@@ -1,0 +1,184 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import MobileBottomNav from '../components/MobileBottomNav';
+import MobilePageShell from '../components/MobilePageShell';
+import useIsMobile from '../hooks/useIsMobile';
+
+function Foto() {
+  const isMobile = useIsMobile();
+  const [editingDescriptionId, setEditingDescriptionId] = useState(null);
+  const [editingDescriptionText, setEditingDescriptionText] = useState('');
+  const [fotoItems, setFotoItems] = useState(() => {
+    const saved = localStorage.getItem('bb-foto');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [commento, setCommento] = useState('');
+  const [immagine, setImmagine] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('bb-foto', JSON.stringify(fotoItems));
+  }, [fotoItems]);
+
+  useEffect(() => {
+    const rootEl = document.getElementById('root');
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyOverscroll = document.body.style.overscrollBehavior;
+    const prevRootOverflow = rootEl ? rootEl.style.overflow : '';
+
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    if (rootEl) rootEl.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.documentElement.style.overscrollBehavior = prevHtmlOverscroll;
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.overscrollBehavior = prevBodyOverscroll;
+      if (rootEl) rootEl.style.overflow = prevRootOverflow;
+    };
+  }, []);
+
+  function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setImmagine(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  function handleAddFoto(e) {
+    e.preventDefault();
+    if (!immagine) return;
+    const nuovoItem = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      image: immagine,
+      commento: commento.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    setFotoItems(prev => [nuovoItem, ...prev]);
+    setImmagine('');
+    setCommento('');
+  }
+
+  function handleStartEditDescription(item) {
+    setEditingDescriptionId(item.id);
+    setEditingDescriptionText(item.commento || '');
+  }
+
+  function handleSaveDescription(itemId) {
+    setFotoItems(prev => prev.map(item => (item.id === itemId ? { ...item, commento: editingDescriptionText.trim() } : item)));
+    setEditingDescriptionId(null);
+    setEditingDescriptionText('');
+  }
+
+  function handleDeleteDescription(itemId) {
+    setFotoItems(prev => prev.map(item => (item.id === itemId ? { ...item, commento: '' } : item)));
+    if (editingDescriptionId === itemId) {
+      setEditingDescriptionId(null);
+      setEditingDescriptionText('');
+    }
+  }
+
+  function handleDeleteFoto(itemId) {
+    const confirmed = window.confirm('Vuoi eliminare questa foto?');
+    if (!confirmed) return;
+
+    setFotoItems(prev => prev.filter(item => item.id !== itemId));
+    if (editingDescriptionId === itemId) {
+      setEditingDescriptionId(null);
+      setEditingDescriptionText('');
+    }
+  }
+
+  return (
+    <div
+      className="bb-page"
+      style={{ height: 'var(--bb-app-height, 100dvh)', background: '#111', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: isMobile ? 0 : '48px', paddingBottom: 0, position: 'fixed', inset: 0, overflow: 'hidden' }}
+    >
+      <MobilePageShell title="FOTO" />
+      {!isMobile && <Link to="/" className="bb-back-btn">&#8592; Home</Link>}
+      {!isMobile && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', marginBottom: '24px' }}>
+          <h1 className="bb-title" style={{ margin: 0 }}>FOTO</h1>
+        </div>
+      )}
+
+      <div style={{ width: '100%', maxWidth: '700px', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px) calc(var(--bb-mobile-bottom-nav-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px)' : '0 16px 24px 16px', boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto', overflowX: 'hidden' }}>
+        <form onSubmit={handleAddFoto} style={{ background: '#222', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
+          <label style={{ fontWeight: 600 }}>Inserisci fotografia</label>
+          <input type="file" accept="image/*" onChange={handleImageChange} style={{ color: '#fff' }} />
+
+          {immagine && (
+            <img src={immagine} alt="anteprima foto" style={{ width: '100%', maxHeight: '220px', objectFit: 'cover', borderRadius: '8px' }} />
+          )}
+
+          <label style={{ fontWeight: 600 }}>Commento breve</label>
+          <textarea
+            value={commento}
+            onChange={e => setCommento(e.target.value)}
+            placeholder="Scrivi un commento..."
+            maxLength={180}
+            style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '46px', resize: 'vertical', fontSize: '0.95rem' }}
+          />
+          <button className="bb-event-btn" type="submit" disabled={!immagine}>Salva foto</button>
+        </form>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {fotoItems.length === 0 && <div style={{ color: '#bbb' }}>Nessuna foto inserita.</div>}
+          {fotoItems.map(item => (
+            <div key={item.id} style={{ background: '#222', borderRadius: '12px', padding: '10px' }}>
+              <img src={item.image} alt="foto caricata" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '8px' }} />
+              {editingDescriptionId === item.id ? (
+                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <textarea
+                    value={editingDescriptionText}
+                    onChange={e => setEditingDescriptionText(e.target.value)}
+                    placeholder="Modifica descrizione..."
+                    maxLength={180}
+                    style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '46px', resize: 'vertical', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box' }}
+                  />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="button" className="bb-event-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem' }} onClick={() => handleSaveDescription(item.id)}>
+                      Salva descrizione
+                    </button>
+                    <button type="button" className="bb-add-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem', marginLeft: 0 }} onClick={() => { setEditingDescriptionId(null); setEditingDescriptionText(''); }}>
+                      Annulla
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                item.commento && <div style={{ marginTop: '8px', color: '#ffb366' }}>{item.commento}</div>
+              )}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                <button type="button" className="bb-add-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', marginLeft: 0 }} onClick={() => handleStartEditDescription(item)}>
+                  Modifica descrizione
+                </button>
+                <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => handleDeleteDescription(item.id)}>
+                  Elimina descrizione
+                </button>
+                <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', background: '#ff4444' }} onClick={() => handleDeleteFoto(item.id)}>
+                  Elimina foto
+                </button>
+              </div>
+              <div style={{ marginTop: '6px', fontSize: '0.8em', color: '#9a9a9a' }}>{new Date(item.createdAt).toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <MobileBottomNav />
+    </div>
+  );
+}
+
+export default Foto;
