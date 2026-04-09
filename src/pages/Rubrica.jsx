@@ -388,13 +388,17 @@ function Rubrica() {
       return;
     }
     if (editingIscrittoId) {
-      await supabase.from('iscritti').update({
+      const { error } = await supabase.from('iscritti').update({
         ruolo,
         cognome,
         nome,
         telefono,
         categorie: form.categorie,
       }).eq('id', editingIscrittoId);
+      if (error) {
+        alert('Errore nel salvataggio: ' + error.message);
+        return;
+      }
       setEditingIscrittoId(null);
     } else {
       const { data, error } = await supabase.from('iscritti').insert([
@@ -406,6 +410,10 @@ function Rubrica() {
           categorie: form.categorie,
         },
       ]).select();
+      if (error) {
+        alert('Errore nel salvataggio: ' + error.message);
+        return;
+      }
       if (!currentUserId && data && data[0]) setCurrentUserId(data[0].id);
     }
     setSaveError('');
