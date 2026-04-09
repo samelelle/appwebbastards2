@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+// --- INIZIO MODIFICA SUPABASE ISCRITTI ---
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
@@ -26,23 +27,7 @@ function Rubrica() {
   const [chatNotice, setChatNotice] = useState('');
   const [openedChatImage, setOpenedChatImage] = useState('');
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
-  const [iscritti, setIscritti] = useState(() => {
-    const saved = localStorage.getItem('bb-rubrica');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.map((iscritto, idx) => (iscritto.id
-          ? iscritto
-          : {
-              ...iscritto,
-              id: `legacy-${idx}-${(iscritto.cognome || '').trim()}-${(iscritto.nome || '').trim()}`,
-            }));
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [iscritti, setIscritti] = useState([]);
   const [chatByCategoria, setChatByCategoria] = useState({});
   const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
   const [seenByCategory, setSeenByCategory] = useState(() => {
@@ -195,9 +180,34 @@ function Rubrica() {
     return `${iscritto.cognome} ${iscritto.nome}`.trim();
   }
 
+
+  // Carica iscritti da Supabase e ascolta realtime
   useEffect(() => {
-    localStorage.setItem('bb-rubrica', JSON.stringify(iscritti));
-  }, [iscritti]);
+    let ignore = false;
+    async function fetchIscritti() {
+      const { data, error } = await supabase
+        .from('iscritti')
+        .select('*')
+        .order('cognome', { ascending: true });
+      if (!error && !ignore) {
+        setIscritti(data || []);
+      }
+    }
+    fetchIscritti();
+
+    // Realtime
+    const channel = supabase
+      .channel('public:iscritti')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'iscritti' }, payload => {
+        fetchIscritti();
+      })
+      .subscribe();
+
+    return () => {
+      ignore = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
 
   // Carica i messaggi dalla tabella chat e ascolta in realtime
@@ -356,11 +366,10 @@ function Rubrica() {
     setShowAddModal(true);
   }
 
-  function handleDeleteIscritto(iscrittoId) {
+  async function handleDeleteIscritto(iscrittoId) {
     const confirmed = window.confirm('Vuoi cancellare davvero questo iscritto?');
     if (!confirmed) return;
-
-    setIscritti(prev => prev.filter(item => item.id !== iscrittoId));
+    await supabase.from('iscritti').delete().eq('id', iscrittoId);
     if (currentUserId === iscrittoId) setCurrentUserId('');
     if (editingIscrittoId === iscrittoId) {
       setEditingIscrittoId(null);
@@ -368,7 +377,7 @@ function Rubrica() {
     }
   }
 
-  function handleAddIscritto(e) {
+  async function handleAddIscritto(e) {
     e.preventDefault();
     const ruolo = form.ruolo.trim();
     const cognome = form.cognome.trim();
@@ -379,36 +388,31 @@ function Rubrica() {
       return;
     }
     if (editingIscrittoId) {
-      setIscritti(prev => prev.map(item => (item.id === editingIscrittoId
-        ? {
-            ...item,
-            ruolo,
-            cognome,
-            nome,
-            telefono,
-            categorie: form.categorie,
-          }
-        : item)));
+      await supabase.from('iscritti').update({
+        ruolo,
+        cognome,
+        nome,
+        telefono,
+        categorie: form.categorie,
+      }).eq('id', editingIscrittoId);
       setEditingIscrittoId(null);
     } else {
-      const newId = generateId();
-      setIscritti(prev => [
-        ...prev,
+      const { data, error } = await supabase.from('iscritti').insert([
         {
-          id: newId,
           ruolo,
           cognome,
           nome,
           telefono,
           categorie: form.categorie,
         },
-      ]);
-      if (!currentUserId) setCurrentUserId(newId);
+      ]).select();
+      if (!currentUserId && data && data[0]) setCurrentUserId(data[0].id);
     }
     setSaveError('');
     setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
     setShowAddModal(false);
   }
+// --- FINE MODIFICA SUPABASE ISCRITTI ---
 
   function getCategorieArray(iscritto) {
     if (Array.isArray(iscritto.categorie)) return iscritto.categorie;
