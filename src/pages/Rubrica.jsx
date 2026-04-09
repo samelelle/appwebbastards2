@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
@@ -42,17 +43,7 @@ function Rubrica() {
     }
     return [];
   });
-  const [chatByCategoria, setChatByCategoria] = useState(() => {
-    const saved = localStorage.getItem('bb-rubrica-chat');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [chatByCategoria, setChatByCategoria] = useState({});
   const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
   const [seenByCategory, setSeenByCategory] = useState(() => {
     const saved = localStorage.getItem(seenCategoryKey);
@@ -208,10 +199,60 @@ function Rubrica() {
     localStorage.setItem('bb-rubrica', JSON.stringify(iscritti));
   }, [iscritti]);
 
+
+  // Carica i messaggi dalla tabella chat e ascolta in realtime
   useEffect(() => {
-    localStorage.setItem('bb-rubrica-chat', JSON.stringify(chatByCategoria));
-    notifyBadgeDataChanged('chat');
-  }, [chatByCategoria]);
+    let ignore = false;
+    async function fetchMessages() {
+      const { data, error } = await supabase
+        .from('chat')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error && !ignore) {
+        // Raggruppa per categoria
+        const grouped = {};
+        for (const msg of data) {
+          if (!grouped[msg.categoria]) grouped[msg.categoria] = [];
+          grouped[msg.categoria].push({
+            ...msg,
+            text: msg.message,
+            imageData: msg.image_url,
+            timestamp: msg.created_at,
+          });
+        }
+        setChatByCategoria(grouped);
+      }
+    }
+    fetchMessages();
+
+    // Realtime
+    const channel = supabase
+      .channel('public:chat')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat' },
+        payload => {
+          const msg = payload.new;
+          setChatByCategoria(prev => {
+            const cat = msg.categoria;
+            const arr = prev[cat] ? [...prev[cat]] : [];
+            arr.push({
+              ...msg,
+              text: msg.message,
+              imageData: msg.image_url,
+              timestamp: msg.created_at,
+            });
+            return { ...prev, [cat]: arr };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      ignore = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(seenCategoryKey, JSON.stringify(seenByCategory));
@@ -473,22 +514,15 @@ function Rubrica() {
     const testo = chatInput.trim();
     if (!testo && !chatImageData) return;
 
-    const nuovoMessaggio = {
-      id: generateId(),
-      authorId: identitaCorrente.id,
-      authorName: displayName(identitaCorrente),
-      categoria: categoriaAperta,
-      text: testo,
-      imageData: chatImageData || null,
-      timestamp: new Date().toISOString(),
-      replyToId: replyTo ? replyTo.id : null,
-      replyToAuthor: replyTo ? (replyTo.authorName || replyTo.author || 'Membro') : null,
-      replyToText: replyTo ? replyPreviewText(replyTo) : null,
-    };
-    setChatByCategoria(prev => ({
-      ...prev,
-      [categoriaAperta]: [...(prev[categoriaAperta] || []), nuovoMessaggio],
-    }));
+    await supabase.from('chat').insert([
+      {
+        categoria: categoriaAperta,
+        user_id: identitaCorrente.id,
+        message: testo,
+        image_url: chatImageData || null,
+        // puoi aggiungere altri campi se vuoi (es. replyTo)
+      },
+    ]);
     setChatInput('');
     setChatImageData('');
     setChatImageError('');
