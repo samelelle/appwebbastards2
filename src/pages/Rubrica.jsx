@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 // --- INIZIO MODIFICA SUPABASE ISCRITTI ---
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
-import { markChatSeen, notifyBadgeDataChanged } from '../lib/notificationBadges';
+import { markChatSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
 
 function Rubrica() {
@@ -14,13 +14,19 @@ function Rubrica() {
   const categorieDisponibili = ['Full', 'Prospect', 'Viminale'];
   const seenCategoryKey = 'bb-rubrica-seen-categories';
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showIdentityModal, setShowIdentityModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [categoriaAperta, setCategoriaAperta] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const [chatImageData, setChatImageData] = useState('');
   const [chatImageError, setChatImageError] = useState('');
-  const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('bb-current-chat-user-id') || '');
+  const [showIdentityModal, setShowIdentityModal] = useState(false);
+  const [myIscrittoId, setMyIscrittoId] = useState(
+    () =>
+      localStorage.getItem('bb-my-iscritto-id')
+      || localStorage.getItem('bb-current-chat-user-id')
+      || ''
+  );
+  const currentUserId = myIscrittoId || '';
   const [replyTo, setReplyTo] = useState(null);
   const [saveError, setSaveError] = useState('');
   const [editingIscrittoId, setEditingIscrittoId] = useState(null);
@@ -51,21 +57,6 @@ function Rubrica() {
   function openChatImage(imageData) {
     if (!imageData) return;
     setOpenedChatImage(imageData);
-  }
-
-  function generateId() {
-    if (typeof crypto !== 'undefined') {
-      if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-      if (typeof crypto.getRandomValues === 'function') {
-        const bytes = new Uint8Array(16);
-        crypto.getRandomValues(bytes);
-        bytes[6] = (bytes[6] & 0x0f) | 0x40;
-        bytes[8] = (bytes[8] & 0x3f) | 0x80;
-        const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-      }
-    }
-    return `fallback-${new Date().toISOString().replace(/\D/g, '')}`;
   }
 
   async function fileToDataUrl(file) {
@@ -133,52 +124,40 @@ function Rubrica() {
     link.remove();
   }
 
-  async function handleSaveOpenedImage() {
-    if (!openedChatImage) return;
-
-    const fileName = `rubrica-foto-${new Date().toISOString().replace(/[:.]/g, '-')}.jpg`;
-    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-
-    try {
-      const response = await fetch(openedChatImage);
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
-
-      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-        await navigator.share({
-          files: [file],
-          title: 'Foto chat',
-          text: 'Seleziona Salva immagine o Foto/Galleria',
-        });
-        return;
-      }
-
-      if (isMobileDevice) {
-        const blobUrl = URL.createObjectURL(blob);
-        const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-        if (!opened) {
-          window.location.href = blobUrl;
-        }
-        return;
-      }
-
-      downloadImageData(openedChatImage);
-    } catch {
-      if (isMobileDevice) {
-        const opened = window.open(openedChatImage, '_blank', 'noopener,noreferrer');
-        if (!opened) {
-          window.location.href = openedChatImage;
-        }
-        return;
-      }
-      downloadImageData(openedChatImage);
-    }
-  }
-
-  function displayName(iscritto) {
+  const displayName = useCallback((iscritto) => {
     return `${iscritto.cognome} ${iscritto.nome}`.trim();
-  }
+  }, []);
+
+  const iscrittiById = useMemo(() => {
+    const map = new Map();
+    for (const iscritto of iscritti) {
+      if (iscritto?.id != null) map.set(String(iscritto.id), iscritto);
+    }
+    return map;
+  }, [iscritti]);
+
+  const getMessageAuthorId = useCallback((message) => {
+    if (!message || typeof message !== 'object') return '';
+    return message.authorId || message.user_id || message.userId || '';
+  }, []);
+
+  const authorLabel = useCallback((message) => {
+    const authorId = getMessageAuthorId(message);
+    if (authorId) {
+      const iscritto = iscrittiById.get(String(authorId));
+      if (iscritto) {
+        const label = displayName(iscritto);
+        if (label) return label;
+      }
+    }
+    return message?.authorName || message?.author || 'Membro';
+  }, [displayName, getMessageAuthorId, iscrittiById]);
+
+  const isOwnMessage = useCallback((message) => {
+    const authorId = getMessageAuthorId(message);
+    if (!authorId || !currentUserId) return false;
+    return String(authorId) === String(currentUserId);
+  }, [currentUserId, getMessageAuthorId]);
 
 
   // Carica iscritti da Supabase e ascolta realtime
@@ -198,7 +177,7 @@ function Rubrica() {
     // Realtime
     const channel = supabase
       .channel('public:iscritti')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'iscritti' }, payload => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'iscritti' }, _payload => {
         fetchIscritti();
       })
       .subscribe();
@@ -208,7 +187,6 @@ function Rubrica() {
       supabase.removeChannel(channel);
     };
   }, []);
-
 
   // Carica i messaggi dalla tabella chat e ascolta in realtime
   useEffect(() => {
@@ -221,15 +199,17 @@ function Rubrica() {
       if (!error && !ignore) {
         // Raggruppa per categoria
         const grouped = {};
-        for (const msg of data) {
-          if (!grouped[msg.categoria]) grouped[msg.categoria] = [];
-          grouped[msg.categoria].push({
-            ...msg,
-            text: msg.message,
-            imageData: msg.image_url,
-            timestamp: msg.created_at,
-          });
-        }
+         for (const msg of data) {
+           if (!grouped[msg.categoria]) grouped[msg.categoria] = [];
+           grouped[msg.categoria].push({
+             ...msg,
+              authorId: msg.authorId || msg.user_id || msg.userId || '',
+              authorName: msg.authorName || msg.author || '',
+              text: msg.message,
+              imageData: msg.image_url,
+              timestamp: msg.created_at,
+            });
+          }
         setChatByCategoria(grouped);
       }
     }
@@ -243,16 +223,18 @@ function Rubrica() {
         { event: 'INSERT', schema: 'public', table: 'chat' },
         payload => {
           const msg = payload.new;
-          setChatByCategoria(prev => {
-            const cat = msg.categoria;
-            const arr = prev[cat] ? [...prev[cat]] : [];
-            arr.push({
-              ...msg,
-              text: msg.message,
-              imageData: msg.image_url,
-              timestamp: msg.created_at,
-            });
-            return { ...prev, [cat]: arr };
+           setChatByCategoria(prev => {
+             const cat = msg.categoria;
+             const arr = prev[cat] ? [...prev[cat]] : [];
+             arr.push({
+               ...msg,
+               authorId: msg.authorId || msg.user_id || msg.userId || '',
+               authorName: msg.authorName || msg.author || '',
+               text: msg.message,
+               imageData: msg.image_url,
+               timestamp: msg.created_at,
+             });
+             return { ...prev, [cat]: arr };
           });
         }
       )
@@ -305,8 +287,12 @@ function Rubrica() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('bb-current-chat-user-id', currentUserId || '');
-  }, [currentUserId]);
+    // Identita bloccata: l'ID corrente segue sempre quello creato da questo dispositivo.
+    const lockedId = myIscrittoId || '';
+    localStorage.setItem('bb-my-iscritto-id', lockedId);
+    // Mantieni compatibilita con chi legge ancora questa chiave.
+    localStorage.setItem('bb-current-chat-user-id', lockedId);
+  }, [myIscrittoId]);
 
   useEffect(() => {
     const rootEl = document.getElementById('root');
@@ -354,6 +340,7 @@ function Rubrica() {
   }
 
   function startEditIscritto(iscritto) {
+    if (myIscrittoId && String(iscritto?.id || '') !== String(myIscrittoId)) return;
     setEditingIscrittoId(iscritto.id);
     setForm({
       ruolo: iscritto.ruolo || '',
@@ -367,10 +354,11 @@ function Rubrica() {
   }
 
   async function handleDeleteIscritto(iscrittoId) {
+    if (myIscrittoId && String(iscrittoId) !== String(myIscrittoId)) return;
     const confirmed = window.confirm('Vuoi cancellare davvero questo iscritto?');
     if (!confirmed) return;
     await supabase.from('iscritti').delete().eq('id', iscrittoId);
-    if (currentUserId === iscrittoId) setCurrentUserId('');
+    if (String(myIscrittoId) === String(iscrittoId)) setMyIscrittoId('');
     if (editingIscrittoId === iscrittoId) {
       setEditingIscrittoId(null);
       setShowAddModal(false);
@@ -385,6 +373,14 @@ function Rubrica() {
     const telefono = form.telefono.trim();
     if (!ruolo || !cognome || !nome || !telefono || form.categorie.length === 0) {
       setSaveError('Compila tutti i campi e seleziona almeno una categoria.');
+      return;
+    }
+    if (!editingIscrittoId && myIscrittoId && identitaCorrente) {
+      setSaveError('Puoi creare solo un iscritto su questo dispositivo.');
+      return;
+    }
+    if (editingIscrittoId && myIscrittoId && String(editingIscrittoId) !== String(myIscrittoId)) {
+      setSaveError('Non puoi modificare l’iscritto di un’altra identita.');
       return;
     }
     if (editingIscrittoId) {
@@ -414,7 +410,7 @@ function Rubrica() {
         alert('Errore nel salvataggio: ' + error.message);
         return;
       }
-      if (!currentUserId && data && data[0]) setCurrentUserId(data[0].id);
+      if (data && data[0]) setMyIscrittoId(data[0].id);
     }
     setSaveError('');
     setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
@@ -446,7 +442,7 @@ function Rubrica() {
   const categoryMessageCounts = categorieDisponibili.reduce((accumulator, categoria) => {
     const messages = Array.isArray(chatByCategoria[categoria]) ? chatByCategoria[categoria] : [];
     const seenCount = Number(seenByCategory[categoria] || 0);
-    accumulator[categoria] = Math.max(0, messages.filter(message => message.authorId !== currentUserId).length - seenCount);
+    accumulator[categoria] = Math.max(0, messages.filter(message => !isOwnMessage(message)).length - seenCount);
     return accumulator;
   }, {});
 
@@ -456,9 +452,9 @@ function Rubrica() {
     const messages = Array.isArray(chatByCategoria[categoriaAperta]) ? chatByCategoria[categoriaAperta] : [];
     setSeenByCategory(prev => ({
       ...prev,
-      [categoriaAperta]: messages.filter(message => message.authorId !== currentUserId).length,
+      [categoriaAperta]: messages.filter(message => !isOwnMessage(message)).length,
     }));
-  }, [categoriaAperta, chatByCategoria, currentUserId]);
+  }, [categoriaAperta, chatByCategoria, isOwnMessage]);
 
   useEffect(() => {
     const entries = Object.entries(chatByCategoria);
@@ -477,11 +473,11 @@ function Rubrica() {
     knownMessageIdsRef.current = nextIds;
     if (!incoming.length) return;
 
-    const externalIncoming = incoming.filter(message => message.authorId !== currentUserId);
+    const externalIncoming = incoming.filter(message => !isOwnMessage(message));
     if (!externalIncoming.length) return;
 
     const latest = externalIncoming[externalIncoming.length - 1];
-    const author = latest.authorName || latest.author || 'Membro';
+    const author = authorLabel(latest);
     const categoryLabel = latest.categoria ? ` in ${latest.categoria}` : '';
     const preview = latest.text?.trim() ? latest.text.trim().slice(0, 60) : 'Nuovo messaggio';
     const noticeText = `Nuovo messaggio${categoryLabel} da ${author}`;
@@ -492,7 +488,7 @@ function Rubrica() {
     if (notificationsAllowed) {
       notifyUser(noticeText, preview);
     }
-  }, [chatByCategoria, currentUserId, notificationsAllowed]);
+  }, [authorLabel, chatByCategoria, isOwnMessage, notificationsAllowed]);
 
   useEffect(() => {
     if (!showAddModal) return undefined;
@@ -580,7 +576,32 @@ function Rubrica() {
           Lista iscritti
         </button>
 
-        <button className="bb-add-btn" style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }} onClick={() => { setSaveError(''); setShowAddModal(true); }}>Aggiungi iscritto</button>
+        {!myIscrittoId && (
+          <button
+            className="bb-add-btn"
+            style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }}
+            onClick={() => {
+              setEditingIscrittoId(null);
+              setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
+              setSaveError('');
+              setShowAddModal(true);
+            }}
+          >
+            Crea iscritto
+          </button>
+        )}
+        {myIscrittoId && (
+          <button
+            className="bb-add-btn"
+            style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }}
+            onClick={() => {
+              const me = iscritti.find(iscritto => String(iscritto?.id || '') === String(myIscrittoId));
+              if (me) startEditIscritto(me);
+            }}
+          >
+            Modifica iscritto
+          </button>
+        )}
       </div>
 
       {categoriaAperta && (
@@ -602,11 +623,11 @@ function Rubrica() {
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
                 )}
                 {messaggiCategoriaAperta.map((msg, idx) => {
-                  const isOwn = msg.authorId === currentUserId;
+                  const isOwn = isOwnMessage(msg);
                   return (
                   <div key={`${msg.timestamp}-${idx}`} style={{ alignSelf: isOwn ? 'flex-end' : 'flex-start', maxWidth: '84%', background: isOwn ? '#1f7a3f' : '#2a2a2a', borderRadius: '12px', padding: '7px 9px' }}>
                     {!isOwn && (
-                      <div style={{ fontSize: '0.76em', color: '#ffb366', marginBottom: '2px' }}>{msg.authorName || msg.author || 'Membro'}</div>
+                      <div style={{ fontSize: '0.76em', color: '#ffb366', marginBottom: '2px' }}>{authorLabel(msg)}</div>
                     )}
                     {msg.replyToAuthor && (
                       <div style={{ fontSize: '0.78em', color: '#aaa', borderLeft: '2px solid #555', paddingLeft: '6px', marginBottom: '4px' }}>
@@ -653,7 +674,7 @@ function Rubrica() {
 
               {replyTo && (
                 <div style={{ marginTop: '8px', background: '#2a2a2a', borderRadius: '6px', padding: '6px 8px', fontSize: '0.85em' }}>
-                  Rispondi a <b>{replyTo.authorName || replyTo.author || 'Membro'}</b>: {replyPreviewText(replyTo)}
+                  Rispondi a <b>{authorLabel(replyTo)}</b>: {replyPreviewText(replyTo)}
                   <button type="button" onClick={() => setReplyTo(null)} style={{ marginLeft: '8px', background: '#444', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer', fontSize: '0.75em' }}>
                     Annulla
                   </button>
@@ -784,24 +805,26 @@ function Rubrica() {
                     <div style={{ color: '#ffb366', fontSize: '0.92em' }}>Ruolo: {iscritto.ruolo || 'N/D'}</div>
                     <div style={{ color: '#ddd', fontSize: '0.9em' }}>Telefono: {iscritto.telefono || 'N/D'}</div>
                     <div style={{ color: '#aaa', fontSize: '0.85em' }}>Categorie: {getCategorieArray(iscritto).join(', ') || 'N/D'}</div>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button
-                        type="button"
-                        className="bb-add-btn"
-                        style={{ width: 'auto', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem', marginLeft: 0 }}
-                        onClick={() => startEditIscritto(iscritto)}
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        type="button"
-                        className="bb-event-btn"
-                        style={{ width: 'auto', minWidth: '0', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem' }}
-                        onClick={() => handleDeleteIscritto(iscritto.id)}
-                      >
-                        Cancella
-                      </button>
-                    </div>
+                    {myIscrittoId && String(iscritto?.id || '') === String(myIscrittoId) && (
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <button
+                          type="button"
+                          className="bb-add-btn"
+                          style={{ width: 'auto', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem', marginLeft: 0 }}
+                          onClick={() => startEditIscritto(iscritto)}
+                        >
+                          Modifica
+                        </button>
+                        <button
+                          type="button"
+                          className="bb-event-btn"
+                          style={{ width: 'auto', minWidth: '0', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem' }}
+                          onClick={() => handleDeleteIscritto(iscritto.id)}
+                        >
+                          Cancella
+                        </button>
+                      </div>
+                    )}
                   </li>
                 ))}
             </ul>
@@ -815,16 +838,38 @@ function Rubrica() {
           <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#222', paddingBottom: '8px' }}>
               <button onClick={() => setShowIdentityModal(false)} style={{ position: 'absolute', top: isMobile ? '14px' : 10, right: 14, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
-              <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: '10px' }}>Seleziona la tua identita</h2>
+              <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: '6px' }}>Identita chat</h2>
+              <div style={{ color: '#bbb', fontSize: '0.9em', marginBottom: '8px' }}>Identita bloccata: non si puo cambiare.</div>
             </div>
-            {iscritti.length === 0 && <div style={{ color: '#bbb' }}>Nessun iscritto disponibile.</div>}
+            {!myIscrittoId && (
+              <div style={{ color: '#bbb', fontSize: '0.95em' }}>
+                Nessuna identita impostata. Crea un iscritto per usare la chat.
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    className="bb-add-btn"
+                    style={{ width: 'auto' }}
+                    onClick={() => {
+                      setShowIdentityModal(false);
+                      setEditingIscrittoId(null);
+                      setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
+                      setSaveError('');
+                      setShowAddModal(true);
+                    }}
+                  >
+                    Crea iscritto
+                  </button>
+                </div>
+              </div>
+            )}
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, flex: 1, minHeight: 0, overflowY: 'auto' }}>
-              {iscritti.map((iscritto, idx) => (
+              {iscritti
+                .filter(iscritto => myIscrittoId && String(iscritto?.id || '') === String(myIscrittoId))
+                .map((iscritto, idx) => (
                 <li key={`${iscritto.id || idx}`} style={{ marginBottom: '8px' }}>
                   <button
                     type="button"
                     onClick={() => {
-                      setCurrentUserId(iscritto.id);
                       setShowIdentityModal(false);
                     }}
                     style={{ width: '100%', textAlign: 'left', background: currentUserId === iscritto.id ? '#ff6600' : '#2a2a2a', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', cursor: 'pointer' }}
