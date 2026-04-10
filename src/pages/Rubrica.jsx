@@ -636,7 +636,7 @@ function Rubrica({ isDevMode }) {
             Crea iscritto
           </button>
         )}
-        {myIscrittoId && (
+        {myIscrittoId && isDevMode && (
           <button
             className="bb-add-btn"
             style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }}
