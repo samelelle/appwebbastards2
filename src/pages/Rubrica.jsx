@@ -842,7 +842,7 @@ function Rubrica({ isDevMode }) {
                     <div style={{ color: '#ffb366', fontSize: '0.92em' }}>Ruolo: {iscritto.ruolo || 'N/D'}</div>
                     <div style={{ color: '#ddd', fontSize: '0.9em' }}>Telefono: {iscritto.telefono || 'N/D'}</div>
                     <div style={{ color: '#aaa', fontSize: '0.85em' }}>Categorie: {getCategorieArray(iscritto).join(', ') || 'N/D'}</div>
-                    {myIscrittoId && String(iscritto?.id || '') === String(myIscrittoId) && isDevMode && (
+                    {isDevMode && (
                       <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                         <button
                           type="button"
