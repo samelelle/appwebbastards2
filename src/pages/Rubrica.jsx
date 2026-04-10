@@ -434,11 +434,14 @@ function Rubrica({ isDevMode }) {
   const identitaCorrente = iscritti.find(iscritto => iscritto.id === currentUserId) || null;
   // Funzione per controllare se l'identità corrente è membro di una categoria
   function isMembroCorrenteInCategoria(cat) {
+    if (isDevMode) return true;
     return identitaCorrente ? getCategorieArray(identitaCorrente).includes(cat) : false;
   }
-  const membroCorrenteInCategoria = identitaCorrente && categoriaAperta
-    ? getCategorieArray(identitaCorrente).includes(categoriaAperta)
-    : false;
+  const membroCorrenteInCategoria = isDevMode
+    ? true
+    : (identitaCorrente && categoriaAperta
+      ? getCategorieArray(identitaCorrente).includes(categoriaAperta)
+      : false);
 
   const messaggiCategoriaAperta = categoriaAperta
     ? (chatByCategoria[categoriaAperta] || [])
@@ -622,7 +625,7 @@ function Rubrica({ isDevMode }) {
           Lista iscritti
         </button>
 
-        {!myIscrittoId && (
+        {(!myIscrittoId || isDevMode) && (
           <button
             className="bb-add-btn"
             style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }}
