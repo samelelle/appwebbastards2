@@ -2,6 +2,14 @@ import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
+
+function isDevBypassEnabled() {
+  try {
+    return localStorage.getItem('bb-dev-bypass-auth') === 'true';
+  } catch {
+    return false;
+  }
+}
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
 import { useState } from 'react';
 
@@ -12,11 +20,11 @@ function MobileBottomNav() {
   const navRef = useRef(null);
   const [unreadEvents, setUnreadEvents] = useState(null);
   const [unreadChats, setUnreadChats] = useState(null);
-  const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings());
+  const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings() || isDevBypassEnabled());
 
   useEffect(() => {
     const refreshAccess = () => {
-      setCanAccessMeetings(canCurrentUserAccessMeetings());
+      setCanAccessMeetings(canCurrentUserAccessMeetings() || isDevBypassEnabled());
     };
 
     refreshAccess();
