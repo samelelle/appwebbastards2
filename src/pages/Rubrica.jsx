@@ -31,6 +31,7 @@ function Rubrica() {
   const [saveError, setSaveError] = useState('');
   const [editingIscrittoId, setEditingIscrittoId] = useState(null);
   const [chatNotice, setChatNotice] = useState('');
+  const [chatPermissionError, setChatPermissionError] = useState('');
   const [openedChatImage, setOpenedChatImage] = useState('');
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const [iscritti, setIscritti] = useState([]);
@@ -431,6 +432,10 @@ function Rubrica() {
 
   const membriCategoriaAperta = iscrittiCategoriaAperta.map(iscritto => ({ id: iscritto.id, name: displayName(iscritto) }));
   const identitaCorrente = iscritti.find(iscritto => iscritto.id === currentUserId) || null;
+  // Funzione per controllare se l'identità corrente è membro di una categoria
+  function isMembroCorrenteInCategoria(cat) {
+    return identitaCorrente ? getCategorieArray(identitaCorrente).includes(cat) : false;
+  }
   const membroCorrenteInCategoria = identitaCorrente && categoriaAperta
     ? getCategorieArray(identitaCorrente).includes(categoriaAperta)
     : false;
@@ -547,6 +552,11 @@ function Rubrica() {
           {chatNotice}
         </div>
       )}
+      {chatPermissionError && (
+        <div style={{ position: 'fixed', top: 'calc(var(--bb-mobile-shell-height, 94px) + 56px)', left: '10px', right: '10px', zIndex: 8200, background: '#2a1d1d', border: '1px solid #a33', color: '#ffb8b8', borderRadius: '8px', padding: '8px 10px', fontSize: '0.88rem', boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}>
+          {chatPermissionError}
+        </div>
+      )}
       <MobilePageShell title="RUBRICA" />
       {!isMobile && <Link to="/" className="bb-back-btn">&#8592; Home</Link>}
       {!isMobile && (
@@ -555,15 +565,51 @@ function Rubrica() {
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: isMobile ? '100%' : '360px', maxWidth: '92vw', margin: '0 auto', marginTop: isMobile ? 0 : '3cm', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 72px) 12px 8px 12px' : 0, boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto' }}>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => { setReplyTo(null); setCategoriaAperta('Full'); }}>
+        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+          onClick={() => {
+            setReplyTo(null);
+            if (isMembroCorrenteInCategoria('Full')) {
+              setCategoriaAperta('Full');
+              setChatPermissionError('');
+            } else {
+              setCategoriaAperta(null);
+              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
+              setTimeout(() => setChatPermissionError(''), 3500);
+            }
+          }}
+        >
           Full
           {categoryMessageCounts.Full > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Full > 99 ? '99+' : categoryMessageCounts.Full}</span>}
         </button>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => { setReplyTo(null); setCategoriaAperta('Prospect'); }}>
+        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+          onClick={() => {
+            setReplyTo(null);
+            if (isMembroCorrenteInCategoria('Prospect')) {
+              setCategoriaAperta('Prospect');
+              setChatPermissionError('');
+            } else {
+              setCategoriaAperta(null);
+              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
+              setTimeout(() => setChatPermissionError(''), 3500);
+            }
+          }}
+        >
           Prospect
           {categoryMessageCounts.Prospect > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Prospect > 99 ? '99+' : categoryMessageCounts.Prospect}</span>}
         </button>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => { setReplyTo(null); setCategoriaAperta('Viminale'); }}>
+        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+          onClick={() => {
+            setReplyTo(null);
+            if (isMembroCorrenteInCategoria('Viminale')) {
+              setCategoriaAperta('Viminale');
+              setChatPermissionError('');
+            } else {
+              setCategoriaAperta(null);
+              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
+              setTimeout(() => setChatPermissionError(''), 3500);
+            }
+          }}
+        >
           Viminale
           {categoryMessageCounts.Viminale > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Viminale > 99 ? '99+' : categoryMessageCounts.Viminale}</span>}
         </button>
