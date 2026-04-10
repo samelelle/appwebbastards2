@@ -819,15 +819,6 @@ function Rubrica({ isDevMode }) {
                   placeholder="Cerca per nome, cognome, ruolo, telefono, categoria..."
                   style={{ flex: 1, padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem', minWidth: 0 }}
                 />
-                <button
-                  type="button"
-                  className="bb-add-btn"
-                  style={{ minWidth: '70px', padding: '7px 10px', fontSize: '0.95rem' }}
-                  onClick={() => setSearchIscritto('')}
-                  title="Azzera ricerca"
-                >
-                  Azzera
-                </button>
               </div>
             </div>
             {iscritti.length === 0 && <div style={{ color: '#bbb' }}>Nessun iscritto disponibile.</div>}

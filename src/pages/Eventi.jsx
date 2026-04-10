@@ -435,22 +435,26 @@ function Eventi({ isDevMode }) {
               }}
             />
           </div>
-          <button className="bb-add-btn" style={{ marginTop: '10px', width: isMobile ? '72%' : '60%', maxWidth: isMobile ? '240px' : 'none', fontSize: '0.75rem', padding: '3px 0', minWidth: 0 }} onClick={() => isDevMode && setShowForm(!showForm)} disabled={!isDevMode}>
-            {showForm ? 'Annulla' : 'Aggiungi evento'}
-          </button>
-          {showForm && isDevMode && (
-            <form onSubmit={handleAddEvent} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', background: '#333', borderRadius: '8px', padding: '10px' }}>
-              <input name="title" type="text" placeholder="Titolo evento" value={form.title} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', fontSize: '1rem' }} />
-              <input className="bb-date-input" name="date" type="date" value={form.date} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <input className="bb-time-input" name="start" type="time" value={form.start} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
-                <input className="bb-time-input" name="end" type="time" value={form.end} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
-              </div>
-              <textarea name="note" placeholder="Note evento" value={form.note} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', minHeight: '28px', resize: 'vertical', fontSize: '1rem' }} />
-              <input name="image" type="file" accept="image/*" onChange={handleInput} style={{ marginTop: '4px', color: '#fff', fontSize: '1rem' }} />
-              {form.image && <img src={form.image} alt="anteprima" style={{ maxWidth: '100%', maxHeight: '70px', marginTop: '4px', borderRadius: '6px' }} />}
-              <button className="bb-event-btn" type="submit" style={{ width: '100%', fontSize: '1rem', padding: '6px 0' }}>Salva evento</button>
-            </form>
+          {isDevMode && (
+            <>
+              <button className="bb-add-btn" style={{ marginTop: '10px', width: isMobile ? '72%' : '60%', maxWidth: isMobile ? '240px' : 'none', fontSize: '0.75rem', padding: '3px 0', minWidth: 0 }} onClick={() => setShowForm(!showForm)}>
+                {showForm ? 'Annulla' : 'Aggiungi evento'}
+              </button>
+              {showForm && (
+                <form onSubmit={handleAddEvent} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', background: '#333', borderRadius: '8px', padding: '10px' }}>
+                  <input name="title" type="text" placeholder="Titolo evento" value={form.title} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', fontSize: '1rem' }} />
+                  <input className="bb-date-input" name="date" type="date" value={form.date} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <input className="bb-time-input" name="start" type="time" value={form.start} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
+                    <input className="bb-time-input" name="end" type="time" value={form.end} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
+                  </div>
+                  <textarea name="note" placeholder="Note evento" value={form.note} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', minHeight: '28px', resize: 'vertical', fontSize: '1rem' }} />
+                  <input name="image" type="file" accept="image/*" onChange={handleInput} style={{ marginTop: '4px', color: '#fff', fontSize: '1rem' }} />
+                  {form.image && <img src={form.image} alt="anteprima" style={{ maxWidth: '100%', maxHeight: '70px', marginTop: '4px', borderRadius: '6px' }} />}
+                  <button className="bb-event-btn" type="submit" style={{ width: '100%', fontSize: '1rem', padding: '6px 0' }}>Salva evento</button>
+                </form>
+              )}
+            </>
           )}
         </div>
 
@@ -502,10 +506,12 @@ function Eventi({ isDevMode }) {
                     {ev.note && <div style={{ fontSize: '0.85em', color: '#ffb366', marginTop: '2px', wordBreak: 'break-word' }}><b>Note:</b> {ev.note}</div>}
                     {ev.image && <img src={ev.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '50px', marginTop: '4px', borderRadius: '6px' }} />}
                   </div>
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-                    <button className="bb-add-btn" style={{ fontSize: '0.82rem', padding: '3px 10px', minWidth: '68px', borderRadius: '5px', background: '#ff6600', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => isDevMode && startEditEvent(ev)} disabled={!isDevMode}>Modifica</button>
-                    <button className="bb-event-btn" style={{ width: 'auto', minWidth: '68px', fontSize: '0.82rem', padding: '3px 10px', borderRadius: '5px', background: '#ff4444', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => isDevMode && handleDeleteEvent(ev.id)} disabled={!isDevMode}>Cancella</button>
-                  </div>
+                  {isDevMode && (
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                      <button className="bb-add-btn" style={{ fontSize: '0.82rem', padding: '3px 10px', minWidth: '68px', borderRadius: '5px', background: '#ff6600', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => startEditEvent(ev)}>Modifica</button>
+                      <button className="bb-event-btn" style={{ width: 'auto', minWidth: '68px', fontSize: '0.82rem', padding: '3px 10px', borderRadius: '5px', background: '#ff4444', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => handleDeleteEvent(ev.id)}>Cancella</button>
+                    </div>
+                  )}
                 </li>
               );
             })}
