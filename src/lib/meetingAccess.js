@@ -44,9 +44,19 @@ export function canCurrentUserAccessMeetings() {
     if (!Array.isArray(iscritti)) return false;
 
     const currentMember = iscritti.find(iscritto => String(iscritto?.id || '') === String(currentUserId));
-    const categories = getMemberCategories(currentMember);
+    if (!currentMember) return false;
 
-    return categories.some(category => ALLOWED_MEETING_CATEGORIES.has(category));
+    // Unifica categoria e categorie in un unico array normalizzato
+    let allCategories = [];
+    if (Array.isArray(currentMember.categorie)) {
+      allCategories = allCategories.concat(currentMember.categorie.map(normalizeCategory));
+    }
+    if (typeof currentMember.categoria === 'string') {
+      allCategories.push(normalizeCategory(currentMember.categoria));
+    }
+    allCategories = allCategories.filter(Boolean);
+
+    return allCategories.some(category => ALLOWED_MEETING_CATEGORIES.has(category));
   } catch {
     return false;
   }
