@@ -199,7 +199,7 @@ function App() {
           path="/riunioni"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              {canCurrentUserAccessMeetings() ? <Riunioni /> : <Navigate to="/" replace />}
+              {(canCurrentUserAccessMeetings() || devBypassEnabled) ? <Riunioni /> : <Navigate to="/" replace />}
             </ProtectedRoute>
           )}
         />
