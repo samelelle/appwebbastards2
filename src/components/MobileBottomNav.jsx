@@ -3,6 +3,25 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 
+function isNotOnlyProspect() {
+  try {
+    const currentUserId = localStorage.getItem('bb-current-chat-user-id');
+    const rawRubrica = localStorage.getItem('bb-rubrica');
+    if (!currentUserId || !rawRubrica) return false;
+    const iscritti = JSON.parse(rawRubrica);
+    if (!Array.isArray(iscritti)) return false;
+    const currentMember = iscritti.find(iscritto => String(iscritto?.id || '') === String(currentUserId));
+    if (!currentMember) return false;
+    const cats = (Array.isArray(currentMember.categorie) ? currentMember.categorie : [currentMember.categoria || ''])
+      .map(c => String(c || '').trim().toLowerCase())
+      .filter(Boolean);
+    // Se ha almeno una categoria diversa da 'prospect', mostra Riunioni
+    return cats.some(c => c && c !== 'prospect');
+  } catch {
+    return false;
+  }
+}
+
 function isDevBypassEnabled() {
   try {
     return localStorage.getItem('bb-dev-bypass-auth') === 'true';
@@ -20,11 +39,11 @@ function MobileBottomNav() {
   const navRef = useRef(null);
   const [unreadEvents, setUnreadEvents] = useState(null);
   const [unreadChats, setUnreadChats] = useState(null);
-  const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings() || isDevBypassEnabled());
+  const [canAccessMeetings, setCanAccessMeetings] = useState(() => isDevBypassEnabled() || isNotOnlyProspect());
 
   useEffect(() => {
     const refreshAccess = () => {
-      setCanAccessMeetings(canCurrentUserAccessMeetings() || isDevBypassEnabled());
+      setCanAccessMeetings(isDevBypassEnabled() || isNotOnlyProspect());
     };
 
     refreshAccess();
