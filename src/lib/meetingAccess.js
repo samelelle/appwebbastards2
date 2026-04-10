@@ -46,15 +46,15 @@ export function canCurrentUserAccessMeetings() {
     const currentMember = iscritti.find(iscritto => String(iscritto?.id || '') === String(currentUserId));
     if (!currentMember) return false;
 
-    // Unifica categoria e categorie in un unico array normalizzato
+    // Prendi sia categoria singola che array categorie
     let allCategories = [];
     if (Array.isArray(currentMember.categorie)) {
-      allCategories = allCategories.concat(currentMember.categorie.map(normalizeCategory));
+      allCategories = allCategories.concat(currentMember.categorie);
     }
-    if (typeof currentMember.categoria === 'string') {
-      allCategories.push(normalizeCategory(currentMember.categoria));
+    if (currentMember.categoria) {
+      allCategories.push(currentMember.categoria);
     }
-    allCategories = allCategories.filter(Boolean);
+    allCategories = allCategories.map(c => String(c || '').trim().toLowerCase()).filter(Boolean);
 
     return allCategories.some(category => ALLOWED_MEETING_CATEGORIES.has(category));
   } catch {

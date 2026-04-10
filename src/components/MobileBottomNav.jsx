@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
-import { debugCurrentUserCategories } from '../lib/debugMeetingAccess';
 
 // ...existing code...
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
@@ -20,7 +19,6 @@ function MobileBottomNav() {
   useEffect(() => {
     const refreshAccess = () => {
       setCanAccessMeetings(canCurrentUserAccessMeetings());
-      debugCurrentUserCategories(); // DEBUG: stampa categorie utente
     };
 
     refreshAccess();
