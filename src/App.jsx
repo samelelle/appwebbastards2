@@ -183,7 +183,7 @@ function App() {
           path="/rubrica"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Rubrica />
+              <Rubrica isDevMode={devBypassEnabled} />
             </ProtectedRoute>
           )}
         />
@@ -191,7 +191,7 @@ function App() {
           path="/eventi"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Eventi />
+              <Eventi isDevMode={devBypassEnabled} />
             </ProtectedRoute>
           )}
         />

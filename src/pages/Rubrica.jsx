@@ -8,7 +8,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import { markChatSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
 
-function Rubrica() {
+function Rubrica({ isDevMode }) {
     const [searchIscritto, setSearchIscritto] = useState('');
   const isMobile = useIsMobile();
   const categorieDisponibili = ['Full', 'Prospect', 'Viminale'];
@@ -851,7 +851,7 @@ function Rubrica() {
                     <div style={{ color: '#ffb366', fontSize: '0.92em' }}>Ruolo: {iscritto.ruolo || 'N/D'}</div>
                     <div style={{ color: '#ddd', fontSize: '0.9em' }}>Telefono: {iscritto.telefono || 'N/D'}</div>
                     <div style={{ color: '#aaa', fontSize: '0.85em' }}>Categorie: {getCategorieArray(iscritto).join(', ') || 'N/D'}</div>
-                    {myIscrittoId && String(iscritto?.id || '') === String(myIscrittoId) && (
+                    {myIscrittoId && String(iscritto?.id || '') === String(myIscrittoId) && isDevMode && (
                       <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                         <button
                           type="button"

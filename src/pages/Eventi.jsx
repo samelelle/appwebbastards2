@@ -35,7 +35,7 @@ const defaultEvents = [
   },
 ];
 
-function Eventi() {
+function Eventi({ isDevMode }) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [editEventId, setEditEventId] = useState(null);
@@ -435,10 +435,10 @@ function Eventi() {
               }}
             />
           </div>
-          <button className="bb-add-btn" style={{ marginTop: '10px', width: isMobile ? '72%' : '60%', maxWidth: isMobile ? '240px' : 'none', fontSize: '0.75rem', padding: '3px 0', minWidth: 0 }} onClick={() => setShowForm(!showForm)}>
+          <button className="bb-add-btn" style={{ marginTop: '10px', width: isMobile ? '72%' : '60%', maxWidth: isMobile ? '240px' : 'none', fontSize: '0.75rem', padding: '3px 0', minWidth: 0 }} onClick={() => isDevMode && setShowForm(!showForm)} disabled={!isDevMode}>
             {showForm ? 'Annulla' : 'Aggiungi evento'}
           </button>
-          {showForm && (
+          {showForm && isDevMode && (
             <form onSubmit={handleAddEvent} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', background: '#333', borderRadius: '8px', padding: '10px' }}>
               <input name="title" type="text" placeholder="Titolo evento" value={form.title} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', fontSize: '1rem' }} />
               <input className="bb-date-input" name="date" type="date" value={form.date} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
@@ -503,8 +503,8 @@ function Eventi() {
                     {ev.image && <img src={ev.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '50px', marginTop: '4px', borderRadius: '6px' }} />}
                   </div>
                   <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-                    <button className="bb-add-btn" style={{ fontSize: '0.82rem', padding: '3px 10px', minWidth: '68px', borderRadius: '5px', background: '#ff6600', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => startEditEvent(ev)}>Modifica</button>
-                    <button className="bb-event-btn" style={{ width: 'auto', minWidth: '68px', fontSize: '0.82rem', padding: '3px 10px', borderRadius: '5px', background: '#ff4444', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => handleDeleteEvent(ev.id)}>Cancella</button>
+                    <button className="bb-add-btn" style={{ fontSize: '0.82rem', padding: '3px 10px', minWidth: '68px', borderRadius: '5px', background: '#ff6600', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => isDevMode && startEditEvent(ev)} disabled={!isDevMode}>Modifica</button>
+                    <button className="bb-event-btn" style={{ width: 'auto', minWidth: '68px', fontSize: '0.82rem', padding: '3px 10px', borderRadius: '5px', background: '#ff4444', color: '#fff', fontWeight: 700, letterSpacing: '0.5px', border: 'none', whiteSpace: 'nowrap' }} onClick={() => isDevMode && handleDeleteEvent(ev.id)} disabled={!isDevMode}>Cancella</button>
                   </div>
                 </li>
               );
@@ -516,7 +516,7 @@ function Eventi() {
             )}
           </ul>
 
-          {editEventId !== null && (
+          {editEventId !== null && isDevMode && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
               <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', minWidth: '320px', maxWidth: '90vw', boxShadow: '0 4px 24px #000a', position: 'relative' }}>
                 <button onClick={() => setEditEventId(null)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
