@@ -28,6 +28,11 @@ function safeReadLocalStorage(key) {
 }
 
 export function canCurrentUserAccessMeetings() {
+  // DEV bypass: se attivo, accesso sempre consentito
+  try {
+    if (localStorage.getItem('bb-dev-bypass-auth') === 'true') return true;
+  } catch {}
+
   const currentUserId = safeReadLocalStorage('bb-current-chat-user-id');
   if (!currentUserId) return false;
 

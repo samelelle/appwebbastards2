@@ -3,32 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 
-function canShowMeetingsButton() {
-  try {
-    const currentUserId = localStorage.getItem('bb-current-chat-user-id');
-    const rawRubrica = localStorage.getItem('bb-rubrica');
-    if (!currentUserId || !rawRubrica) return false;
-    const iscritti = JSON.parse(rawRubrica);
-    if (!Array.isArray(iscritti)) return false;
-    const currentMember = iscritti.find(iscritto => String(iscritto?.id || '') === String(currentUserId));
-    if (!currentMember) return false;
-    const cats = (Array.isArray(currentMember.categorie) ? currentMember.categorie : [currentMember.categoria || ''])
-      .map(c => String(c || '').trim().toLowerCase())
-      .filter(Boolean);
-    // Mostra solo se almeno una categoria è 'full' o 'viminale'
-    return cats.some(c => c === 'full' || c === 'viminale');
-  } catch {
-    return false;
-  }
-}
-
-function isDevBypassEnabled() {
-  try {
-    return localStorage.getItem('bb-dev-bypass-auth') === 'true';
-  } catch {
-    return false;
-  }
-}
+// ...existing code...
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
 import { useState } from 'react';
 
@@ -39,11 +14,11 @@ function MobileBottomNav() {
   const navRef = useRef(null);
   const [unreadEvents, setUnreadEvents] = useState(null);
   const [unreadChats, setUnreadChats] = useState(null);
-  const [canAccessMeetings, setCanAccessMeetings] = useState(() => isDevBypassEnabled() || canShowMeetingsButton());
+  const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings());
 
   useEffect(() => {
     const refreshAccess = () => {
-      setCanAccessMeetings(isDevBypassEnabled() || canShowMeetingsButton());
+      setCanAccessMeetings(canCurrentUserAccessMeetings());
     };
 
     refreshAccess();
