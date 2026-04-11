@@ -237,6 +237,7 @@ function Mappa() {
               durationMin: savedRoute?.durationMin ?? savedRoute?.duration ?? '',
             };
 
+            // Imposta anche gli stati necessari per abilitare i bottoni
             if (savedRoute?.start) {
               setStartPosition(savedRoute.start);
               setStartQuery(savedRoute.start.label || 'Partenza');
@@ -249,6 +250,12 @@ function Mappa() {
               setDestinationPosition(savedRoute.end);
               setDestinationQuery(savedRoute.end.label || 'Destinazione');
             }
+            // Imposta anche routeInfo e routePath
+            setRouteInfo({
+              distanceKm: normalizedRoute.distanceKm,
+              durationMin: normalizedRoute.durationMin,
+            });
+            setRoutePath(normalizedRoute.path);
 
             if (normalizedRoute.path.length > 0) {
               setShowSearchPanel(false);
