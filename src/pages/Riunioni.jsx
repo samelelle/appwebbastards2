@@ -1,5 +1,5 @@
   // Solo DEV può modificare
-  const isDev = localStorage.getItem('bb-dev-bypass-auth') === 'true';
+  // isDev ora viene passato come prop
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -7,7 +7,7 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addMeeting, deleteMeeting, getMeetings, updateMeeting } from '../lib/sharedDataApi';
 
-function Riunioni() {
+function Riunioni({ isDevMode }) {
   const isMobile = useIsMobile();
   const [riunioni, setRiunioni] = useState([]);
   const [syncError, setSyncError] = useState('');
@@ -276,7 +276,7 @@ function Riunioni() {
             </button>
           </div>
 
-          {isDev && (
+          {isDevMode && (
           <form className="riunioni-form" onSubmit={handleAddRiunione} style={{ background: '#222', borderRadius: '12px', padding: isMobile ? 'clamp(10px, 2.6vw, 12px)' : '18px', width: '100%', maxWidth: '100%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: isMobile ? '7px' : '10px', boxSizing: 'border-box', overflowX: 'hidden' }}>
             <label style={{ fontWeight: 600, fontSize: isMobile ? 'clamp(0.84rem, 2.8vw, 0.94rem)' : 'clamp(0.9rem, 3vw, 1rem)' }}>Data riunione:</label>
             <input className="bb-date-input" name="data" type="date" value={form.data} onChange={handleInput} style={{ padding: isMobile ? '6px' : '7px', borderRadius: '6px', fontSize: isMobile ? '1rem' : 'clamp(0.95rem, 3vw, 1rem)', width: '100%', boxSizing: 'border-box' }} />
@@ -355,8 +355,8 @@ function Riunioni() {
                           }}
                         >
                           <button onClick={() => setDetailMeeting(r)} style={{ background: '#5a4bff', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Dettaglio</button>
-                          {isDev && <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>}
-                          {isDev && <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>}
+                          {isDevMode && <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>}
+                          {isDevMode && <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>}
                         </div>
                       </>
                     )}
