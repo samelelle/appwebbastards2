@@ -831,26 +831,26 @@ function Mappa({ isDevMode = false }) {
             >
               {showSearchPanel ? 'Nascondi ricerca' : 'Cerca'}
             </button>
-
-            <button
-              type="button"
-              onClick={handleCreateEventFromRoute}
-              disabled={!hasRoute}
-              style={{
-                background: hasRoute ? '#ff6600' : '#555',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '10px 14px',
-                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                cursor: hasRoute ? 'pointer' : 'not-allowed',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Aggiungi evento
-            </button>
+            {isDevMode && hasRoute && (
+              <button
+                type="button"
+                onClick={handleCreateEventFromRoute}
+                style={{
+                  background: '#ff6600',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+                  fontWeight: 700,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Aggiungi evento
+              </button>
+            )}
           </div>
         </div>
 
@@ -1144,28 +1144,5 @@ function Mappa({ isDevMode = false }) {
             </form>
           </div>
         )}
-        {/* Bottone aggiungi evento solo per DEV e solo se c'è una route */}
-        {hasRoute && (
-          <div>
-            <button
-              type="button"
-              onClick={isDevMode ? handleCreateEventFromRoute : undefined}
-              disabled={!isDevMode}
-              style={{
-                background: isDevMode ? '#ff6600' : '#555',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '10px 14px',
-                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                cursor: isDevMode ? 'pointer' : 'not-allowed',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Aggiungi evento
-            </button>
-          </div>
-        )}
+        {/* Bottone aggiungi evento solo per DEV e solo se c'è una route - UNICO in alto */}
 
