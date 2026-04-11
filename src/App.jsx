@@ -58,34 +58,16 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
 }
 
 function App() {
-    const location = useLocation();
-    // Aggiorna la rubrica ogni volta che cambia schermata
-    useEffect(() => {
-      let active = true;
-      async function refreshAll() {
-        try {
-          // Rubrica
-          const { data: iscritti, error: errIscritti } = await supabase.from('iscritti').select('*');
-          if (!errIscritti && Array.isArray(iscritti) && active) {
-            localStorage.setItem('bb-rubrica', JSON.stringify(iscritti));
-          }
-          // Eventi
-          const { data: eventi, error: errEventi } = await supabase.from('eventi').select('*');
-          if (!errEventi && Array.isArray(eventi) && active) {
-            localStorage.setItem('bb-eventi', JSON.stringify(eventi));
-          }
-          // Riunioni
-          const { data: riunioni, error: errRiunioni } = await supabase.from('riunioni').select('*');
-          if (!errRiunioni && Array.isArray(riunioni) && active) {
-            localStorage.setItem('bb-riunioni', JSON.stringify(riunioni));
-          }
-        } catch {}
-      }
-      if (!devBypassEnabled && hasSupabaseConfig && supabase) {
-        refreshAll();
-      }
-      return () => { active = false; };
-    }, [location.pathname]);
+  return (
+    <Router>
+      <ScrollToTopOnRouteChange />
+      <AppRoutes />
+    </Router>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
   const [devBypassEnabled, setDevBypassEnabled] = useState(() => {
     if (!canUseDevBypass) return false;
     const stored = safeGetStorageItem(devBypassStorageKey);
@@ -95,6 +77,35 @@ function App() {
   });
   const [session, setSession] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(() => devBypassEnabled || !hasSupabaseConfig);
+
+  // Aggiorna la rubrica ogni volta che cambia schermata
+  useEffect(() => {
+    let active = true;
+    async function refreshAll() {
+      try {
+        // Rubrica
+        const { data: iscritti, error: errIscritti } = await supabase.from('iscritti').select('*');
+        if (!errIscritti && Array.isArray(iscritti) && active) {
+          localStorage.setItem('bb-rubrica', JSON.stringify(iscritti));
+        }
+        // Eventi
+        const { data: eventi, error: errEventi } = await supabase.from('eventi').select('*');
+        if (!errEventi && Array.isArray(eventi) && active) {
+          localStorage.setItem('bb-eventi', JSON.stringify(eventi));
+        }
+        // Riunioni
+        const { data: riunioni, error: errRiunioni } = await supabase.from('riunioni').select('*');
+        if (!errRiunioni && Array.isArray(riunioni) && active) {
+          localStorage.setItem('bb-riunioni', JSON.stringify(riunioni));
+        }
+      } catch {}
+    }
+    if (!devBypassEnabled && hasSupabaseConfig && supabase) {
+      refreshAll();
+    }
+    return () => { active = false; };
+  }, [location.pathname]);
+
 
   useEffect(() => {
     if (!canUseDevBypass) {
@@ -210,9 +221,7 @@ function App() {
   }
 
   return (
-    <Router>
-      <ScrollToTopOnRouteChange />
-      <Routes>
+    <Routes>
         <Route
           path="/login"
           element={(
@@ -280,7 +289,7 @@ function App() {
           )}
         />
       </Routes>
-    </Router>
+
   );
 }
 
