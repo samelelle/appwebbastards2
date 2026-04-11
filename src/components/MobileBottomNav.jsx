@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
@@ -15,10 +15,13 @@ function MobileBottomNav() {
   const [unreadEvents, setUnreadEvents] = useState(null);
   const [unreadChats, setUnreadChats] = useState(null);
   const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings());
+  // Forza re-render su cambio rubrica/identità
+  const [meetingsVersion, setMeetingsVersion] = useState(0);
 
   useEffect(() => {
     const refreshAccess = () => {
       setCanAccessMeetings(canCurrentUserAccessMeetings());
+      setMeetingsVersion(v => v + 1);
     };
 
     refreshAccess();
@@ -76,6 +79,7 @@ function MobileBottomNav() {
 
   if (!isMobile) return null;
 
+  // meetingsVersion forza il re-render quando cambia la rubrica/identità
   const items = [
     { label: 'Home', path: '/' },
     { label: 'Eventi', path: '/eventi' },

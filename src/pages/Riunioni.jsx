@@ -340,8 +340,12 @@ function Riunioni() {
                           }}
                         >
                           <button onClick={() => setDetailMeeting(r)} style={{ background: '#5a4bff', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Dettaglio</button>
-                          <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>
-                          <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>
+                          {isDevMode && (
+                            <>
+                              <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>
+                              <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>
+                            </>
+                          )}
                         </div>
                       </>
                     )}
