@@ -139,7 +139,8 @@ async function geocodeSuggestions(query) {
   }));
 }
 
-function Mappa() {
+import { useRef } from 'react';
+function Mappa({ isDevMode = false }) {
   const isMobile = useIsMobile();
   const mapRef = useRef(null);
   const leafletMapRef = useRef(null);
@@ -172,6 +173,8 @@ function Mappa() {
   const [showSearchPanel, setShowSearchPanel] = useState(true);
   const [showRoutePanel, setShowRoutePanel] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
+  // Stato per evitare doppia selezione punto consigliato
+  const lastSelectedRef = useRef({ start: null, stop: null, destination: null });
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationDistanceKm, setNavigationDistanceKm] = useState(null);
   const [followNavigation, setFollowNavigation] = useState(true);
@@ -542,6 +545,10 @@ function Mappa() {
   }
 
   async function selectLocation(type, suggestion) {
+    // Evita doppia selezione consecutiva dello stesso punto
+    const last = lastSelectedRef.current[type];
+    if (last && last.lat === suggestion.lat && last.lng === suggestion.lng) return;
+    lastSelectedRef.current[type] = { lat: suggestion.lat, lng: suggestion.lng };
     const point = { lat: suggestion.lat, lng: suggestion.lng, label: suggestion.label, kind: type };
     clearRoute();
     setStartSuggestions([]);
@@ -732,6 +739,7 @@ function Mappa() {
   }
 
   function handleCreateEventFromRoute() {
+    if (!isDevMode) return;
     if (!routeInfo || !startPosition || !destinationPosition) {
       setStatus('Crea prima il percorso.');
       return;
@@ -1082,14 +1090,13 @@ function Mappa() {
           )}
         </div>
 
-        {showEventModal && (
+        {isDevMode && showEventModal && (
           <div style={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: 'calc(var(--bb-mobile-bottom-nav-height, 0px) + env(safe-area-inset-bottom))', zIndex: 7500, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
             <form onSubmit={handleSaveRouteEvent} style={{ width: '100%', maxWidth: '480px', background: '#222', color: '#fff', borderRadius: '18px', padding: '18px', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
                 <h2 style={{ margin: 0, color: '#ff6600', fontSize: '1.15rem' }}>Crea evento</h2>
                 <button type="button" onClick={() => setShowEventModal(false)} style={{ background: 'none', border: 'none', color: '#ff6600', fontSize: '1.6rem', cursor: 'pointer' }}>&times;</button>
               </div>
-
               <input
                 type="text"
                 value={eventForm.title}
@@ -1119,7 +1126,6 @@ function Mappa() {
                   />
                 </div>
               </div>
-
               <textarea
                 value={eventForm.note}
                 onChange={e => setEventForm(prev => ({ ...prev, note: e.target.value }))}
@@ -1127,7 +1133,6 @@ function Mappa() {
                 rows={4}
                 style={{ width: '100%', padding: '10px', borderRadius: '10px', border: 'none', boxSizing: 'border-box', resize: 'vertical' }}
               />
-
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button type="button" className="bb-add-btn" style={{ flex: 1, marginLeft: 0, height: '40px', padding: '6px 10px', fontSize: '0.85rem' }} onClick={() => setShowEventModal(false)}>
                   Annulla
@@ -1139,12 +1144,23 @@ function Mappa() {
             </form>
           </div>
         )}
-      </div>
-
-      <MobileBottomNav />
-    </>
-  );
-}
-
-export default Mappa;
+            <button
+              type="button"
+              onClick={isDevMode ? handleCreateEventFromRoute : undefined}
+              disabled={!hasRoute || !isDevMode}
+              style={{
+                background: hasRoute && isDevMode ? '#ff6600' : '#555',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '10px 14px',
+                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+                fontWeight: 700,
+                fontSize: '0.84rem',
+                cursor: hasRoute && isDevMode ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Aggiungi evento
+            </button>
 

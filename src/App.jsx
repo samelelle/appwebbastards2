@@ -246,7 +246,7 @@ function App() {
           path="/mappa"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Mappa />
+              <Mappa isDevMode={devBypassEnabled} />
             </ProtectedRoute>
           )}
         />
