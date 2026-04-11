@@ -4,6 +4,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 
+function Foto() {
   const isMobile = useIsMobile();
   const [editingDescriptionId, setEditingDescriptionId] = useState(null);
   const [editingDescriptionText, setEditingDescriptionText] = useState('');
