@@ -1146,24 +1146,26 @@ function Mappa({ isDevMode = false }) {
         )}
         {/* Bottone aggiungi evento solo per DEV e solo se c'è una route */}
         {hasRoute && (
-          <button
-            type="button"
-            onClick={isDevMode ? handleCreateEventFromRoute : undefined}
-            disabled={!isDevMode}
-            style={{
-              background: isDevMode ? '#ff6600' : '#555',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '14px',
-              padding: '10px 14px',
-              boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
-              fontWeight: 700,
-              fontSize: '0.84rem',
-              cursor: isDevMode ? 'pointer' : 'not-allowed',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Aggiungi evento
-          </button>
+          <div>
+            <button
+              type="button"
+              onClick={isDevMode ? handleCreateEventFromRoute : undefined}
+              disabled={!isDevMode}
+              style={{
+                background: isDevMode ? '#ff6600' : '#555',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '10px 14px',
+                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+                fontWeight: 700,
+                fontSize: '0.84rem',
+                cursor: isDevMode ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Aggiungi evento
+            </button>
+          </div>
         )}
 
