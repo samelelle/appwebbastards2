@@ -112,15 +112,46 @@ function App() {
 
     let mounted = true;
 
+
+    async function syncRubricaAndUser(session) {
+      try {
+        const { data, error } = await supabase
+          .from('iscritti')
+          .select('*');
+        if (!error && Array.isArray(data)) {
+          localStorage.setItem('bb-rubrica', JSON.stringify(data));
+          // Se l'id dell'utente autenticato coincide con uno degli iscritti, usalo
+          if (session?.user?.id) {
+            const current = data.find(iscritto => String(iscritto.id) === String(session.user.id));
+            if (current && current.id) {
+              localStorage.setItem('bb-my-iscritto-id', String(current.id));
+              localStorage.setItem('bb-current-chat-user-id', String(current.id));
+              return;
+            }
+          }
+          // Altrimenti fallback su email se presente
+          if (session?.user?.email) {
+            const current = data.find(iscritto => (iscritto.email && iscritto.email.toLowerCase() === session.user.email.toLowerCase()));
+            if (current && current.id) {
+              localStorage.setItem('bb-my-iscritto-id', String(current.id));
+              localStorage.setItem('bb-current-chat-user-id', String(current.id));
+            }
+          }
+        }
+      } catch {}
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setSession(data.session ?? null);
       setIsAuthReady(true);
+      if (data.session) syncRubricaAndUser(data.session);
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession ?? null);
       setIsAuthReady(true);
+      if (nextSession) syncRubricaAndUser(nextSession);
     });
 
     return () => {
