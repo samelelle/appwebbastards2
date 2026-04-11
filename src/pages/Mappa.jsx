@@ -138,8 +138,6 @@ async function geocodeSuggestions(query) {
     label: item.display_name,
   }));
 }
-
-import { useRef } from 'react';
 function Mappa({ isDevMode = false }) {
   const isMobile = useIsMobile();
   const mapRef = useRef(null);
