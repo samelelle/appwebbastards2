@@ -459,6 +459,4 @@ import { addMeeting, deleteMeeting, getMeetings, updateMeeting } from '../lib/sh
       <MobileBottomNav />
     </div>
   );
-}
-
 export default Riunioni;
