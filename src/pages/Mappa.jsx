@@ -259,7 +259,7 @@ function Mappa() {
 
             if (normalizedRoute.path.length > 0) {
               setShowSearchPanel(false);
-              setShowRoutePanel(false); // Mostra subito i bottoni principali
+              setShowRoutePanel(true);
               setStatus('Percorso caricato dall evento.');
               window.requestAnimationFrame(() => {
                 void renderRoute(normalizedRoute);
