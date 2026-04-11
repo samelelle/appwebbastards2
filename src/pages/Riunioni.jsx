@@ -5,7 +5,7 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addMeeting, deleteMeeting, getMeetings, updateMeeting } from '../lib/sharedDataApi';
 
-function Riunioni() {
+function Riunioni({ isDevMode = false }) {
   const isMobile = useIsMobile();
   const [riunioni, setRiunioni] = useState([]);
   const [syncError, setSyncError] = useState('');

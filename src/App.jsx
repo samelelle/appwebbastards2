@@ -230,7 +230,7 @@ function App() {
           path="/riunioni"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              {(canCurrentUserAccessMeetings() || devBypassEnabled) ? <Riunioni /> : <Navigate to="/" replace />}
+              {(canCurrentUserAccessMeetings() || devBypassEnabled) ? <Riunioni isDevMode={devBypassEnabled} /> : <Navigate to="/" replace />}
             </ProtectedRoute>
           )}
         />
