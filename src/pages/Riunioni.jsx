@@ -5,7 +5,7 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addMeeting, deleteMeeting, getMeetings, updateMeeting } from '../lib/sharedDataApi';
 
-function Riunioni({ isDevMode = false }) {
+function Riunioni() {
   const isMobile = useIsMobile();
   const [riunioni, setRiunioni] = useState([]);
   const [syncError, setSyncError] = useState('');
@@ -340,12 +340,8 @@ function Riunioni({ isDevMode = false }) {
                           }}
                         >
                           <button onClick={() => setDetailMeeting(r)} style={{ background: '#5a4bff', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Dettaglio</button>
-                          {isDevMode && (
-                            <>
-                              <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>
-                              <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>
-                            </>
-                          )}
+                          <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>
+                          <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>
                         </div>
                       </>
                     )}
