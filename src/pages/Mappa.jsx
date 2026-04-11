@@ -1145,4 +1145,7 @@ function Mappa({ isDevMode = false }) {
           </div>
         )}
         {/* Bottone aggiungi evento solo per DEV e solo se c'è una route - UNICO in alto */}
+      </>
+  );
+}
 
