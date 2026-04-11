@@ -1144,23 +1144,25 @@ function Mappa({ isDevMode = false }) {
             </form>
           </div>
         )}
-            <button
-              type="button"
-              onClick={isDevMode ? handleCreateEventFromRoute : undefined}
-              disabled={!hasRoute || !isDevMode}
-              style={{
-                background: hasRoute && isDevMode ? '#ff6600' : '#555',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '10px 14px',
-                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                cursor: hasRoute && isDevMode ? 'pointer' : 'not-allowed',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Aggiungi evento
-            </button>
+        <div>
+          <button
+            type="button"
+            onClick={isDevMode ? handleCreateEventFromRoute : undefined}
+            disabled={!hasRoute || !isDevMode}
+            style={{
+              background: hasRoute && isDevMode ? '#ff6600' : '#555',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '14px',
+              padding: '10px 14px',
+              boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              cursor: hasRoute && isDevMode ? 'pointer' : 'not-allowed',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Aggiungi evento
+          </button>
+        </div>
 
