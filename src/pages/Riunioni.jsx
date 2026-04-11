@@ -1,14 +1,39 @@
   // Solo DEV può modificare
-  const isDev = localStorage.getItem('bb-dev-bypass-auth') === 'true';
-import { useEffect, useState } from 'react';
+  import { useEffect, useState } from 'react';
+
+  function getIsDev() {
+    // Puoi personalizzare qui la logica per riconoscere un DEV
+    if (localStorage.getItem('bb-dev-bypass-auth') === 'true') return true;
+    try {
+      const rubrica = JSON.parse(localStorage.getItem('bb-rubrica') || '[]');
+      const userId = localStorage.getItem('bb-user-id');
+      const user = rubrica.find(u => String(u.id) === String(userId));
+      return user?.ruolo === 'DEV';
+    } catch {
+      return false;
+    }
+  }
+// ...existing code...
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addMeeting, deleteMeeting, getMeetings, updateMeeting } from '../lib/sharedDataApi';
 
-function Riunioni() {
   const isMobile = useIsMobile();
+  const [isDev, setIsDev] = useState(getIsDev());
+    // Aggiorna il controllo DEV ogni volta che cambia la rubrica o il bypass
+    useEffect(() => {
+      function handleStorageChange() {
+        setIsDev(getIsDev());
+      }
+      window.addEventListener('storage', handleStorageChange);
+      // Aggiorna anche a ogni render (es. cambio schermata)
+      setIsDev(getIsDev());
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }, []);
   const [riunioni, setRiunioni] = useState([]);
   const [syncError, setSyncError] = useState('');
   const [searchText, setSearchText] = useState('');
