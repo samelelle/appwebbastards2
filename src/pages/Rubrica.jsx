@@ -384,6 +384,7 @@ function Rubrica({ isDevMode }) {
       setSaveError('Non puoi modificare l’iscritto di un’altra identita.');
       return;
     }
+    let nuovoId = null;
     if (editingIscrittoId) {
       const { error } = await supabase.from('iscritti').update({
         ruolo,
@@ -396,6 +397,7 @@ function Rubrica({ isDevMode }) {
         alert('Errore nel salvataggio: ' + error.message);
         return;
       }
+      nuovoId = editingIscrittoId;
       setEditingIscrittoId(null);
     } else {
       const { data, error } = await supabase.from('iscritti').insert([
@@ -411,8 +413,30 @@ function Rubrica({ isDevMode }) {
         alert('Errore nel salvataggio: ' + error.message);
         return;
       }
-      if (data && data[0]) setMyIscrittoId(data[0].id);
+      if (data && data[0]) {
+        setMyIscrittoId(data[0].id);
+        nuovoId = data[0].id;
+      }
     }
+    // Aggiorna subito la rubrica in localStorage e l'identità locale se il nuovo/aggiornato iscritto è almeno full o viminale
+    try {
+      const { data: iscrittiData, error: iscrittiError } = await supabase.from('iscritti').select('*');
+      if (!iscrittiError && Array.isArray(iscrittiData)) {
+        localStorage.setItem('bb-rubrica', JSON.stringify(iscrittiData));
+        if (nuovoId) {
+          const nuovoIscritto = iscrittiData.find(i => String(i.id) === String(nuovoId));
+          if (nuovoIscritto) {
+            const categorie = Array.isArray(nuovoIscritto.categorie)
+              ? nuovoIscritto.categorie.map(c => String(c).toLowerCase())
+              : [String(nuovoIscritto.categoria || '').toLowerCase()];
+            if (categorie.includes('full') || categorie.includes('viminale')) {
+              localStorage.setItem('bb-my-iscritto-id', String(nuovoIscritto.id));
+              localStorage.setItem('bb-current-chat-user-id', String(nuovoIscritto.id));
+            }
+          }
+        }
+      }
+    } catch {}
     setSaveError('');
     setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
     setShowAddModal(false);

@@ -236,8 +236,22 @@ function Foto() {
               >
                 &#8592; Torna ai gruppi
               </button>
-              <div style={{ fontWeight: 700, color: '#ffb366', fontSize: '1.1em', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 700, color: '#ffb366', fontSize: '1.1em', marginBottom: '8px' }}>
                 {gruppoSelezionato === '__no_group__' ? 'Senza gruppo' : gruppoSelezionato}
+                {gruppoSelezionato !== '__no_group__' && (
+                  <button
+                    type="button"
+                    style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '8px', padding: '4px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (window.confirm('Vuoi eliminare tutte le foto di questo gruppo?')) {
+                        setFotoItems(prev => prev.filter(item => item.gruppo !== gruppoSelezionato));
+                        setGruppoSelezionato('');
+                      }
+                    }}
+                  >
+                    Elimina gruppo
+                  </button>
+                )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {fotoItems
