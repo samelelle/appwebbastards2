@@ -28,7 +28,7 @@ const travelModeToProfile = {
 function formatDistance(meters) {
   if (!Number.isFinite(meters)) return '';
   if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
-  return `${Math.round(meters)} m`;
+	return `${Math.round(meters)} m`;
 }
 
 function formatDuration(seconds) {
