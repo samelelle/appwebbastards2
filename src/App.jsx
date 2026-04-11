@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import './carnivalee-font.css';
@@ -57,6 +58,34 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
 }
 
 function App() {
+    const location = useLocation();
+    // Aggiorna la rubrica ogni volta che cambia schermata
+    useEffect(() => {
+      let active = true;
+      async function refreshAll() {
+        try {
+          // Rubrica
+          const { data: iscritti, error: errIscritti } = await supabase.from('iscritti').select('*');
+          if (!errIscritti && Array.isArray(iscritti) && active) {
+            localStorage.setItem('bb-rubrica', JSON.stringify(iscritti));
+          }
+          // Eventi
+          const { data: eventi, error: errEventi } = await supabase.from('eventi').select('*');
+          if (!errEventi && Array.isArray(eventi) && active) {
+            localStorage.setItem('bb-eventi', JSON.stringify(eventi));
+          }
+          // Riunioni
+          const { data: riunioni, error: errRiunioni } = await supabase.from('riunioni').select('*');
+          if (!errRiunioni && Array.isArray(riunioni) && active) {
+            localStorage.setItem('bb-riunioni', JSON.stringify(riunioni));
+          }
+        } catch {}
+      }
+      if (!devBypassEnabled && hasSupabaseConfig && supabase) {
+        refreshAll();
+      }
+      return () => { active = false; };
+    }, [location.pathname]);
   const [devBypassEnabled, setDevBypassEnabled] = useState(() => {
     if (!canUseDevBypass) return false;
     const stored = safeGetStorageItem(devBypassStorageKey);
