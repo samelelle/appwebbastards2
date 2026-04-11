@@ -1,3 +1,5 @@
+  // Solo DEV può modificare
+  const isDev = localStorage.getItem('bb-dev-bypass-auth') === 'true';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -47,6 +49,17 @@ function Riunioni() {
 
   useEffect(() => {
     let mounted = true;
+
+    // Forza refresh rubrica locale per accesso riunioni
+    async function refreshRubrica() {
+      try {
+        const { data, error } = await import('../lib/supabaseClient').then(m => m.supabase.from('iscritti').select('*'));
+        if (!error && Array.isArray(data)) {
+          localStorage.setItem('bb-rubrica', JSON.stringify(data));
+        }
+      } catch {}
+    }
+    refreshRubrica();
 
     async function loadMeetings() {
       try {
@@ -263,6 +276,7 @@ function Riunioni() {
             </button>
           </div>
 
+          {isDev && (
           <form className="riunioni-form" onSubmit={handleAddRiunione} style={{ background: '#222', borderRadius: '12px', padding: isMobile ? 'clamp(10px, 2.6vw, 12px)' : '18px', width: '100%', maxWidth: '100%', minWidth: 0, display: 'flex', flexDirection: 'column', gap: isMobile ? '7px' : '10px', boxSizing: 'border-box', overflowX: 'hidden' }}>
             <label style={{ fontWeight: 600, fontSize: isMobile ? 'clamp(0.84rem, 2.8vw, 0.94rem)' : 'clamp(0.9rem, 3vw, 1rem)' }}>Data riunione:</label>
             <input className="bb-date-input" name="data" type="date" value={form.data} onChange={handleInput} style={{ padding: isMobile ? '6px' : '7px', borderRadius: '6px', fontSize: isMobile ? '1rem' : 'clamp(0.95rem, 3vw, 1rem)', width: '100%', boxSizing: 'border-box' }} />
@@ -272,6 +286,7 @@ function Riunioni() {
             <textarea name="ordine" value={form.ordine} onChange={handleInput} placeholder="Ordine del giorno" style={{ padding: isMobile ? '6px' : '7px', borderRadius: '6px', border: 'none', minHeight: isMobile ? '44px' : '48px', fontSize: isMobile ? '1rem' : 'clamp(0.95rem, 3vw, 1rem)', resize: 'vertical', width: '100%', boxSizing: 'border-box' }} />
             <button className="bb-event-btn" type="submit" style={{ marginTop: '8px', fontSize: isMobile ? 'clamp(0.84rem, 2.9vw, 0.92rem)' : 'clamp(0.92rem, 3vw, 1rem)', padding: isMobile ? '7px 0' : '8px 0', borderRadius: '6px', width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}>Aggiungi riunione</button>
           </form>
+          )}
 
           <div className="riunioni-list-area" style={{ width: '100%', textAlign: 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -340,8 +355,8 @@ function Riunioni() {
                           }}
                         >
                           <button onClick={() => setDetailMeeting(r)} style={{ background: '#5a4bff', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Dettaglio</button>
-                          <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>
-                          <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>
+                          {isDev && <button onClick={() => handleEdit(r)} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Modifica</button>}
+                          {isDev && <button onClick={() => handleDelete(r.id)} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '4px', padding: isMobile ? '2px 6px' : '1px 7px', fontSize: '0.85em', cursor: 'pointer' }}>Elimina</button>}
                         </div>
                       </>
                     )}
