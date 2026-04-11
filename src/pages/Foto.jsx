@@ -5,6 +5,7 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 
 function Foto() {
+    const [gruppoSelezionato, setGruppoSelezionato] = useState('');
   const isMobile = useIsMobile();
   const [editingDescriptionId, setEditingDescriptionId] = useState(null);
   const [editingDescriptionText, setEditingDescriptionText] = useState('');
@@ -163,97 +164,110 @@ function Foto() {
         </form>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {gruppi.length === 0 && fotoItems.length === 0 && <div style={{ color: '#bbb' }}>Nessuna foto inserita.</div>}
-          {gruppi.map(gr => (
-            <div key={gr} style={{ background: '#191919', borderRadius: '14px', padding: '10px 10px 2px 10px' }}>
-              <div style={{ fontWeight: 700, color: '#ffb366', fontSize: '1.1em', marginBottom: '8px' }}>{gr}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {fotoItems.filter(item => item.gruppo === gr).map(item => (
-                  <div key={item.id} style={{ background: '#222', borderRadius: '12px', padding: '10px' }}>
-                    <img src={item.image} alt="foto caricata" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '8px' }} />
-                    {editingDescriptionId === item.id ? (
-                      <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <textarea
-                          value={editingDescriptionText}
-                          onChange={e => setEditingDescriptionText(e.target.value)}
-                          placeholder="Modifica descrizione..."
-                          maxLength={180}
-                          style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '46px', resize: 'vertical', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box' }}
-                        />
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button type="button" className="bb-event-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem' }} onClick={() => handleSaveDescription(item.id)}>
-                            Salva descrizione
-                          </button>
-                          <button type="button" className="bb-add-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem', marginLeft: 0 }} onClick={() => { setEditingDescriptionId(null); setEditingDescriptionText(''); }}>
-                            Annulla
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      item.commento && <div style={{ marginTop: '8px', color: '#ffb366' }}>{item.commento}</div>
-                    )}
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                      <button type="button" className="bb-add-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', marginLeft: 0 }} onClick={() => handleStartEditDescription(item)}>
-                        Modifica descrizione
-                      </button>
-                      <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => handleDeleteDescription(item.id)}>
-                        Elimina descrizione
-                      </button>
-                      <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', background: '#ff4444' }} onClick={() => handleDeleteFoto(item.id)}>
-                        Elimina foto
-                      </button>
-                    </div>
-                    <div style={{ marginTop: '6px', fontSize: '0.8em', color: '#9a9a9a' }}>{new Date(item.createdAt).toLocaleString()}</div>
-                  </div>
-                ))}
+          {/* Se nessun gruppo selezionato, mostra lista gruppi */}
+          {!gruppoSelezionato && (
+            <>
+              {gruppi.length === 0 && fotoItems.length === 0 && <div style={{ color: '#bbb' }}>Nessuna foto inserita.</div>}
+              {gruppi.map(gr => (
+                <button
+                  key={gr}
+                  type="button"
+                  style={{
+                    background: '#191919',
+                    color: '#ffb366',
+                    fontWeight: 700,
+                    fontSize: '1.1em',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '18px 10px',
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setGruppoSelezionato(gr)}
+                >
+                  {gr}
+                </button>
+              ))}
+              {/* Gruppo "Senza gruppo" */}
+              {fotoItems.filter(item => !item.gruppo).length > 0 && (
+                <button
+                  type="button"
+                  style={{
+                    background: '#191919',
+                    color: '#ffb366',
+                    fontWeight: 700,
+                    fontSize: '1.1em',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '18px 10px',
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setGruppoSelezionato('__no_group__')}
+                >
+                  Senza gruppo
+                </button>
+              )}
+            </>
+          )}
+          {/* Se gruppo selezionato, mostra solo le foto di quel gruppo */}
+          {gruppoSelezionato && (
+            <>
+              <button
+                type="button"
+                style={{ marginBottom: '16px', background: '#222', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px 18px', fontWeight: 700, fontSize: '1em', cursor: 'pointer' }}
+                onClick={() => setGruppoSelezionato('')}
+              >
+                &#8592; Torna ai gruppi
+              </button>
+              <div style={{ fontWeight: 700, color: '#ffb366', fontSize: '1.1em', marginBottom: '8px' }}>
+                {gruppoSelezionato === '__no_group__' ? 'Senza gruppo' : gruppoSelezionato}
               </div>
-            </div>
-          ))}
-          {/* Foto senza gruppo */}
-          {fotoItems.filter(item => !item.gruppo).length > 0 && (
-            <div style={{ background: '#191919', borderRadius: '14px', padding: '10px 10px 2px 10px' }}>
-              <div style={{ fontWeight: 700, color: '#ffb366', fontSize: '1.1em', marginBottom: '8px' }}>Senza gruppo</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {fotoItems.filter(item => !item.gruppo).map(item => (
-                  <div key={item.id} style={{ background: '#222', borderRadius: '12px', padding: '10px' }}>
-                    <img src={item.image} alt="foto caricata" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '8px' }} />
-                    {editingDescriptionId === item.id ? (
-                      <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <textarea
-                          value={editingDescriptionText}
-                          onChange={e => setEditingDescriptionText(e.target.value)}
-                          placeholder="Modifica descrizione..."
-                          maxLength={180}
-                          style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '46px', resize: 'vertical', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box' }}
-                        />
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button type="button" className="bb-event-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem' }} onClick={() => handleSaveDescription(item.id)}>
-                            Salva descrizione
-                          </button>
-                          <button type="button" className="bb-add-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem', marginLeft: 0 }} onClick={() => { setEditingDescriptionId(null); setEditingDescriptionText(''); }}>
-                            Annulla
-                          </button>
+                {fotoItems
+                  .filter(item =>
+                    gruppoSelezionato === '__no_group__' ? !item.gruppo : item.gruppo === gruppoSelezionato
+                  )
+                  .map(item => (
+                    <div key={item.id} style={{ background: '#222', borderRadius: '12px', padding: '10px' }}>
+                      <img src={item.image} alt="foto caricata" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '8px' }} />
+                      {editingDescriptionId === item.id ? (
+                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <textarea
+                            value={editingDescriptionText}
+                            onChange={e => setEditingDescriptionText(e.target.value)}
+                            placeholder="Modifica descrizione..."
+                            maxLength={180}
+                            style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '46px', resize: 'vertical', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box' }}
+                          />
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button type="button" className="bb-event-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem' }} onClick={() => handleSaveDescription(item.id)}>
+                              Salva descrizione
+                            </button>
+                            <button type="button" className="bb-add-btn" style={{ flex: 1, padding: '6px 0', fontSize: '0.85rem', marginLeft: 0 }} onClick={() => { setEditingDescriptionId(null); setEditingDescriptionText(''); }}>
+                              Annulla
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        item.commento && <div style={{ marginTop: '8px', color: '#ffb366' }}>{item.commento}</div>
+                      )}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                        <button type="button" className="bb-add-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', marginLeft: 0 }} onClick={() => handleStartEditDescription(item)}>
+                          Modifica descrizione
+                        </button>
+                        <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => handleDeleteDescription(item.id)}>
+                          Elimina descrizione
+                        </button>
+                        <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', background: '#ff4444' }} onClick={() => handleDeleteFoto(item.id)}>
+                          Elimina foto
+                        </button>
                       </div>
-                    ) : (
-                      item.commento && <div style={{ marginTop: '8px', color: '#ffb366' }}>{item.commento}</div>
-                    )}
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                      <button type="button" className="bb-add-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', marginLeft: 0 }} onClick={() => handleStartEditDescription(item)}>
-                        Modifica descrizione
-                      </button>
-                      <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => handleDeleteDescription(item.id)}>
-                        Elimina descrizione
-                      </button>
-                      <button type="button" className="bb-event-btn" style={{ padding: '5px 10px', fontSize: '0.8rem', background: '#ff4444' }} onClick={() => handleDeleteFoto(item.id)}>
-                        Elimina foto
-                      </button>
+                      <div style={{ marginTop: '6px', fontSize: '0.8em', color: '#9a9a9a' }}>{new Date(item.createdAt).toLocaleString()}</div>
                     </div>
-                    <div style={{ marginTop: '6px', fontSize: '0.8em', color: '#9a9a9a' }}>{new Date(item.createdAt).toLocaleString()}</div>
-                  </div>
-                ))}
+                  ))}
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
