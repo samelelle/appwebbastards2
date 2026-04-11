@@ -5,7 +5,17 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 
 function Foto() {
-    const [gruppoSelezionato, setGruppoSelezionato] = useState('');
+  const [gruppoSelezionato, setGruppoSelezionato] = useState('');
+    // Quando seleziono un gruppo, aggiorno anche il campo gruppo del form
+    useEffect(() => {
+      if (gruppoSelezionato && gruppoSelezionato !== '__no_group__') {
+        setGruppo(gruppoSelezionato);
+        setNuovoGruppo('');
+      } else if (!gruppoSelezionato) {
+        setGruppo('');
+        setNuovoGruppo('');
+      }
+    }, [gruppoSelezionato]);
   const isMobile = useIsMobile();
   const [editingDescriptionId, setEditingDescriptionId] = useState(null);
   const [editingDescriptionText, setEditingDescriptionText] = useState('');
@@ -129,22 +139,28 @@ function Foto() {
 
       <div style={{ width: '100%', maxWidth: '700px', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px) calc(var(--bb-mobile-bottom-nav-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px)' : '0 16px 24px 16px', boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto', overflowX: 'hidden' }}>
         <form onSubmit={handleAddFoto} style={{ background: '#222', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
-                    <label style={{ fontWeight: 600 }}>Gruppo</label>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <select value={gruppo} onChange={e => setGruppo(e.target.value)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }}>
-                        <option value="">Seleziona gruppo...</option>
-                        {gruppi.map(g => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="text"
-                        value={nuovoGruppo}
-                        onChange={e => setNuovoGruppo(e.target.value)}
-                        placeholder="Nuovo gruppo"
-                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }}
-                      />
-                    </div>
+          <label style={{ fontWeight: 600 }}>Gruppo</label>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <select
+              value={gruppo}
+              onChange={e => setGruppo(e.target.value)}
+              style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }}
+              disabled={!!gruppoSelezionato && gruppoSelezionato !== '__no_group__'}
+            >
+              <option value="">Seleziona gruppo...</option>
+              {gruppi.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={nuovoGruppo}
+              onChange={e => setNuovoGruppo(e.target.value)}
+              placeholder="Nuovo gruppo"
+              style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }}
+              disabled={!!gruppoSelezionato && gruppoSelezionato !== '__no_group__'}
+            />
+          </div>
           <label style={{ fontWeight: 600 }}>Inserisci fotografia</label>
           <input type="file" accept="image/*" onChange={handleImageChange} style={{ color: '#fff' }} />
 
