@@ -88,6 +88,7 @@ function MobileBottomNav() {
   return (
     <div
       ref={navRef}
+      className="bb-mobile-bottom-nav"
       style={{
         position: 'fixed',
         left: 0,
