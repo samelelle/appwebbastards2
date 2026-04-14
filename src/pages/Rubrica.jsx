@@ -355,7 +355,6 @@ function Rubrica({ isDevMode }) {
   }
 
   async function handleDeleteIscritto(iscrittoId) {
-    if (myIscrittoId && String(iscrittoId) !== String(myIscrittoId)) return;
     const confirmed = window.confirm('Vuoi cancellare davvero questo iscritto?');
     if (!confirmed) return;
     await supabase.from('iscritti').delete().eq('id', iscrittoId);

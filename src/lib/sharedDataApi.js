@@ -142,7 +142,7 @@ export async function getEvents(defaultEvents = []) {
 
   const { data, error } = await supabase
     .from('events')
-    .select('id, title, start_at, end_at, note, image')
+    .select('id, title, start_at, end_at, note, image, mapRoute')
     .order('start_at', { ascending: true });
 
   if (error) throw error;
@@ -154,7 +154,7 @@ export async function getEvents(defaultEvents = []) {
     end: new Date(row.end_at),
     note: row.note || '',
     image: row.image || '',
-    mapRoute: getEventRoute(row.id),
+    mapRoute: row.mapRoute || getEventRoute(row.id),
   })).filter(ev => !deletedIds.has(ev.id));
 
   return remoteEvents;
@@ -189,8 +189,9 @@ export async function addEvent(eventPayload) {
       end_at: payload.end.toISOString(),
       note: payload.note,
       image: payload.image,
+      mapRoute: payload.mapRoute || null,
     })
-    .select('id, title, start_at, end_at, note, image')
+    .select('id, title, start_at, end_at, note, image, mapRoute')
     .single();
 
   if (error) throw error;
@@ -230,9 +231,10 @@ export async function updateEvent(eventId, eventPayload) {
       end_at: payload.end.toISOString(),
       note: payload.note,
       image: payload.image,
+      mapRoute: payload.mapRoute || null,
     })
     .eq('id', eventId)
-    .select('id, title, start_at, end_at, note, image')
+    .select('id, title, start_at, end_at, note, image, mapRoute')
     .single();
 
   if (error) throw error;

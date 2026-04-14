@@ -20,14 +20,6 @@ function Foto() {
   const [editingDescriptionId, setEditingDescriptionId] = useState(null);
   const [editingDescriptionText, setEditingDescriptionText] = useState('');
   const [fotoItems, setFotoItems] = useState(() => {
-    const saved = localStorage.getItem('bb-foto');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
     return [];
   });
   const [commento, setCommento] = useState('');
@@ -39,7 +31,17 @@ function Foto() {
   const gruppi = Array.from(new Set(fotoItems.map(f => f.gruppo).filter(Boolean)));
 
   useEffect(() => {
-    localStorage.setItem('bb-foto', JSON.stringify(fotoItems));
+    // Carica tutte le foto da Supabase all'avvio
+    fetchFoto();
+    // eslint-disable-next-line
+  }, []);
+
+  async function fetchFoto() {
+    const { data, error } = await supabase
+      .from('foto')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    if (!error) setFotoItems(data || []);
   }, [fotoItems]);
 
   useEffect(() => {
@@ -87,7 +89,8 @@ function Foto() {
       gruppo: gruppoFinale,
       createdAt: new Date().toISOString(),
     };
-    setFotoItems(prev => [nuovoItem, ...prev]);
+    const { error } = await supabase.from('foto').insert([nuovoItem]);
+    if (!error) fetchFoto();
     setImmagine('');
     setCommento('');
     setGruppo('');
@@ -100,13 +103,21 @@ function Foto() {
   }
 
   function handleSaveDescription(itemId) {
-    setFotoItems(prev => prev.map(item => (item.id === itemId ? { ...item, commento: editingDescriptionText.trim() } : item)));
+    const { error } = await supabase
+      .from('foto')
+      .update({ commento: editingDescriptionText.trim() })
+      .eq('id', itemId);
+    if (!error) fetchFoto();
     setEditingDescriptionId(null);
     setEditingDescriptionText('');
   }
 
   function handleDeleteDescription(itemId) {
-    setFotoItems(prev => prev.map(item => (item.id === itemId ? { ...item, commento: '' } : item)));
+    const { error } = await supabase
+      .from('foto')
+      .update({ commento: '' })
+      .eq('id', itemId);
+    if (!error) fetchFoto();
     if (editingDescriptionId === itemId) {
       setEditingDescriptionId(null);
       setEditingDescriptionText('');
@@ -117,7 +128,8 @@ function Foto() {
     const confirmed = window.confirm('Vuoi eliminare questa foto?');
     if (!confirmed) return;
 
-    setFotoItems(prev => prev.filter(item => item.id !== itemId));
+    await supabase.from('foto').delete().eq('id', itemId);
+    fetchFoto();
     if (editingDescriptionId === itemId) {
       setEditingDescriptionId(null);
       setEditingDescriptionText('');
