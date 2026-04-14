@@ -42,7 +42,7 @@ function Foto() {
       .select('*')
       .order('createdAt', { ascending: false });
     if (!error) setFotoItems(data || []);
-  }, [fotoItems]);
+  }
 
   useEffect(() => {
     const rootEl = document.getElementById('root');
