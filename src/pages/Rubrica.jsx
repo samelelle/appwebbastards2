@@ -341,7 +341,8 @@ function Rubrica({ isDevMode }) {
   }
 
   function startEditIscritto(iscritto) {
-    if (myIscrittoId && String(iscritto?.id || '') !== String(myIscrittoId)) return;
+    // Permetti la modifica di tutti gli iscritti solo se isDevMode è true
+    if (!isDevMode && myIscrittoId && String(iscritto?.id || '') !== String(myIscrittoId)) return;
     setEditingIscrittoId(iscritto.id);
     setForm({
       ruolo: iscritto.ruolo || '',
@@ -379,7 +380,7 @@ function Rubrica({ isDevMode }) {
       setSaveError('Puoi creare solo un iscritto su questo dispositivo.');
       return;
     }
-    if (editingIscrittoId && myIscrittoId && String(editingIscrittoId) !== String(myIscrittoId)) {
+    if (!isDevMode && editingIscrittoId && myIscrittoId && String(editingIscrittoId) !== String(myIscrittoId)) {
       setSaveError('Non puoi modificare l’iscritto di un’altra identita.');
       return;
     }
