@@ -134,41 +134,30 @@ function mergeMeetingsById(localMeetings, remoteMeetings) {
 }
 
 export async function getEvents(defaultEvents = []) {
-  const localEvents = loadLocalEvents(defaultEvents);
+
   const deletedIds = new Set(loadDeletedEventIds());
-
   if (!hasSupabaseConfig) {
-    const hasLocal = Boolean(localStorage.getItem(EVENTS_KEY));
-    if (!hasLocal && localEvents.length > 0) {
-      saveLocalEvents(localEvents);
-    }
-    return localEvents;
+    throw new Error('Supabase non configurato: impossibile sincronizzare eventi.');
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('events')
-      .select('id, title, start_at, end_at, note, image')
-      .order('start_at', { ascending: true });
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, title, start_at, end_at, note, image')
+    .order('start_at', { ascending: true });
 
-    if (error) throw error;
+  if (error) throw error;
 
-    const remoteEvents = (data || []).map(row => ({
-      id: row.id,
-      title: row.title,
-      start: new Date(row.start_at),
-      end: new Date(row.end_at),
-      note: row.note || '',
-      image: row.image || '',
-      mapRoute: getEventRoute(row.id),
-    })).filter(ev => !deletedIds.has(ev.id));
+  const remoteEvents = (data || []).map(row => ({
+    id: row.id,
+    title: row.title,
+    start: new Date(row.start_at),
+    end: new Date(row.end_at),
+    note: row.note || '',
+    image: row.image || '',
+    mapRoute: getEventRoute(row.id),
+  })).filter(ev => !deletedIds.has(ev.id));
 
-    const merged = mergeEventsById(localEvents, remoteEvents).filter(ev => !deletedIds.has(ev.id));
-    if (merged.length > 0) saveLocalEvents(merged);
-    return merged;
-  } catch {
-    return localEvents;
-  }
+  return remoteEvents;
 }
 
 export async function addEvent(eventPayload) {
@@ -182,58 +171,42 @@ export async function addEvent(eventPayload) {
     mapRoute: eventPayload.mapRoute || null,
   };
 
+
   const created = ensureId(payload);
-  const existingLocal = loadLocalEvents();
-  const updatedLocal = [...existingLocal, created];
-  saveLocalEvents(updatedLocal);
   setEventRoute(created.id, created.mapRoute);
   notifyBadgeDataChanged('events');
 
   if (!hasSupabaseConfig) {
-    return created;
+    throw new Error('Supabase non configurato: impossibile aggiungere eventi.');
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('events')
-      .insert({
-        id: payload.id,
-        title: payload.title,
-        start_at: payload.start.toISOString(),
-        end_at: payload.end.toISOString(),
-        note: payload.note,
-        image: payload.image,
-      })
-      .select('id, title, start_at, end_at, note, image')
-      .single();
+  const { data, error } = await supabase
+    .from('events')
+    .insert({
+      id: payload.id,
+      title: payload.title,
+      start_at: payload.start.toISOString(),
+      end_at: payload.end.toISOString(),
+      note: payload.note,
+      image: payload.image,
+    })
+    .select('id, title, start_at, end_at, note, image')
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    const merged = updatedLocal.map(ev => (ev.id === created.id ? {
-      id: data.id,
-      title: data.title,
-      start: new Date(data.start_at),
-      end: new Date(data.end_at),
-      note: data.note || '',
-      image: data.image || '',
-      mapRoute: created.mapRoute || getEventRoute(created.id) || null,
-    } : ev));
-    saveLocalEvents(merged);
-    setEventRoute(created.id, created.mapRoute);
-    notifyBadgeDataChanged('events');
+  setEventRoute(created.id, created.mapRoute);
+  notifyBadgeDataChanged('events');
 
-    return {
-      id: data.id,
-      title: data.title,
-      start: new Date(data.start_at),
-      end: new Date(data.end_at),
-      note: data.note || '',
-      image: data.image || '',
-      mapRoute: created.mapRoute || getEventRoute(created.id) || null,
-    };
-  } catch {
-    return created;
-  }
+  return {
+    id: data.id,
+    title: data.title,
+    start: new Date(data.start_at),
+    end: new Date(data.end_at),
+    note: data.note || '',
+    image: data.image || '',
+    mapRoute: created.mapRoute || getEventRoute(created.id) || null,
+  };
 }
 
 export async function updateEvent(eventId, eventPayload) {
@@ -246,45 +219,32 @@ export async function updateEvent(eventId, eventPayload) {
   };
 
   if (!hasSupabaseConfig) {
-    const existing = loadLocalEvents();
-    const updated = existing.map(ev => (ev.id === eventId ? { ...ev, ...payload, mapRoute: ev.mapRoute || getEventRoute(ev.id) || null } : ev));
-    saveLocalEvents(updated);
-    notifyBadgeDataChanged('events');
-    return updated.find(ev => ev.id === eventId) || null;
+    throw new Error('Supabase non configurato: impossibile aggiornare eventi.');
   }
 
-  const existing = loadLocalEvents();
-  const locallyUpdated = existing.map(ev => (ev.id === eventId ? { ...ev, ...payload, mapRoute: ev.mapRoute || getEventRoute(ev.id) || null } : ev));
-  saveLocalEvents(locallyUpdated);
-  notifyBadgeDataChanged('events');
+  const { data, error } = await supabase
+    .from('events')
+    .update({
+      title: payload.title,
+      start_at: payload.start.toISOString(),
+      end_at: payload.end.toISOString(),
+      note: payload.note,
+      image: payload.image,
+    })
+    .eq('id', eventId)
+    .select('id, title, start_at, end_at, note, image')
+    .single();
 
-  try {
-    const { data, error } = await supabase
-      .from('events')
-      .update({
-        title: payload.title,
-        start_at: payload.start.toISOString(),
-        end_at: payload.end.toISOString(),
-        note: payload.note,
-        image: payload.image,
-      })
-      .eq('id', eventId)
-      .select('id, title, start_at, end_at, note, image')
-      .single();
+  if (error) throw error;
 
-    if (error) throw error;
-
-    return {
-      id: data.id,
-      title: data.title,
-      start: new Date(data.start_at),
-      end: new Date(data.end_at),
-      note: data.note || '',
-      image: data.image || '',
-    };
-  } catch {
-    return locallyUpdated.find(ev => ev.id === eventId) || null;
-  }
+  return {
+    id: data.id,
+    title: data.title,
+    start: new Date(data.start_at),
+    end: new Date(data.end_at),
+    note: data.note || '',
+    image: data.image || '',
+  };
 }
 
 export async function deleteEvent(eventId) {
@@ -292,51 +252,31 @@ export async function deleteEvent(eventId) {
   setEventRoute(eventId, null);
 
   if (!hasSupabaseConfig) {
-    const existing = loadLocalEvents();
-    const updated = existing.filter(ev => ev.id !== eventId);
-    saveLocalEvents(updated);
-    notifyBadgeDataChanged('events');
-    return;
+    throw new Error('Supabase non configurato: impossibile eliminare eventi.');
   }
 
-  try {
-    const { error } = await supabase
-      .from('events')
-      .delete()
-      .eq('id', eventId);
+  const { error } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventId);
 
-    if (error) throw error;
-  } catch {
-    const existing = loadLocalEvents();
-    const updated = existing.filter(ev => ev.id !== eventId);
-    saveLocalEvents(updated);
-    notifyBadgeDataChanged('events');
-  }
+  if (error) throw error;
 }
 
 export async function getMeetings() {
-  const localMeetings = loadLocalMeetings();
-
   if (!hasSupabaseConfig) {
-    return localMeetings;
+    throw new Error('Supabase non configurato: impossibile sincronizzare riunioni.');
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('meetings')
-      .select('id, data, ora, ordine')
-      .order('data', { ascending: true })
-      .order('ora', { ascending: true });
+  const { data, error } = await supabase
+    .from('meetings')
+    .select('id, data, ora, ordine')
+    .order('data', { ascending: true })
+    .order('ora', { ascending: true });
 
-    if (error) throw error;
+  if (error) throw error;
 
-    const remoteMeetings = (data || []).map(ensureId);
-    const merged = mergeMeetingsById(localMeetings, remoteMeetings);
-    if (merged.length > 0) saveLocalMeetings(merged);
-    return merged;
-  } catch {
-    return localMeetings;
-  }
+  return (data || []).map(ensureId);
 }
 
 export async function addMeeting(meetingPayload) {
@@ -347,31 +287,22 @@ export async function addMeeting(meetingPayload) {
     ordine: meetingPayload.ordine,
   };
 
+
   const created = ensureId(payload);
-  const existingLocal = loadLocalMeetings();
-  const updatedLocal = [...existingLocal, created];
-  saveLocalMeetings(updatedLocal);
 
   if (!hasSupabaseConfig) {
-    return created;
+    throw new Error('Supabase non configurato: impossibile aggiungere riunioni.');
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('meetings')
-      .insert(payload)
-      .select('id, data, ora, ordine')
-      .single();
+  const { data, error } = await supabase
+    .from('meetings')
+    .insert(payload)
+    .select('id, data, ora, ordine')
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    const merged = updatedLocal.map(item => (item.id === created.id ? ensureId(data) : item));
-    saveLocalMeetings(merged);
-
-    return ensureId(data);
-  } catch {
-    return created;
-  }
+  return ensureId(data);
 }
 
 export async function updateMeeting(meetingId, meetingPayload) {
@@ -382,50 +313,30 @@ export async function updateMeeting(meetingId, meetingPayload) {
   };
 
   if (!hasSupabaseConfig) {
-    const existing = loadLocalMeetings();
-    const updated = existing.map(item => (item.id === meetingId ? { ...item, ...payload } : item));
-    saveLocalMeetings(updated);
-    return updated.find(item => item.id === meetingId) || null;
+    throw new Error('Supabase non configurato: impossibile aggiornare riunioni.');
   }
 
-  const existing = loadLocalMeetings();
-  const locallyUpdated = existing.map(item => (item.id === meetingId ? { ...item, ...payload } : item));
-  saveLocalMeetings(locallyUpdated);
+  const { data, error } = await supabase
+    .from('meetings')
+    .update(payload)
+    .eq('id', meetingId)
+    .select('id, data, ora, ordine')
+    .single();
 
-  try {
-    const { data, error } = await supabase
-      .from('meetings')
-      .update(payload)
-      .eq('id', meetingId)
-      .select('id, data, ora, ordine')
-      .single();
+  if (error) throw error;
 
-    if (error) throw error;
-
-    return ensureId(data);
-  } catch {
-    return locallyUpdated.find(item => item.id === meetingId) || null;
-  }
+  return ensureId(data);
 }
 
 export async function deleteMeeting(meetingId) {
   if (!hasSupabaseConfig) {
-    const existing = loadLocalMeetings();
-    const updated = existing.filter(item => item.id !== meetingId);
-    saveLocalMeetings(updated);
-    return;
+    throw new Error('Supabase non configurato: impossibile eliminare riunioni.');
   }
 
-  try {
-    const { error } = await supabase
-      .from('meetings')
-      .delete()
-      .eq('id', meetingId);
+  const { error } = await supabase
+    .from('meetings')
+    .delete()
+    .eq('id', meetingId);
 
-    if (error) throw error;
-  } catch {
-    const existing = loadLocalMeetings();
-    const updated = existing.filter(item => item.id !== meetingId);
-    saveLocalMeetings(updated);
-  }
+  if (error) throw error;
 }
