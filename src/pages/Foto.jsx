@@ -102,7 +102,7 @@ function Foto() {
     setEditingDescriptionText(item.commento || '');
   }
 
-  function handleSaveDescription(itemId) {
+  async function handleSaveDescription(itemId) {
     const { error } = await supabase
       .from('foto')
       .update({ commento: editingDescriptionText.trim() })
@@ -112,7 +112,7 @@ function Foto() {
     setEditingDescriptionText('');
   }
 
-  function handleDeleteDescription(itemId) {
+async function handleDeleteDescription(itemId) {
     const { error } = await supabase
       .from('foto')
       .update({ commento: '' })
@@ -124,7 +124,7 @@ function Foto() {
     }
   }
 
-  function handleDeleteFoto(itemId) {
+async function handleDeleteFoto(itemId) {
     const confirmed = window.confirm('Vuoi eliminare questa foto?');
     if (!confirmed) return;
 
