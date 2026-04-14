@@ -75,7 +75,7 @@ function Foto() {
     reader.readAsDataURL(file);
   }
 
-  function handleAddFoto(e) {
+  async function handleAddFoto(e) {
     e.preventDefault();
     if (!immagine) return;
     let gruppoFinale = gruppo;
