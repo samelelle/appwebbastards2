@@ -26,6 +26,7 @@ function Foto() {
   const [immagine, setImmagine] = useState('');
   const [gruppo, setGruppo] = useState('');
   const [nuovoGruppo, setNuovoGruppo] = useState('');
+  const [erroreSalvataggio, setErroreSalvataggio] = useState('');
 
   // Gruppi unici estratti dalle foto
   const gruppi = Array.from(new Set(fotoItems.map(f => f.gruppo).filter(Boolean)));
@@ -77,6 +78,7 @@ function Foto() {
 
   async function handleAddFoto(e) {
     e.preventDefault();
+    setErroreSalvataggio('');
     if (!immagine) return;
     let gruppoFinale = gruppo;
     if (nuovoGruppo.trim()) {
@@ -87,10 +89,14 @@ function Foto() {
       image: immagine,
       commento: commento.trim(),
       gruppo: gruppoFinale,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(), // chiave corretta
     };
     const { error } = await supabase.from('foto').insert([nuovoItem]);
-    if (!error) fetchFoto();
+    if (error) {
+      setErroreSalvataggio(error.message || 'Errore durante il salvataggio.');
+      return;
+    }
+    fetchFoto();
     setImmagine('');
     setCommento('');
     setGruppo('');
@@ -151,6 +157,9 @@ async function handleDeleteFoto(itemId) {
 
       <div style={{ width: '100%', maxWidth: '700px', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px) calc(var(--bb-mobile-bottom-nav-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px)' : '0 16px 24px 16px', boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto', overflowX: 'hidden' }}>
         <form onSubmit={handleAddFoto} style={{ background: '#222', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
+          {erroreSalvataggio && (
+            <div style={{ color: '#ff4444', fontWeight: 600, marginBottom: '8px' }}>{erroreSalvataggio}</div>
+          )}
           <label style={{ fontWeight: 600 }}>Gruppo</label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             <select
