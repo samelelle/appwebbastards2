@@ -31,6 +31,8 @@ function Rubrica({ isDevMode }) {
   const [saveError, setSaveError] = useState('');
   const [editingIscrittoId, setEditingIscrittoId] = useState(null);
   const [chatNotice, setChatNotice] = useState('');
+  // Tiene traccia dell'ultimo messaggio visto per categoria
+  const lastSeenMsgIdRef = useRef({});
   const [chatPermissionError, setChatPermissionError] = useState('');
   const [openedChatImage, setOpenedChatImage] = useState('');
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
@@ -501,6 +503,12 @@ function Rubrica({ isDevMode }) {
     if (!initializedMessagesRef.current) {
       knownMessageIdsRef.current = nextIds;
       initializedMessagesRef.current = true;
+      // Aggiorna i lastSeenMsgIdRef per tutte le categorie
+      for (const [categoria, messages] of Object.entries(chatByCategoria)) {
+        if (Array.isArray(messages) && messages.length > 0) {
+          lastSeenMsgIdRef.current[categoria] = messages[messages.length - 1].id;
+        }
+      }
       return;
     }
 
@@ -508,22 +516,31 @@ function Rubrica({ isDevMode }) {
     knownMessageIdsRef.current = nextIds;
     if (!incoming.length) return;
 
+    // Mostra la notifica solo se il nuovo messaggio non è stato ancora visto
     const externalIncoming = incoming.filter(message => !isOwnMessage(message));
     if (!externalIncoming.length) return;
 
     const latest = externalIncoming[externalIncoming.length - 1];
-    const author = authorLabel(latest);
-    const categoryLabel = latest.categoria ? ` in ${latest.categoria}` : '';
-    const preview = latest.text?.trim() ? latest.text.trim().slice(0, 60) : 'Nuovo messaggio';
-    const noticeText = `Nuovo messaggio${categoryLabel} da ${author}`;
-
-    setChatNotice(noticeText);
-    window.setTimeout(() => setChatNotice(''), 4500);
-
-    if (notificationsAllowed) {
-      notifyUser(noticeText, preview);
+    const categoria = latest.categoria;
+    // Se la categoria è aperta e l'utente è sulla pagina giusta, aggiorna il lastSeenMsgIdRef
+    if (categoriaAperta === categoria && document.hasFocus()) {
+      lastSeenMsgIdRef.current[categoria] = latest.id;
+      return; // Non mostrare la notifica se l'utente sta già guardando
     }
-  }, [authorLabel, chatByCategoria, isOwnMessage, notificationsAllowed]);
+    // Mostra la notifica solo se non è già stata vista
+    if (lastSeenMsgIdRef.current[categoria] !== latest.id) {
+      const author = authorLabel(latest);
+      const categoryLabel = latest.categoria ? ` in ${latest.categoria}` : '';
+      const preview = latest.text?.trim() ? latest.text.trim().slice(0, 60) : 'Nuovo messaggio';
+      const noticeText = `Nuovo messaggio${categoryLabel} da ${author}`;
+      setChatNotice(noticeText);
+      window.setTimeout(() => setChatNotice(''), 4500);
+      lastSeenMsgIdRef.current[categoria] = latest.id;
+      if (notificationsAllowed) {
+        notifyUser(noticeText, preview);
+      }
+    }
+  }, [authorLabel, chatByCategoria, isOwnMessage, notificationsAllowed, categoriaAperta]);
 
   useEffect(() => {
     if (!showAddModal) return undefined;
