@@ -7,4 +7,6 @@ export async function initOneSignal() {
     notifyButton: { enable: true },
     allowLocalhostAsSecureOrigin: true,
   });
+  // Mostra il prompt per la richiesta notifiche
+  OneSignal.showSlidedownPrompt();
 }
