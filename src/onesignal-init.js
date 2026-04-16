@@ -9,6 +9,8 @@ export async function initOneSignal() {
     serviceWorkerPath: '/OneSignalSDKWorker.js',
     serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
   });
-  // Mostra il prompt per la richiesta notifiche
-  OneSignal.showSlidedownPrompt();
+  // Mostra il prompt per la richiesta notifiche solo se la funzione esiste
+  if (typeof OneSignal.showSlidedownPrompt === 'function') {
+    OneSignal.showSlidedownPrompt();
+  }
 }
