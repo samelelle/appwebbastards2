@@ -9,6 +9,76 @@ import { markChatSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
 
 function Rubrica({ isDevMode }) {
+        // Stato per modifica messaggio
+        const [editingMsgId, setEditingMsgId] = useState(null);
+        const [editingMsgText, setEditingMsgText] = useState('');
+      // Azioni selezione multipla
+      function canEditOrDeleteForAll() {
+        if (!selectedMessages.length) return false;
+        // Solo se tutti i selezionati sono miei
+        return selectedMessages.every(selId => {
+          const msg = messaggiCategoriaAperta.find(m => m.id === selId);
+          return msg && isOwnMessage(msg);
+        });
+      }
+
+      function canReply() {
+        return selectedMessages.length === 1;
+      }
+
+      function handleReplySelected() {
+        if (selectedMessages.length !== 1) return;
+        const msg = messaggiCategoriaAperta.find(m => m.id === selectedMessages[0]);
+        if (msg) setReplyTo(msg);
+        exitSelectMode();
+      }
+
+      function handleEditSelected() {
+        if (selectedMessages.length !== 1) return exitSelectMode();
+        const msg = messaggiCategoriaAperta.find(m => m.id === selectedMessages[0]);
+        if (!msg || !isOwnMessage(msg)) return exitSelectMode();
+        setEditingMsgId(msg.id);
+        setEditingMsgText(msg.text || '');
+        exitSelectMode();
+      }
+
+      async function handleSaveEditMsg() {
+        if (!editingMsgId) return;
+        const newText = editingMsgText.trim();
+        if (!newText) return;
+        await supabase.from('chat').update({ message: newText }).eq('id', editingMsgId);
+        setEditingMsgId(null);
+        setEditingMsgText('');
+      }
+
+      function handleCancelEditMsg() {
+        setEditingMsgId(null);
+        setEditingMsgText('');
+      }
+
+      async function handleDeleteForAll() {
+        if (!selectedMessages.length) return exitSelectMode();
+        if (!window.confirm('Vuoi eliminare questi messaggi per tutti?')) return;
+        // Elimina da supabase (delete by id)
+        await supabase.from('chat').delete().in('id', selectedMessages);
+        exitSelectMode();
+      }
+
+      async function handleDeleteForMe() {
+        if (!selectedMessages.length) return exitSelectMode();
+        // Blacklist locale: salva in localStorage gli id dei messaggi nascosti solo per me
+        const key = 'bb-chat-hide-msg-ids';
+        let hidden = [];
+        try {
+          hidden = JSON.parse(localStorage.getItem(key) || '[]');
+          if (!Array.isArray(hidden)) hidden = [];
+        } catch { hidden = []; }
+        const newHidden = Array.from(new Set([...hidden, ...selectedMessages]));
+        localStorage.setItem(key, JSON.stringify(newHidden));
+        exitSelectMode();
+        // Forza refresh locale
+        setChatByCategoria(prev => ({ ...prev }));
+      }
     const [searchIscritto, setSearchIscritto] = useState('');
   const isMobile = useIsMobile();
   const categorieDisponibili = ['Full', 'Prospect', 'Viminale'];
@@ -28,6 +98,9 @@ function Rubrica({ isDevMode }) {
   );
   const currentUserId = myIscrittoId || '';
   const [replyTo, setReplyTo] = useState(null);
+  // Stato per selezione multipla messaggi
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [selectMode, setSelectMode] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [editingIscrittoId, setEditingIscrittoId] = useState(null);
   const [chatNotice, setChatNotice] = useState('');
@@ -60,6 +133,25 @@ function Rubrica({ isDevMode }) {
   function openChatImage(imageData) {
     if (!imageData) return;
     setOpenedChatImage(imageData);
+  }
+
+  // Gestione selezione multipla messaggi
+  function handleLongPressMessage(msgId) {
+    setSelectMode(true);
+    setSelectedMessages([msgId]);
+  }
+
+  function handleToggleSelectMessage(msgId) {
+    setSelectedMessages(prev =>
+      prev.includes(msgId)
+        ? prev.filter(id => id !== msgId)
+        : [...prev, msgId]
+    );
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedMessages([]);
   }
 
   async function fileToDataUrl(file) {
@@ -472,8 +564,16 @@ function Rubrica({ isDevMode }) {
       ? getCategorieArray(identitaCorrente).includes(categoriaAperta)
       : false);
 
+  // Applica blacklist locale per "elimina per me"
+  const hiddenMsgIds = useMemo(() => {
+    try {
+      const arr = JSON.parse(localStorage.getItem('bb-chat-hide-msg-ids') || '[]');
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  }, [chatByCategoria]);
+
   const messaggiCategoriaAperta = categoriaAperta
-    ? (chatByCategoria[categoriaAperta] || [])
+    ? (chatByCategoria[categoriaAperta] || []).filter(msg => !hiddenMsgIds.includes(msg.id))
     : [];
   const isOverlayOpen = Boolean(categoriaAperta || showMembersModal || showIdentityModal || showAddModal);
   const categoryMessageCounts = categorieDisponibili.reduce((accumulator, categoria) => {
@@ -717,48 +817,128 @@ function Rubrica({ isDevMode }) {
                 )}
                 {messaggiCategoriaAperta.map((msg, idx) => {
                   const isOwn = isOwnMessage(msg);
-                  return (
-                  <div key={`${msg.timestamp}-${idx}`} style={{ alignSelf: isOwn ? 'flex-end' : 'flex-start', maxWidth: '84%', background: isOwn ? '#1f7a3f' : '#2a2a2a', borderRadius: '12px', padding: '7px 9px' }}>
-                    {!isOwn && (
-                      <div style={{ fontSize: '0.76em', color: '#ffb366', marginBottom: '2px' }}>{authorLabel(msg)}</div>
-                    )}
-                    {msg.replyToAuthor && (
-                      <div style={{ fontSize: '0.78em', color: '#aaa', borderLeft: '2px solid #555', paddingLeft: '6px', marginBottom: '4px' }}>
-                        Risposta a {msg.replyToAuthor}: {msg.replyToText}
-                      </div>
-                    )}
-                    {msg.text && <div style={{ fontSize: '0.95em' }}>{msg.text}</div>}
-                    {msg.imageData && (
-                      <button
-                        type="button"
-                        onClick={() => openChatImage(msg.imageData)}
-                        style={{
-                          marginTop: msg.text ? '6px' : 0,
-                          padding: 0,
-                          border: 'none',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          display: 'block',
-                          width: '100%',
-                          touchAction: 'manipulation',
-                        }}
-                        aria-label="Apri foto inviata in chat"
-                      >
-                        <img
-                          src={msg.imageData}
-                          alt="Foto inviata in chat"
-                          style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.18)', display: 'block', touchAction: 'manipulation' }}
+                  const isSelected = selectedMessages.includes(msg.id);
+                  let pressTimer = null;
+                  // Modalità modifica messaggio
+                  if (editingMsgId === msg.id) {
+                    return (
+                      <div key={`${msg.timestamp}-${idx}`} style={{ alignSelf: isOwn ? 'flex-end' : 'flex-start', maxWidth: '84%', background: '#ffb366', borderRadius: '12px', padding: '7px 9px', border: '2px solid #fff', position: 'relative' }}>
+                        <textarea
+                          value={editingMsgText}
+                          onChange={e => setEditingMsgText(e.target.value)}
+                          style={{ width: '100%', minHeight: '48px', borderRadius: '8px', border: '1px solid #aaa', fontSize: '0.95em', padding: '6px' }}
                         />
-                        <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>Tocca la foto per aprirla</div>
-                      </button>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                          <button type="button" onClick={handleSaveEditMsg} style={{ background: '#14602f', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Salva</button>
+                          <button type="button" onClick={handleCancelEditMsg} style={{ background: '#444', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Annulla</button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      key={`${msg.timestamp}-${idx}`}
+                      style={{
+                        alignSelf: isOwn ? 'flex-end' : 'flex-start',
+                        maxWidth: '84%',
+                        background: isSelected ? '#ff6600' : (isOwn ? '#1f7a3f' : '#2a2a2a'),
+                        borderRadius: '12px',
+                        padding: '7px 9px',
+                        border: isSelected ? '2px solid #fff' : undefined,
+                        opacity: selectMode && !isSelected ? 0.6 : 1,
+                        position: 'relative',
+                        cursor: selectMode ? 'pointer' : 'default',
+                        userSelect: 'none',
+                      }}
+                      onPointerDown={e => {
+                        if (selectMode) {
+                          handleToggleSelectMessage(msg.id);
+                          return;
+                        }
+                        pressTimer = setTimeout(() => handleLongPressMessage(msg.id), 420);
+                      }}
+                      onPointerUp={e => {
+                        if (pressTimer) clearTimeout(pressTimer);
+                        if (selectMode) return;
+                        // click normale: nessuna selezione, comportamento normale
+                      }}
+                      onPointerLeave={e => {
+                        if (pressTimer) clearTimeout(pressTimer);
+                      }}
+                      onClick={e => {
+                        if (selectMode) {
+                          handleToggleSelectMessage(msg.id);
+                        }
+                      }}
+                    >
+                      {selectMode && (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectMessage(msg.id)}
+                          style={{ position: 'absolute', left: '-28px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}
+                        />
+                      )}
+                      {!isOwn && (
+                        <div style={{ fontSize: '0.76em', color: '#ffb366', marginBottom: '2px' }}>{authorLabel(msg)}</div>
+                      )}
+                      {msg.replyToAuthor && (
+                        <div style={{ fontSize: '0.78em', color: '#aaa', borderLeft: '2px solid #555', paddingLeft: '6px', marginBottom: '4px' }}>
+                          Risposta a {msg.replyToAuthor}: {msg.replyToText}
+                        </div>
+                      )}
+                      {msg.text && <div style={{ fontSize: '0.95em' }}>{msg.text}</div>}
+                      {msg.imageData && (
+                        <button
+                          type="button"
+                          onClick={() => openChatImage(msg.imageData)}
+                          style={{
+                            marginTop: msg.text ? '6px' : 0,
+                            padding: 0,
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            display: 'block',
+                            width: '100%',
+                            touchAction: 'manipulation',
+                          }}
+                          aria-label="Apri foto inviata in chat"
+                        >
+                          <img
+                            src={msg.imageData}
+                            alt="Foto inviata in chat"
+                            style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.18)', display: 'block', touchAction: 'manipulation' }}
+                          />
+                          <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>Tocca la foto per aprirla</div>
+                        </button>
+                      )}
+                      <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>{new Date(msg.timestamp).toLocaleString()}</div>
+                      {!selectMode && (
+                        <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '4px', background: isOwn ? '#14602f' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer' }}>
+                          Rispondi
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Barra azioni selezione multipla */}
+                {selectMode && selectedMessages.length > 0 && (
+                  <div style={{ position: 'fixed', bottom: isMobile ? 'calc(var(--bb-mobile-bottom-nav-height, 94px) + 8px)' : '18px', left: 0, right: 0, zIndex: 9999, display: 'flex', justifyContent: 'center', gap: '12px', background: '#222', borderRadius: '16px', padding: '10px 16px', boxShadow: '0 2px 12px #000a', alignItems: 'center', maxWidth: '420px', margin: '0 auto' }}>
+                    <span style={{ color: '#ffb366', fontWeight: 600, fontSize: '1em' }}>{selectedMessages.length} selezionato{selectedMessages.length > 1 ? 'i' : ''}</span>
+                    <button type="button" onClick={exitSelectMode} style={{ background: '#444', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Annulla</button>
+                    {canReply() && (
+                      <button type="button" onClick={handleReplySelected} style={{ background: '#14602f', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Rispondi</button>
                     )}
-                    <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>{new Date(msg.timestamp).toLocaleString()}</div>
-                    <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '4px', background: isOwn ? '#14602f' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer' }}>
-                      Rispondi
-                    </button>
+                    {canEditOrDeleteForAll() && selectedMessages.length === 1 && (
+                      <button type="button" onClick={handleEditSelected} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '6px', padding: '6px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Modifica</button>
+                    )}
+                    {canEditOrDeleteForAll() && (
+                      <button type="button" onClick={handleDeleteForAll} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Elimina per tutti</button>
+                    )}
+                    <button type="button" onClick={handleDeleteForMe} style={{ background: '#333', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}>Elimina per me</button>
                   </div>
-                );})}
+                )}
                 <div ref={chatEndRef} />
               </div>
 
