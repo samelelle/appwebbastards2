@@ -36,7 +36,7 @@ function Rubrica({ isDevMode }) {
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const [iscritti, setIscritti] = useState([]);
   const [chatByCategoria, setChatByCategoria] = useState({});
-  const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
+  const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', email: '', categorie: [] });
   const [seenByCategory, setSeenByCategory] = useState(() => {
     const saved = localStorage.getItem(seenCategoryKey);
     if (saved) {
@@ -372,8 +372,9 @@ function Rubrica({ isDevMode }) {
     const cognome = form.cognome.trim();
     const nome = form.nome.trim();
     const telefono = form.telefono.trim();
-    if (!ruolo || !cognome || !nome || !telefono || form.categorie.length === 0) {
-      setSaveError('Compila tutti i campi e seleziona almeno una categoria.');
+    const email = form.email.trim().toLowerCase();
+    if (!ruolo || !cognome || !nome || !telefono || !email || form.categorie.length === 0) {
+      setSaveError('Compila tutti i campi, inclusa la email, e seleziona almeno una categoria.');
       return;
     }
     if (!editingIscrittoId && myIscrittoId && identitaCorrente) {
@@ -391,6 +392,7 @@ function Rubrica({ isDevMode }) {
         cognome,
         nome,
         telefono,
+        email,
         categorie: form.categorie,
       }).eq('id', editingIscrittoId);
       if (error) {
@@ -406,6 +408,7 @@ function Rubrica({ isDevMode }) {
           cognome,
           nome,
           telefono,
+          email,
           categorie: form.categorie,
         },
       ]).select();
@@ -438,7 +441,7 @@ function Rubrica({ isDevMode }) {
       }
     } catch {}
     setSaveError('');
-    setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
+    setForm({ ruolo: '', cognome: '', nome: '', telefono: '', email: '', categorie: [] });
     setShowAddModal(false);
   }
 // --- FINE MODIFICA SUPABASE ISCRITTI ---
@@ -956,6 +959,8 @@ function Rubrica({ isDevMode }) {
               <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: 0 }}>{editingIscrittoId ? 'Modifica iscritto' : 'Nuovo iscritto'}</h2>
             </div>
             <form id="member-form" onSubmit={handleAddIscritto} style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: '1 1 auto', overflowY: 'auto', paddingTop: '12px', paddingBottom: '12px', minHeight: 0, boxSizing: 'border-box' }}>
+                            <label style={{ fontWeight: 600 }}>Email</label>
+                            <input name="email" type="email" value={form.email} onChange={handleInput} placeholder="Email" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} required />
               <label style={{ fontWeight: 600 }}>Ruolo</label>
               <input name="ruolo" type="text" value={form.ruolo} onChange={handleInput} placeholder="Es. Segretario" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
 
