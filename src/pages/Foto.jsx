@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
+import { supabase } from '../lib/supabaseClient';
 
 function Foto() {
   const [gruppoSelezionato, setGruppoSelezionato] = useState('');
