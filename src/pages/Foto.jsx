@@ -79,7 +79,11 @@ function Foto() {
   async function handleAddFoto(e) {
     e.preventDefault();
     setErroreSalvataggio('');
-    if (!immagine) return;
+    console.log('[DEBUG] handleAddFoto chiamata');
+    if (!immagine) {
+      console.log('[DEBUG] Nessuna immagine selezionata');
+      return;
+    }
     let gruppoFinale = gruppo;
     if (nuovoGruppo.trim()) {
       gruppoFinale = nuovoGruppo.trim();
@@ -89,10 +93,17 @@ function Foto() {
       image: immagine,
       commento: commento.trim(),
       gruppo: gruppoFinale,
-      created_at: new Date().toISOString(), // chiave corretta
+      created_at: new Date().toISOString(),
     };
+    console.log('[DEBUG] nuovoItem da inserire:', nuovoItem);
+    if (!supabase) {
+      console.error('[DEBUG] supabase è null!');
+      setErroreSalvataggio('Errore di configurazione Supabase.');
+      return;
+    }
     const { error } = await supabase.from('foto').insert([nuovoItem]);
     if (error) {
+      console.error('[DEBUG] Errore Supabase:', error);
       setErroreSalvataggio(error.message || 'Errore durante il salvataggio.');
       return;
     }
@@ -101,6 +112,7 @@ function Foto() {
     setCommento('');
     setGruppo('');
     setNuovoGruppo('');
+    console.log('[DEBUG] Foto inserita con successo');
   }
 
   function handleStartEditDescription(item) {
