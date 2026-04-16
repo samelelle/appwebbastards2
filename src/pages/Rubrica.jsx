@@ -642,22 +642,30 @@ function Rubrica({ isDevMode }) {
           lastSeenMsgIdRef.current[categoria] = messages[messages.length - 1].id;
         }
       }
+      setChatNotice(''); // Non mostrare la notifica all'apertura
       return;
     }
 
     const incoming = allMessages.filter(message => !knownMessageIdsRef.current.has(message.id));
     knownMessageIdsRef.current = nextIds;
-    if (!incoming.length) return;
+    if (!incoming.length) {
+      setChatNotice(''); // Nessun nuovo messaggio, nessuna notifica
+      return;
+    }
 
     // Mostra la notifica solo se il nuovo messaggio non è stato ancora visto
     const externalIncoming = incoming.filter(message => !isOwnMessage(message));
-    if (!externalIncoming.length) return;
+    if (!externalIncoming.length) {
+      setChatNotice('');
+      return;
+    }
 
     const latest = externalIncoming[externalIncoming.length - 1];
     const categoria = latest.categoria;
     // Se la categoria è aperta e l'utente è sulla pagina giusta, aggiorna il lastSeenMsgIdRef
     if (categoriaAperta === categoria && document.hasFocus()) {
       lastSeenMsgIdRef.current[categoria] = latest.id;
+      setChatNotice('');
       return; // Non mostrare la notifica se l'utente sta già guardando
     }
     // Mostra la notifica solo se non è già stata vista
@@ -672,6 +680,8 @@ function Rubrica({ isDevMode }) {
       if (notificationsAllowed) {
         notifyUser(noticeText, preview);
       }
+    } else {
+      setChatNotice('');
     }
   }, [authorLabel, chatByCategoria, isOwnMessage, notificationsAllowed, categoriaAperta]);
 
@@ -928,7 +938,9 @@ function Rubrica({ isDevMode }) {
                           <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>Tocca la foto per aprirla</div>
                         </button>
                       )}
-                      <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>{new Date(msg.timestamp).toLocaleString()}</div>
+                      <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>
+                        {new Date(msg.timestamp && !msg.timestamp.endsWith('Z') ? msg.timestamp + 'Z' : msg.timestamp).toLocaleString()}
+                      </div>
                       {!selectMode && (
                         <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '4px', background: isOwn ? '#14602f' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer' }}>
                           Rispondi
