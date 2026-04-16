@@ -307,7 +307,7 @@ function Rubrica({ isDevMode }) {
     }
     fetchMessages();
 
-    // Realtime
+    // Realtime: ascolta INSERT, UPDATE, DELETE
     const channel = supabase
       .channel('public:chat')
       .on(
@@ -315,18 +315,54 @@ function Rubrica({ isDevMode }) {
         { event: 'INSERT', schema: 'public', table: 'chat' },
         payload => {
           const msg = payload.new;
-           setChatByCategoria(prev => {
-             const cat = msg.categoria;
-             const arr = prev[cat] ? [...prev[cat]] : [];
-             arr.push({
-               ...msg,
-               authorId: msg.authorId || msg.user_id || msg.userId || '',
-               authorName: msg.authorName || msg.author || '',
-               text: msg.message,
-               imageData: msg.image_url,
-               timestamp: msg.created_at,
-             });
-             return { ...prev, [cat]: arr };
+          setChatByCategoria(prev => {
+            const cat = msg.categoria;
+            const arr = prev[cat] ? [...prev[cat]] : [];
+            arr.push({
+              ...msg,
+              authorId: msg.authorId || msg.user_id || msg.userId || '',
+              authorName: msg.authorName || msg.author || '',
+              text: msg.message,
+              imageData: msg.image_url,
+              timestamp: msg.created_at,
+            });
+            return { ...prev, [cat]: arr };
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'chat' },
+        payload => {
+          const msg = payload.new;
+          setChatByCategoria(prev => {
+            const cat = msg.categoria;
+            const arr = prev[cat] ? [...prev[cat]] : [];
+            const idx = arr.findIndex(m => m.id === msg.id);
+            if (idx !== -1) {
+              arr[idx] = {
+                ...arr[idx],
+                ...msg,
+                authorId: msg.authorId || msg.user_id || msg.userId || '',
+                authorName: msg.authorName || msg.author || '',
+                text: msg.message,
+                imageData: msg.image_url,
+                timestamp: msg.created_at,
+              };
+            }
+            return { ...prev, [cat]: arr };
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'chat' },
+        payload => {
+          const msg = payload.old;
+          setChatByCategoria(prev => {
+            const cat = msg.categoria;
+            const arr = prev[cat] ? prev[cat].filter(m => m.id !== msg.id) : [];
+            return { ...prev, [cat]: arr };
           });
         }
       )
