@@ -468,7 +468,7 @@ function Rubrica({ isDevMode }) {
   }
 
   function startEditIscritto(iscritto) {
-    // Permetti la modifica di tutti gli iscritti solo se isDevMode è true
+    // In modalità DEV puoi modificare tutti, altrimenti solo il tuo
     if (!isDevMode && myIscrittoId && String(iscritto?.id || '') !== String(myIscrittoId)) return;
     setEditingIscrittoId(iscritto.id);
     setForm({
@@ -649,7 +649,7 @@ function Rubrica({ isDevMode }) {
     const incoming = allMessages.filter(message => !knownMessageIdsRef.current.has(message.id));
     knownMessageIdsRef.current = nextIds;
     if (!incoming.length) {
-      setChatNotice(''); // Nessun nuovo messaggio, nessuna notifica
+      setChatNotice('');
       return;
     }
 
@@ -666,10 +666,11 @@ function Rubrica({ isDevMode }) {
     if (categoriaAperta === categoria && document.hasFocus()) {
       lastSeenMsgIdRef.current[categoria] = latest.id;
       setChatNotice('');
-      return; // Non mostrare la notifica se l'utente sta già guardando
+      return;
     }
-    // Mostra la notifica solo se non è già stata vista
-    if (lastSeenMsgIdRef.current[categoria] !== latest.id) {
+
+    // Mostra la notifica solo se non è già stata vista e solo se latest.id non è già in lastSeenMsgIdRef
+    if (!lastSeenMsgIdRef.current[categoria] || lastSeenMsgIdRef.current[categoria] !== latest.id) {
       const author = authorLabel(latest);
       const categoryLabel = latest.categoria ? ` in ${latest.categoria}` : '';
       const preview = latest.text?.trim() ? latest.text.trim().slice(0, 60) : 'Nuovo messaggio';
