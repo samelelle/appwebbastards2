@@ -642,45 +642,35 @@ function Rubrica({ isDevMode }) {
           lastSeenMsgIdRef.current[categoria] = messages[messages.length - 1].id;
         }
       }
-      setChatNotice(''); // Non mostrare la notifica all'apertura
+      setChatNotice('');
       return;
     }
 
-    const incoming = allMessages.filter(message => !knownMessageIdsRef.current.has(message.id));
     knownMessageIdsRef.current = nextIds;
-    if (!incoming.length) {
-      setChatNotice('');
-      return;
-    }
 
-    // Mostra la notifica solo se il nuovo messaggio non è stato ancora visto
-    const externalIncoming = incoming.filter(message => !isOwnMessage(message));
-    if (!externalIncoming.length) {
-      setChatNotice('');
-      return;
+    // NOTIFICA SOLO SE ESISTONO MESSAGGI NON VISTI IN ALMENO UNA CATEGORIA
+    let foundUnseen = false;
+    let noticeText = '';
+    for (const [categoria, messages] of Object.entries(chatByCategoria)) {
+      if (!Array.isArray(messages) || messages.length === 0) continue;
+      // Prendi solo i messaggi non miei
+      const notMyMessages = messages.filter(m => !isOwnMessage(m));
+      if (notMyMessages.length === 0) continue;
+      const lastMsg = notMyMessages[notMyMessages.length - 1];
+      // Quanti ne ho visti?
+      const seenCount = Number(seenByCategory[categoria] || 0);
+      if (seenCount < notMyMessages.length) {
+        foundUnseen = true;
+        const author = authorLabel(lastMsg);
+        const categoryLabel = lastMsg.categoria ? ` in ${lastMsg.categoria}` : '';
+        const preview = lastMsg.text?.trim() ? lastMsg.text.trim().slice(0, 60) : 'Nuovo messaggio';
+        noticeText = `Nuovo messaggio${categoryLabel} da ${author}`;
+        break; // Mostra solo una notifica per la prima categoria trovata
+      }
     }
-
-    const latest = externalIncoming[externalIncoming.length - 1];
-    const categoria = latest.categoria;
-    // Se la categoria è aperta e l'utente è sulla pagina giusta, aggiorna il lastSeenMsgIdRef
-    if (categoriaAperta === categoria && document.hasFocus()) {
-      lastSeenMsgIdRef.current[categoria] = latest.id;
-      setChatNotice('');
-      return;
-    }
-
-    // Mostra la notifica solo se non è già stata vista e solo se latest.id non è già in lastSeenMsgIdRef
-    if (!lastSeenMsgIdRef.current[categoria] || lastSeenMsgIdRef.current[categoria] !== latest.id) {
-      const author = authorLabel(latest);
-      const categoryLabel = latest.categoria ? ` in ${latest.categoria}` : '';
-      const preview = latest.text?.trim() ? latest.text.trim().slice(0, 60) : 'Nuovo messaggio';
-      const noticeText = `Nuovo messaggio${categoryLabel} da ${author}`;
+    if (foundUnseen) {
       setChatNotice(noticeText);
       window.setTimeout(() => setChatNotice(''), 4500);
-      lastSeenMsgIdRef.current[categoria] = latest.id;
-      if (notificationsAllowed) {
-        notifyUser(noticeText, preview);
-      }
     } else {
       setChatNotice('');
     }
