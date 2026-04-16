@@ -49,7 +49,7 @@ function Eventi({ isDevMode }) {
   const LAST_SEEN_EVENT_KEY = 'bb-last-seen-event-id';
   const lastSeenEventIdRef = useRef(localStorage.getItem(LAST_SEEN_EVENT_KEY) || null);
   // Tiene traccia dell'ultimo evento visto
-  const lastSeenEventIdRef = useRef(null);
+  // (Dichiarazione duplicata rimossa)
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const knownEventIdsRef = useRef(new Set());
   const initializedEventsRef = useRef(false);
