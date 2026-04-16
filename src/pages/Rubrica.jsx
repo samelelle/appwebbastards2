@@ -63,6 +63,16 @@ function Rubrica({ isDevMode }) {
         if (!window.confirm('Vuoi eliminare questi messaggi per tutti?')) return;
         // Elimina da supabase (delete by id)
         await supabase.from('chat').delete().in('id', selectedMessages);
+        // Aggiorna subito lo stato locale per rimuovere i messaggi eliminati
+        setChatByCategoria(prev => {
+          const updated = { ...prev };
+          for (const cat in updated) {
+            if (Array.isArray(updated[cat])) {
+              updated[cat] = updated[cat].filter(m => !selectedMessages.includes(m.id));
+            }
+          }
+          return updated;
+        });
         exitSelectMode();
       }
 
