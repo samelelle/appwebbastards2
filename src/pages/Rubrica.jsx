@@ -28,26 +28,11 @@ function Rubrica({ isDevMode }) {
   );
   const currentUserId = myIscrittoId || '';
   const [replyTo, setReplyTo] = useState(null);
-  const [selectedMsgIds, setSelectedMsgIds] = useState([]);
-  const [showMsgActions, setShowMsgActions] = useState(false);
-  const [editingMsg, setEditingMsg] = useState(null);
-  // Messaggi eliminati solo per me (persistente)
-  const DELETED_MSG_KEY = 'bb-deleted-msg-ids';
-  const [deletedMsgIds, setDeletedMsgIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(DELETED_MSG_KEY) || '[]');
-    } catch { return []; }
-  });
   const [saveError, setSaveError] = useState('');
   const [editingIscrittoId, setEditingIscrittoId] = useState(null);
   const [chatNotice, setChatNotice] = useState('');
-  // Tiene traccia dell'ultimo messaggio visto per categoria (persistente)
-  const LAST_SEEN_MSG_KEY = 'bb-last-seen-msg-id';
-  const lastSeenMsgIdRef = useRef(() => {
-    try {
-      return JSON.parse(localStorage.getItem(LAST_SEEN_MSG_KEY) || '{}');
-    } catch { return {}; }
-  })();
+  // Tiene traccia dell'ultimo messaggio visto per categoria
+  const lastSeenMsgIdRef = useRef({});
   const [chatPermissionError, setChatPermissionError] = useState('');
   const [openedChatImage, setOpenedChatImage] = useState('');
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
@@ -518,18 +503,12 @@ function Rubrica({ isDevMode }) {
     if (!initializedMessagesRef.current) {
       knownMessageIdsRef.current = nextIds;
       initializedMessagesRef.current = true;
-      // Aggiorna i lastSeenMsgIdRef per tutte le categorie e persisti
-      let changed = false;
+      // Aggiorna i lastSeenMsgIdRef per tutte le categorie
       for (const [categoria, messages] of Object.entries(chatByCategoria)) {
         if (Array.isArray(messages) && messages.length > 0) {
-          const lastId = messages[messages.length - 1].id;
-          if (lastSeenMsgIdRef.current[categoria] !== lastId) {
-            lastSeenMsgIdRef.current[categoria] = lastId;
-            changed = true;
-          }
+          lastSeenMsgIdRef.current[categoria] = messages[messages.length - 1].id;
         }
       }
-      if (changed) localStorage.setItem(LAST_SEEN_MSG_KEY, JSON.stringify(lastSeenMsgIdRef.current));
       return;
     }
 
@@ -545,10 +524,7 @@ function Rubrica({ isDevMode }) {
     const categoria = latest.categoria;
     // Se la categoria è aperta e l'utente è sulla pagina giusta, aggiorna il lastSeenMsgIdRef
     if (categoriaAperta === categoria && document.hasFocus()) {
-      if (lastSeenMsgIdRef.current[categoria] !== latest.id) {
-        lastSeenMsgIdRef.current[categoria] = latest.id;
-        localStorage.setItem(LAST_SEEN_MSG_KEY, JSON.stringify(lastSeenMsgIdRef.current));
-      }
+      lastSeenMsgIdRef.current[categoria] = latest.id;
       return; // Non mostrare la notifica se l'utente sta già guardando
     }
     // Mostra la notifica solo se non è già stata vista
@@ -560,7 +536,6 @@ function Rubrica({ isDevMode }) {
       setChatNotice(noticeText);
       window.setTimeout(() => setChatNotice(''), 4500);
       lastSeenMsgIdRef.current[categoria] = latest.id;
-      localStorage.setItem(LAST_SEEN_MSG_KEY, JSON.stringify(lastSeenMsgIdRef.current));
       if (notificationsAllowed) {
         notifyUser(noticeText, preview);
       }
@@ -740,49 +715,10 @@ function Rubrica({ isDevMode }) {
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
                 )}
-                {messaggiCategoriaAperta.filter(msg => !deletedMsgIds.includes(msg.id)).map((msg, idx) => {
+                {messaggiCategoriaAperta.map((msg, idx) => {
                   const isOwn = isOwnMessage(msg);
-                  const isSelected = selectedMsgIds.includes(msg.id);
-                  // Long press/tap/click per selezione multipla
-                  const handleMsgSelect = e => {
-                    e.preventDefault();
-                    if (selectedMsgIds.includes(msg.id)) {
-                      setSelectedMsgIds(selectedMsgIds.filter(id => id !== msg.id));
-                    } else {
-                      setSelectedMsgIds([...selectedMsgIds, msg.id]);
-                    }
-                    setShowMsgActions(true);
-                  };
                   return (
-                  <div
-                    key={`${msg.timestamp}-${idx}`}
-                    style={{
-                      alignSelf: isOwn ? 'flex-end' : 'flex-start',
-                      maxWidth: '84%',
-                      background: isSelected ? '#ff6600' : (isOwn ? '#1f7a3f' : '#2a2a2a'),
-                      borderRadius: '12px',
-                      padding: '7px 9px',
-                      border: isSelected ? '2px solid #ff6600' : undefined,
-                      position: 'relative',
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                    }}
-                    onContextMenu={handleMsgSelect}
-                    onClick={e => {
-                      if (selectedMsgIds.length > 0) handleMsgSelect(e);
-                    }}
-                    onTouchStart={e => {
-                      if (e.touches && e.touches.length === 1) {
-                        setTimeout(() => handleMsgSelect(e), 400);
-                      }
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={handleMsgSelect}
-                      style={{ position: 'absolute', left: -24, top: 8, zIndex: 2, accentColor: '#ff6600' }}
-                    />
+                  <div key={`${msg.timestamp}-${idx}`} style={{ alignSelf: isOwn ? 'flex-end' : 'flex-start', maxWidth: '84%', background: isOwn ? '#1f7a3f' : '#2a2a2a', borderRadius: '12px', padding: '7px 9px' }}>
                     {!isOwn && (
                       <div style={{ fontSize: '0.76em', color: '#ffb366', marginBottom: '2px' }}>{authorLabel(msg)}</div>
                     )}
@@ -818,71 +754,9 @@ function Rubrica({ isDevMode }) {
                       </button>
                     )}
                     <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>{new Date(msg.timestamp).toLocaleString()}</div>
-                    {selectedMsgIds.length === 0 && (
-                      <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '4px', background: isOwn ? '#14602f' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer' }}>
-                        Rispondi
-                      </button>
-                    )}
-                                {/* Azioni contestuali per messaggi selezionati */}
-                                {showMsgActions && selectedMsgIds.length > 0 && (
-                                  <div style={{ position: 'fixed', bottom: isMobile ? 'calc(var(--bb-mobile-bottom-nav-height, 94px) + 12px)' : 24, left: 0, right: 0, zIndex: 9000, display: 'flex', justifyContent: 'center', gap: 12 }}>
-                                    {/* Elimina per tutti (DEV o autore) */}
-                                    {(isDevMode || messaggiCategoriaAperta.filter(m => selectedMsgIds.includes(m.id)).every(m => isOwnMessage(m))) && (
-                                      <button className="bb-event-btn" style={{ background: '#ff2b2b', color: '#fff' }}
-                                        onClick={async () => {
-                                          await supabase.from('chat').delete().in('id', selectedMsgIds);
-                                          setSelectedMsgIds([]); setShowMsgActions(false);
-                                        }}
-                                      >Elimina per tutti</button>
-                                    )}
-                                    {/* Elimina per me (tutti) */}
-                                    <button className="bb-event-btn" style={{ background: '#ffb366', color: '#222' }}
-                                      onClick={() => {
-                                        const updated = Array.from(new Set([...deletedMsgIds, ...selectedMsgIds]));
-                                        setDeletedMsgIds(updated);
-                                        localStorage.setItem(DELETED_MSG_KEY, JSON.stringify(updated));
-                                        setSelectedMsgIds([]); setShowMsgActions(false);
-                                      }}
-                                    >Elimina per me</button>
-                                    {/* Modifica (solo autore, un solo messaggio) */}
-                                    {selectedMsgIds.length === 1 && messaggiCategoriaAperta.find(m => m.id === selectedMsgIds[0]) && isOwnMessage(messaggiCategoriaAperta.find(m => m.id === selectedMsgIds[0])) && (
-                                      <button className="bb-event-btn" style={{ background: '#1f7a3f', color: '#fff' }}
-                                        onClick={() => {
-                                          setEditingMsg(messaggiCategoriaAperta.find(m => m.id === selectedMsgIds[0]));
-                                          setShowMsgActions(false); setSelectedMsgIds([]);
-                                        }}
-                                      >Modifica</button>
-                                    )}
-                                                  {/* Modale modifica messaggio */}
-                                                  {editingMsg && (
-                                                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#000a', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                      <div style={{ background: '#222', padding: 24, borderRadius: 12, minWidth: 280, maxWidth: '90vw' }}>
-                                                        <h3 style={{ color: '#ff6600', marginTop: 0 }}>Modifica messaggio</h3>
-                                                        <textarea
-                                                          value={editingMsg.text || ''}
-                                                          onChange={e => setEditingMsg({ ...editingMsg, text: e.target.value })}
-                                                          style={{ width: '100%', minHeight: 60, borderRadius: 8, border: '1px solid #555', padding: 8, fontSize: '1em', marginBottom: 12 }}
-                                                        />
-                                                        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                                                          <button className="bb-add-btn" onClick={() => setEditingMsg(null)}>Annulla</button>
-                                                          <button className="bb-event-btn" style={{ background: '#1f7a3f', color: '#fff' }}
-                                                            onClick={async () => {
-                                                              await supabase.from('chat').update({ message: editingMsg.text }).eq('id', editingMsg.id);
-                                                              setEditingMsg(null);
-                                                            }}
-                                                          >Salva</button>
-                                                        </div>
-                                                      </div>
-                                                    </div>
-                                                  )}
-                                    {/* Rispondi (solo se non autore, un solo messaggio) */}
-                                    {selectedMsgIds.length === 1 && messaggiCategoriaAperta.find(m => m.id === selectedMsgIds[0]) && !isOwnMessage(messaggiCategoriaAperta.find(m => m.id === selectedMsgIds[0])) && (
-                                      <button className="bb-event-btn" style={{ background: '#14602f', color: '#fff' }} onClick={() => { setReplyTo(messaggiCategoriaAperta.find(m => m.id === selectedMsgIds[0])); setShowMsgActions(false); setSelectedMsgIds([]); }}>Rispondi</button>
-                                    )}
-                                    {/* Annulla selezione */}
-                                    <button className="bb-add-btn" style={{ background: '#444', color: '#fff' }} onClick={() => { setSelectedMsgIds([]); setShowMsgActions(false); }}>Annulla</button>
-                                  </div>
-                                )}
+                    <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '4px', background: isOwn ? '#14602f' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer' }}>
+                      Rispondi
+                    </button>
                   </div>
                 );})}
                 <div ref={chatEndRef} />
