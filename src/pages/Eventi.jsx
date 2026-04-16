@@ -45,6 +45,11 @@ function Eventi({ isDevMode }) {
   const [events, setEvents] = useState([]);
   const [syncError, setSyncError] = useState('');
   const [eventNotice, setEventNotice] = useState('');
+  // Tiene traccia dell'ultimo evento visto (persistente)
+  const LAST_SEEN_EVENT_KEY = 'bb-last-seen-event-id';
+  const lastSeenEventIdRef = useRef(localStorage.getItem(LAST_SEEN_EVENT_KEY) || null);
+  // Tiene traccia dell'ultimo evento visto
+  const lastSeenEventIdRef = useRef(null);
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const knownEventIdsRef = useRef(new Set());
   const initializedEventsRef = useRef(false);
@@ -99,6 +104,11 @@ function Eventi({ isDevMode }) {
       if (!initializedEventsRef.current) {
         knownEventIdsRef.current = nextIds;
         initializedEventsRef.current = true;
+        // All'avvio, considera l'ultimo evento come già visto
+        if (normalized.length > 0) {
+          lastSeenEventIdRef.current = normalized[normalized.length - 1].id;
+          localStorage.setItem(LAST_SEEN_EVENT_KEY, lastSeenEventIdRef.current);
+        }
         return;
       }
 
@@ -107,17 +117,29 @@ function Eventi({ isDevMode }) {
       if (!added.length) return;
 
       const newest = added.sort((a, b) => b.start - a.start)[0];
-      const message = `Nuovo evento: ${newest.title}`;
-      setEventNotice(message);
-      window.setTimeout(() => setEventNotice(''), 4500);
-
-      if (notificationsAllowed) {
-        notifyUser('Nuovo evento inserito', newest.title);
+      // Mostra la notifica solo se non è già stata vista
+      if (lastSeenEventIdRef.current !== newest.id) {
+        const message = `Nuovo evento: ${newest.title}`;
+        setEventNotice(message);
+        window.setTimeout(() => setEventNotice(''), 4500);
+        if (notificationsAllowed) {
+          notifyUser('Nuovo evento inserito', newest.title);
+        }
       }
     };
 
     evaluate(events);
   }, [events, notificationsAllowed]);
+
+  // Quando l'utente apre la schermata Eventi, aggiorna l'ultimo evento visto
+  useEffect(() => {
+    if (normalizedEvents.length > 0) {
+      const lastId = normalizedEvents[normalizedEvents.length - 1].id;
+      lastSeenEventIdRef.current = lastId;
+      localStorage.setItem(LAST_SEEN_EVENT_KEY, lastId);
+      setEventNotice(''); // Nasconde la notifica appena visto
+    }
+  }, [normalizedEvents.length]);
 
   useEffect(() => {
     let active = true;
