@@ -42,7 +42,7 @@ function Foto() {
     const { data, error } = await supabase
       .from('foto')
       .select('*')
-      .order('createdAt', { ascending: false });
+      .order('created_at', { ascending: false });
     if (!error) setFotoItems(data || []);
   }
 
