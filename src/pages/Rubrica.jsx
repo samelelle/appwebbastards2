@@ -15,6 +15,7 @@ function Rubrica({ isDevMode }) {
       // Azioni selezione multipla
       function canEditOrDeleteForAll() {
         if (!selectedMessages.length) return false;
+        if (isDevMode) return true;
         // Solo se tutti i selezionati sono miei
         return selectedMessages.every(selId => {
           const msg = messaggiCategoriaAperta.find(m => m.id === selId);
@@ -136,12 +137,8 @@ function Rubrica({ isDevMode }) {
   }
 
   // Gestione selezione multipla messaggi
-  function handleLongPressMessage(msgId) {
-    setSelectMode(true);
-    setSelectedMessages([msgId]);
-  }
-
   function handleToggleSelectMessage(msgId) {
+    setSelectMode(true);
     setSelectedMessages(prev =>
       prev.includes(msgId)
         ? prev.filter(id => id !== msgId)
@@ -818,7 +815,6 @@ function Rubrica({ isDevMode }) {
                 {messaggiCategoriaAperta.map((msg, idx) => {
                   const isOwn = isOwnMessage(msg);
                   const isSelected = selectedMessages.includes(msg.id);
-                  let pressTimer = null;
                   // Modalità modifica messaggio
                   if (editingMsgId === msg.id) {
                     return (
@@ -847,28 +843,11 @@ function Rubrica({ isDevMode }) {
                         border: isSelected ? '2px solid #fff' : undefined,
                         opacity: selectMode && !isSelected ? 0.6 : 1,
                         position: 'relative',
-                        cursor: selectMode ? 'pointer' : 'default',
+                        cursor: 'pointer',
                         userSelect: 'none',
                       }}
-                      onPointerDown={e => {
-                        if (selectMode) {
-                          handleToggleSelectMessage(msg.id);
-                          return;
-                        }
-                        pressTimer = setTimeout(() => handleLongPressMessage(msg.id), 420);
-                      }}
-                      onPointerUp={e => {
-                        if (pressTimer) clearTimeout(pressTimer);
-                        if (selectMode) return;
-                        // click normale: nessuna selezione, comportamento normale
-                      }}
-                      onPointerLeave={e => {
-                        if (pressTimer) clearTimeout(pressTimer);
-                      }}
                       onClick={e => {
-                        if (selectMode) {
-                          handleToggleSelectMessage(msg.id);
-                        }
+                        handleToggleSelectMessage(msg.id);
                       }}
                     >
                       {selectMode && (
