@@ -238,12 +238,16 @@ function Eventi({ isDevMode }) {
       end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 23, 59);
     }
     try {
+      // Recupera la mapRoute dall'evento selezionato (se esiste)
+      const currentEvent = events.find(ev => ev.id === editEventId);
+      const mapRoute = currentEvent && currentEvent.mapRoute ? currentEvent.mapRoute : null;
       const saved = await updateEvent(editEventId, {
         title: editForm.title,
         start,
         end,
         note: editForm.note,
         image: editForm.image,
+        mapRoute,
       });
       if (saved) {
         setEvents(prev => prev.map(item => (item.id === editEventId ? saved : item)));
@@ -301,7 +305,12 @@ function Eventi({ isDevMode }) {
       end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 23, 59);
     }
     try {
-      const created = await addEvent({ title: form.title, start, end, note: form.note, image: form.image });
+      // Se il form contiene una mapRoute, salvala nell'evento
+      const eventPayload = { title: form.title, start, end, note: form.note, image: form.image };
+      if (form.mapRoute) {
+        eventPayload.mapRoute = form.mapRoute;
+      }
+      const created = await addEvent(eventPayload);
       setEvents(prev => [...prev, created]);
       setForm({ title: '', date: '', start: '', end: '', note: '', image: '' });
       setShowForm(false);
