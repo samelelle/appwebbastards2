@@ -276,9 +276,10 @@ async function handleDeleteFoto(itemId) {
                   <button
                     type="button"
                     style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '8px', padding: '4px 12px', fontWeight: 600, fontSize: '0.95em', cursor: 'pointer' }}
-                    onClick={() => {
+                    onClick={async () => {
                       if (window.confirm('Vuoi eliminare tutte le foto di questo gruppo?')) {
-                        setFotoItems(prev => prev.filter(item => item.gruppo !== gruppoSelezionato));
+                        await supabase.from('foto').delete().eq('gruppo', gruppoSelezionato);
+                        fetchFoto();
                         setGruppoSelezionato('');
                       }
                     }}
