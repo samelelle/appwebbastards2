@@ -7,6 +7,7 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { markChatSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
+import { sendOneSignalNotification } from '../lib/onesignalNotify';
 
 function Rubrica({ isDevMode }) {
         // Stato per modifica messaggio
@@ -671,6 +672,12 @@ function Rubrica({ isDevMode }) {
     if (foundUnseen) {
       setChatNotice(noticeText);
       window.setTimeout(() => setChatNotice(''), 4500);
+      // Notifica push OneSignal
+      sendOneSignalNotification({
+        title: 'Nuovo messaggio in chat',
+        message: noticeText,
+        url: window.location.href
+      });
     } else {
       setChatNotice('');
     }
@@ -815,18 +822,6 @@ function Rubrica({ isDevMode }) {
             }}
           >
             Crea iscritto
-          </button>
-        )}
-        {myIscrittoId && isDevMode && (
-          <button
-            className="bb-add-btn"
-            style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }}
-            onClick={() => {
-              const me = iscritti.find(iscritto => String(iscritto?.id || '') === String(myIscrittoId));
-              if (me) startEditIscritto(me);
-            }}
-          >
-            Modifica iscritto
           </button>
         )}
       </div>
