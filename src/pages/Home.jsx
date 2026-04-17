@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import QrCodeShare from '../components/QrCodeShare';
-  const [showQr, setShowQr] = useState(false);
 import { useNavigate } from 'react-router-dom';
 import teschioImg from '../assets/teschio1.png';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -127,14 +125,6 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
       >
         BORN BASTARDS
       </h1>
-      <button
-        type="button"
-        className="bb-add-btn"
-        style={{ margin: '18px 0 0 0', padding: '8px 18px', fontSize: '1.1rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }}
-        onClick={() => setShowQr(true)}
-      >
-        📱 Condividi app
-      </button>
       <div
         style={{
           position: 'absolute',
