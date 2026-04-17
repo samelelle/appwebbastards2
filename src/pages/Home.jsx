@@ -125,6 +125,23 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
       >
         BORN BASTARDS
       </h1>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, margin: '32px 0 0 0' }}>
+        <button className="bb-add-btn" style={{ width: '220px', padding: '12px', fontSize: '1.15rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }} onClick={() => navigate('/rubrica')}>
+          Rubrica
+        </button>
+        <button className="bb-add-btn" style={{ width: '220px', padding: '12px', fontSize: '1.15rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }} onClick={() => navigate('/eventi')}>
+          Eventi
+        </button>
+        <button className="bb-add-btn" style={{ width: '220px', padding: '12px', fontSize: '1.15rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }} onClick={() => navigate('/riunioni')}>
+          Riunioni
+        </button>
+        <button className="bb-add-btn" style={{ width: '220px', padding: '12px', fontSize: '1.15rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }} onClick={() => navigate('/foto')}>
+          Foto
+        </button>
+        <button className="bb-add-btn" style={{ width: '220px', padding: '12px', fontSize: '1.15rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }} onClick={() => navigate('/mappa')}>
+          Mappa
+        </button>
+      </div>
       <div
         style={{
           position: 'absolute',
