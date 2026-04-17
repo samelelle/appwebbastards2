@@ -119,7 +119,7 @@ function AppRoutes() {
 
   useEffect(() => {
     const root = document.documentElement;
-
+    export default App;
     const updateViewportVars = () => {
       const viewportHeight = Math.max(window.innerHeight || 0, window.visualViewport?.height || 0);
       root.style.setProperty('--bb-app-height', `${Math.round(viewportHeight)}px`);
