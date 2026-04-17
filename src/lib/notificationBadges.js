@@ -1,3 +1,15 @@
+// Aggiorna il badge sull'icona dell'app (dove supportato)
+function updateAppBadge() {
+  if (navigator.setAppBadge) {
+    const total = getUnreadEventCount() + getUnreadChatCount();
+    if (total > 0) {
+      navigator.setAppBadge(total);
+    } else {
+      navigator.clearAppBadge();
+    }
+  }
+}
+
 const EVENTS_KEY = 'bb-events';
 const CHAT_KEY = 'bb-rubrica-chat';
 const SEEN_EVENTS_KEY = 'bb-seen-events-count';
@@ -35,9 +47,12 @@ function emitBadgeSync(scope = 'all') {
 
 export function notifyBadgeDataChanged(scope = 'all') {
   emitBadgeSync(scope);
+  updateAppBadge();
 }
 
 export function subscribeBadgeChanges(onChange) {
+  // Aggiorna badge anche all'avvio
+  updateAppBadge();
   if (typeof window === 'undefined') {
     return () => {};
   }
