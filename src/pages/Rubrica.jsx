@@ -749,6 +749,27 @@ function Rubrica({ isDevMode }) {
       className="bb-page"
       style={{ height: 'var(--bb-app-height, 100dvh)', background: '#111', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: isMobile ? 0 : '48px', paddingBottom: 0, position: 'fixed', inset: 0, overflow: 'hidden' }}
     >
+      <div style={{ width: isMobile ? '100%' : '360px', maxWidth: '92vw', margin: '18px auto 0 auto', display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          type="button"
+          className="bb-add-btn"
+          style={{ padding: '7px 16px', fontSize: '1rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+          onClick={() => setShowQr(true)}
+        >
+          📱 Condividi app
+        </button>
+      </div>
+      {showQr && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', background: 'rgba(0,0,0,0.7)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setShowQr(false)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, minWidth: 260, maxWidth: '90vw', boxShadow: '0 4px 32px #0008', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowQr(false)} style={{ position: 'absolute', top: 8, right: 12, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#222' }}>&times;</button>
+            <QrCodeShare />
+          </div>
+        </div>
+      )}
       {chatNotice && (
         <div style={{ position: 'fixed', top: 'calc(var(--bb-mobile-shell-height, 94px) + 8px)', left: '10px', right: '10px', zIndex: 8200, background: '#1d2a1d', border: '1px solid #2f5d2f', color: '#b8f7b8', borderRadius: '8px', padding: '8px 10px', fontSize: '0.88rem', boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}>
           {chatNotice}
