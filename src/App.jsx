@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Mappa from './pages/Mappa';
 import Riunioni from './pages/Riunioni';
 import Rubrica from './pages/Rubrica';
+import QrCodeShare from './components/QrCodeShare';
 
 const devBypassStorageKey = 'bb-dev-bypass-auth';
 const canUseDevBypass = import.meta.env.VITE_DEV_BYPASS_AUTH !== 'false';
@@ -286,6 +287,14 @@ function AppRoutes() {
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
               <Mappa />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/qrcode"
+          element={(
+            <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
+              <QrCodeShare />
             </ProtectedRoute>
           )}
         />

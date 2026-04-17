@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import QrCodeShare from '../components/QrCodeShare';
+  const [showQr, setShowQr] = useState(false);
 import { useNavigate } from 'react-router-dom';
 import teschioImg from '../assets/teschio1.png';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -126,6 +127,14 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
       >
         BORN BASTARDS
       </h1>
+      <button
+        type="button"
+        className="bb-add-btn"
+        style={{ margin: '18px 0 0 0', padding: '8px 18px', fontSize: '1.1rem', background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+        onClick={() => setShowQr(true)}
+      >
+        📱 Condividi app
+      </button>
       <div
         style={{
           position: 'absolute',
@@ -219,6 +228,17 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
                 : undefined}
           />
       </div>
+      {showQr && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', background: 'rgba(0,0,0,0.7)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setShowQr(false)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, minWidth: 260, maxWidth: '90vw', boxShadow: '0 4px 32px #0008', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowQr(false)} style={{ position: 'absolute', top: 8, right: 12, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#222' }}>&times;</button>
+            <QrCodeShare />
+          </div>
+        </div>
+      )}
       <MobileBottomNav />
     </div>
   );
