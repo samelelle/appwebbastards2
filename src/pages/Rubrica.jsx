@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import QrCodeShare from '../components/QrCodeShare';
+
 // --- INIZIO MODIFICA SUPABASE ISCRITTI ---
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -739,6 +741,8 @@ function Rubrica({ isDevMode }) {
     setChatImageError('');
     setReplyTo(null);
   }
+
+  const [showQr, setShowQr] = useState(false);
 
   return (
     <div
