@@ -218,17 +218,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
                 : undefined}
           />
       </div>
-      {showQr && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', background: 'rgba(0,0,0,0.7)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }} onClick={() => setShowQr(false)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, minWidth: 260, maxWidth: '90vw', boxShadow: '0 4px 32px #0008', position: 'relative' }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowQr(false)} style={{ position: 'absolute', top: 8, right: 12, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#222' }}>&times;</button>
-            <QrCodeShare />
-          </div>
-        </div>
-      )}
+      {/* QR code popup rimosso */}
       <MobileBottomNav />
     </div>
   );
