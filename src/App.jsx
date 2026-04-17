@@ -1,4 +1,22 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { usePushNotifications } from './hooks/usePushNotifications';
+
+// Simulazione utente loggato (sostituisci con la tua logica auth)
+const user = { id: 'user123' }; // <-- Cambia con il vero user.id
+
+function App() {
+  // Registra l'utente per le notifiche push
+  usePushNotifications(user.id);
+
+  return (
+    <div>
+      <h1>Benvenuto nella tua app!</h1>
+      {/* ...resto della tua app... */}
+    </div>
+  );
+}
+
+export default App;import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
