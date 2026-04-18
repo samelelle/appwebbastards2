@@ -1,5 +1,7 @@
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 import { notifyBadgeDataChanged } from './notificationBadges';
+import { sendPushOnEvent } from '../api/sendPushOnEvent';
+import { getCurrentUserId } from './pushSubscription';
 
 const EVENTS_KEY = 'bb-events';
 const DELETED_EVENTS_KEY = 'bb-events-deleted';
@@ -199,6 +201,16 @@ export async function addEvent(eventPayload) {
   setEventRoute(created.id, created.mapRoute);
   notifyBadgeDataChanged('events');
 
+  // Invia notifica push a tutti (eccetto autore)
+  try {
+    const authorId = getCurrentUserId();
+    await sendPushOnEvent({
+      authorId,
+      title: 'Nuovo evento',
+      body: data.title,
+      url: window.location.origin + '/eventi',
+    });
+  } catch (e) { /* ignora errori push */ }
   return {
     id: data.id,
     title: data.title,
@@ -304,6 +316,16 @@ export async function addMeeting(meetingPayload) {
 
   if (error) throw error;
 
+  // Invia notifica push a tutti (eccetto autore)
+  try {
+    const authorId = getCurrentUserId();
+    await sendPushOnEvent({
+      authorId,
+      title: 'Nuova riunione',
+      body: `${data.data} ${data.ora || ''} - ${data.ordine || ''}`.trim(),
+      url: window.location.origin + '/riunioni',
+    });
+  } catch (e) { /* ignora errori push */ }
   return ensureId(data);
 }
 

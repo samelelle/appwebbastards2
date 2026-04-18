@@ -15,6 +15,7 @@ import Mappa from './pages/Mappa';
 import Riunioni from './pages/Riunioni';
 import Rubrica from './pages/Rubrica';
 import QrCodeShare from './components/QrCodeShare';
+import { subscribeUserToPush } from './lib/pushSubscription';
 
 const devBypassStorageKey = 'bb-dev-bypass-auth';
 const canUseDevBypass = import.meta.env.VITE_DEV_BYPASS_AUTH !== 'false';
@@ -154,7 +155,6 @@ function AppRoutes() {
 
     let mounted = true;
 
-
     async function syncRubricaAndUser(session) {
       try {
         const { data, error } = await supabase
@@ -168,6 +168,8 @@ function AppRoutes() {
             if (current && current.id) {
               localStorage.setItem('bb-my-iscritto-id', String(current.id));
               localStorage.setItem('bb-current-chat-user-id', String(current.id));
+              // Iscrivi l'utente alle push
+              subscribeUserToPush();
               return;
             }
           }
@@ -177,6 +179,8 @@ function AppRoutes() {
             if (current && current.id) {
               localStorage.setItem('bb-my-iscritto-id', String(current.id));
               localStorage.setItem('bb-current-chat-user-id', String(current.id));
+              // Iscrivi l'utente alle push
+              subscribeUserToPush();
             }
           }
         }

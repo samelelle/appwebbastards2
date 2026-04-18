@@ -736,6 +736,18 @@ function Rubrica({ isDevMode }) {
         // puoi aggiungere altri campi se vuoi (es. replyTo)
       },
     ]);
+
+    // Invia notifica push a tutti (eccetto autore)
+    try {
+      const { sendPushOnEvent } = await import('../api/sendPushOnEvent');
+      await sendPushOnEvent({
+        authorId: identitaCorrente.id,
+        title: 'Nuovo messaggio in chat',
+        body: testo ? testo.slice(0, 60) : '[Foto]',
+        url: window.location.origin + '/rubrica',
+      });
+    } catch (e) { /* ignora errori push */ }
+
     setChatInput('');
     setChatImageData('');
     setChatImageError('');
