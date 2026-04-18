@@ -220,10 +220,13 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
       </div>
       {/* SCRITTA SOTTO L'IMMAGINE */}
       <div className="bb-title" style={{
-        fontSize: isMobile ? '2.1rem' : isTabletLandscape ? '2.7rem' : '3.2rem',
+        fontSize: isMobile ? '1.3rem' : isTabletLandscape ? '1.7rem' : '2.1rem',
         marginTop: isMobile ? '8px' : '18px',
+        whiteSpace: 'normal',
+        textAlign: 'center',
+        lineHeight: 1.1,
       }}>
-        Law Enforcement Motorcycle Club
+        Law Enforcement<br />Motorcycle Club
       </div>
       {/* QR code popup rimosso */}
       <MobileBottomNav />
