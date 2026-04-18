@@ -34,11 +34,24 @@ async function sendPushToAll({ title, body, url }) {
     return;
   }
   for (const sub of data) {
+    let keys = sub.keys;
+    if (typeof keys === 'string') {
+      try {
+        keys = JSON.parse(keys);
+      } catch (e) {
+        console.error('Errore parsing keys JSON per', sub.user_id, e);
+        continue;
+      }
+    }
+    if (!keys || !keys.p256dh || !keys.auth) {
+      console.error('Chiavi mancanti per', sub.user_id);
+      continue;
+    }
     const subscription = {
       endpoint: sub.endpoint,
       keys: {
-        p256dh: sub.p256dh,
-        auth: sub.auth,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
       },
     };
     try {
