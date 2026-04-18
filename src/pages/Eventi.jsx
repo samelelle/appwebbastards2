@@ -337,6 +337,20 @@ function Eventi({ isDevMode }) {
       setShowForm(false);
       markEventsSeen();
       setSyncError('');
+      // Invia notifica push a tutti tranne chi ha creato l'evento
+      try {
+        const myIscrittoId = localStorage.getItem('bb-my-iscritto-id') || localStorage.getItem('bb-current-chat-user-id') || '';
+        await fetch('https://appwebbastards2-3g9t.vercel.app/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Nuovo evento',
+            body: form.title,
+            url: window.location.origin + '/eventi',
+            exclude_user_id: myIscrittoId
+          })
+        });
+      } catch (e) { /* ignora errori push */ }
     } catch {
       setSyncError('Errore salvataggio evento. Riprova.');
     }

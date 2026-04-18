@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Solo POST' });
   }
 
-  const { title, body, url } = req.body || {};
+  const { title, body, url, exclude_user_id } = req.body || {};
   if (!title || !body) {
     return res.status(400).json({ error: 'title e body obbligatori' });
   }
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
 
   let results = [];
   for (const sub of data) {
+      if (exclude_user_id && String(sub.user_id) === String(exclude_user_id)) continue;
     let keys = sub.keys;
     if (typeof keys === 'string') {
       try { keys = JSON.parse(keys); } catch { continue; }

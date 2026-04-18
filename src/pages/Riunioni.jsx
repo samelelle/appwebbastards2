@@ -1,4 +1,4 @@
-  // Solo DEV può modificare
+// Solo DEV può modificare
   // isDev ora viene passato come prop
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -141,6 +141,20 @@ function Riunioni({ isDevMode }) {
       setRiunioni(prev => [...prev, created]);
       setForm({ data: '', ora: '', ordine: '' });
       setSyncError('');
+      // Invia notifica push a tutti tranne chi ha creato la riunione
+      try {
+        const myIscrittoId = localStorage.getItem('bb-my-iscritto-id') || localStorage.getItem('bb-current-chat-user-id') || '';
+        await fetch('https://appwebbastards2-3g9t.vercel.app/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Nuova riunione',
+            body: form.ordine,
+            url: window.location.origin + '/riunioni',
+            exclude_user_id: myIscrittoId
+          })
+        });
+      } catch (e) { /* ignora errori push */ }
     } catch {
       setSyncError('Errore salvataggio riunione. Riprova.');
     }

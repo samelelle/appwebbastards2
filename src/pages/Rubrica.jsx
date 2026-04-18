@@ -745,7 +745,8 @@ function Rubrica({ isDevMode }) {
         body: JSON.stringify({
           title: 'Nuovo messaggio in chat',
           body: testo ? testo.slice(0, 60) : '[Foto]',
-          url: window.location.origin + '/rubrica'
+          url: window.location.origin + '/rubrica',
+          exclude_user_id: identitaCorrente.id
         })
       });
     } catch (e) { /* ignora errori push */ }
