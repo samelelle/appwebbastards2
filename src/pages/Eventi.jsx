@@ -8,7 +8,6 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addEvent, deleteEvent, getEvents, updateEvent } from '../lib/sharedDataApi';
-import { sendOneSignalNotification } from '../lib/onesignalNotify';
 import { markEventsSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
 

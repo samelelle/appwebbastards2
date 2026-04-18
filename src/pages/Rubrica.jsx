@@ -9,7 +9,6 @@ import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { markChatSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
-import { sendOneSignalNotification } from '../lib/onesignalNotify';
 
 function Rubrica({ isDevMode }) {
         // Stato per modifica messaggio
@@ -685,11 +684,11 @@ function Rubrica({ isDevMode }) {
       setChatNotice(noticeText);
       window.setTimeout(() => setChatNotice(''), 4500);
       // Notifica push OneSignal
-      sendOneSignalNotification({
-        title: 'Nuovo messaggio in chat',
-        message: noticeText,
-        url: window.location.href
-      });
+      // sendOneSignalNotification({
+      //   title: 'Nuovo messaggio in chat',
+      //   message: noticeText,
+      //   url: window.location.href
+      // });
     } else {
       setChatNotice('');
     }
@@ -1126,7 +1125,7 @@ function Rubrica({ isDevMode }) {
                   return campi.includes(q);
                 })
                 .map(iscritto => (
-                  <li key={iscritto.id} style={{ background: '#2a2a2a', borderRadius: '8px', padding: '10px' }}>
+                  <li key={iscritto.id} style={{ marginBottom: '8px' }}>
                     <div><b>{displayName(iscritto)}</b></div>
                     <div style={{ color: '#ffb366', fontSize: '0.92em' }}>Ruolo: {iscritto.ruolo || 'N/D'}</div>
                     <div style={{ color: '#ddd', fontSize: '0.9em' }}>Telefono: {iscritto.telefono || 'N/D'}</div>
@@ -1164,7 +1163,7 @@ function Rubrica({ isDevMode }) {
           <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#222', paddingBottom: '8px' }}>
               <button onClick={() => setShowIdentityModal(false)} style={{ position: 'absolute', top: isMobile ? '14px' : 10, right: 14, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
-              <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: '6px' }}>Identita chat</h2>
+              <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: 0 }}>Identita chat</h2>
               <div style={{ color: '#bbb', fontSize: '0.9em', marginBottom: '8px' }}>Identita bloccata: non si puo cambiare.</div>
             </div>
             {!myIscrittoId && (
