@@ -737,14 +737,16 @@ function Rubrica({ isDevMode }) {
       },
     ]);
 
-    // Invia notifica push a tutti (eccetto autore)
+    // Invia notifica push a tutti tramite API Vercel
     try {
-      const { sendPushOnEvent } = await import('../api/sendPushOnEvent');
-      await sendPushOnEvent({
-        authorId: identitaCorrente.id,
-        title: 'Nuovo messaggio in chat',
-        body: testo ? testo.slice(0, 60) : '[Foto]',
-        url: window.location.origin + '/rubrica',
+      await fetch('https://appwebbastards2-3g9t.vercel.app/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Nuovo messaggio in chat',
+          body: testo ? testo.slice(0, 60) : '[Foto]',
+          url: window.location.origin + '/rubrica'
+        })
       });
     } catch (e) { /* ignora errori push */ }
 
