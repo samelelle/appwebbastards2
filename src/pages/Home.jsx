@@ -176,7 +176,6 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
             </button>
           )}
       </div>
-
       {/* IMMAGINE DEL TESCHIO */}
       <div
         style={{
@@ -218,6 +217,18 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
                   }
                 : undefined}
           />
+      </div>
+      {/* SCRITTA SOTTO L'IMMAGINE */}
+      <div style={{
+        textAlign: 'center',
+        color: '#fff',
+        fontSize: isMobile ? '1.1rem' : isTabletLandscape ? '1.3rem' : '2rem',
+        fontWeight: 600,
+        marginTop: isMobile ? '8px' : '18px',
+        letterSpacing: '0.04em',
+        textShadow: '0 2px 8px #000b',
+      }}>
+        Law Enforcement Motorcycle Club
       </div>
       {/* QR code popup rimosso */}
       <MobileBottomNav />
