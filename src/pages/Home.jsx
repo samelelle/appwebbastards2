@@ -220,7 +220,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
       </div>
       {/* SCRITTA SOTTO L'IMMAGINE */}
       <div className="bb-title" style={{
-        fontSize: isMobile ? '1.3rem' : isTabletLandscape ? '1.7rem' : '2.1rem',
+        fontSize: isMobile ? '1.7rem' : isTabletLandscape ? '2.2rem' : '2.7rem',
         marginTop: isMobile ? '8px' : '18px',
         whiteSpace: 'normal',
         textAlign: 'center',
