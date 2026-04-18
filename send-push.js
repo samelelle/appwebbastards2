@@ -1,37 +1,61 @@
+require('dotenv').config();
 const webpush = require('web-push');
 const { createClient } = require('@supabase/supabase-js');
 
+// Controlla che tutte le variabili siano presenti
+function toEnv(name) {
+  if (!process.env[name]) {
+    console.error(`Variabile ${name} mancante in .env`);
+    process.exit(1);
+  }
+}
+toEnv('SUPABASE_URL');
+toEnv('SUPABASE_SERVICE_ROLE_KEY');
+toEnv('VAPID_PUBLIC_KEY');
+toEnv('VAPID_PRIVATE_KEY');
+
 const supabase = createClient(
-  'https://yqapipzwmgvuzduqnsps.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxYXBpcHp3bWd2dXpkdXFuc3BzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTczOTQ5OCwiZXhwIjoyMDkxMzE1NDk4fQ.maFqfRJQr0uD8DMCqHDQT9DDljrI53TPAdzEcK51eZA'
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 webpush.setVapidDetails(
-  'mailto:tuamail@example.com',
-  'BL5BrGEM2zhmHGSJc9pfo_cDjCJvR_nJVCZFbREaSuHMPE6oq3Nv9RyvBkOjROE-Gbb1PBufWkIOIMX4TQsXHMQ',
-  'JKm31-uvJP1GSAglhLRkC0arcIzMX5mGmApzTxzQIJE'
+  'mailto:admin@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
 );
 
-async function sendNotificationToAllExcept(excludedUserId, payload) {
-  const { data } = await supabase.from('push_subscriptions').select('*').neq('user_id', excludedUserId);
-  if (!data) return;
+async function sendPushToAll({ title, body, url }) {
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .select('*');
+  if (error) {
+    console.error('Errore Supabase:', error);
+    return;
+  }
   for (const sub of data) {
+    const subscription = {
+      endpoint: sub.endpoint,
+      keys: {
+        p256dh: sub.p256dh,
+        auth: sub.auth,
+      },
+    };
     try {
-      await webpush.sendNotification({
-        endpoint: sub.endpoint,
-        keys: sub.keys,
-      }, JSON.stringify(payload));
-    } catch (e) {
-      // Gestisci errori (es. endpoint non valido)
+      await webpush.sendNotification(
+        subscription,
+        JSON.stringify({ title, body, url })
+      );
+      console.log('Notifica inviata a', sub.user_id);
+    } catch (err) {
+      console.error('Errore invio push:', err);
     }
   }
 }
 
-// Esempio di invio
-// sendNotificationToAllExcept('user_id_da_escludere', {
-//   title: 'Nuovo evento!',
-//   body: 'È stato aggiunto un nuovo evento.',
-//   url: 'https://appwebbastards2-3g9t.vercel.app/',
-// });
+// Esegui da linea di comando: node send-push.js "Titolo" "Messaggio" "https://url-opzionale"
+const title = process.argv[2] || 'Titolo di test';
+const body = process.argv[3] || 'Messaggio di test';
+const url = process.argv[4] || '';
 
-module.exports = { sendNotificationToAllExcept };
+sendPushToAll({ title, body, url });
