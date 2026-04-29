@@ -153,13 +153,9 @@ function Mappa() {
   const [startQuery, setStartQuery] = useState('');
   const [stopQuery, setStopQuery] = useState('');
   const [destinationQuery, setDestinationQuery] = useState('');
-    const [stops, setStops] = useState([]); // array di {lat, lng, label}
-    const [stopQueries, setStopQueries] = useState(['']); // array di string
-    const [stopSuggestions, setStopSuggestions] = useState([[]]); // array di array
-
-    const [currentPosition, setCurrentPosition] = useState(null);
-    const [startPosition, setStartPosition] = useState(null);
-    const [destinationPosition, setDestinationPosition] = useState(null);
+  const [startSuggestions, setStartSuggestions] = useState([]);
+  const [stopSuggestions, setStopSuggestions] = useState([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState([]);
 
   const [currentPosition, setCurrentPosition] = useState(null);
   const [startPosition, setStartPosition] = useState(null);
@@ -318,40 +314,29 @@ function Mappa() {
     };
   }, [startQuery]);
 
-  // Effetti per ogni input sosta
   useEffect(() => {
-    stopQueries.forEach((query, idx) => {
-      let cancelled = false;
-      if (query.trim().length < 3) {
-        setStopSuggestions(prev => {
-          const arr = [...prev];
-          arr[idx] = [];
-          return arr;
-        });
-        return;
-      }
-      const timer = window.setTimeout(async () => {
-        try {
-          const suggestions = await geocodeSuggestions(query.trim());
-          setStopSuggestions(prev => {
-            const arr = [...prev];
-            arr[idx] = suggestions;
-            return arr;
-          });
-        } catch {
-          setStopSuggestions(prev => {
-            const arr = [...prev];
-            arr[idx] = [];
-            return arr;
-          });
-        }
-      }, 300);
+    let cancelled = false;
+    if (stopQuery.trim().length < 3) {
+      setStopSuggestions([]);
       return () => {
         cancelled = true;
-        window.clearTimeout(timer);
       };
-    });
-  }, [stopQueries]);
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const suggestions = await geocodeSuggestions(stopQuery.trim());
+        if (!cancelled) setStopSuggestions(suggestions);
+      } catch {
+        if (!cancelled) setStopSuggestions([]);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [stopQuery]);
 
   useEffect(() => {
     let cancelled = false;
@@ -393,10 +378,9 @@ function Mappa() {
       points.forEach(point => {
         const isStart = point.kind === 'start';
         const isStop = point.kind === 'stop';
-        const stopIdx = point.stopIdx ?? 0;
         const marker = L.marker([point.lat, point.lng], {
           draggable: true,
-          icon: makeIcon(isStart ? 'A' : isStop ? `S${isStop && stops.length > 1 ? stopIdx + 1 : ''}` : 'B', isStart ? '#00c853' : isStop ? '#00a6ff' : '#ff6600'),
+          icon: makeIcon(isStart ? 'A' : isStop ? 'S' : 'B', isStart ? '#00c853' : isStop ? '#00a6ff' : '#ff6600'),
         }).addTo(markersLayerRef.current).bindPopup(point.label);
 
         marker.on('dragend', async event => {
@@ -413,16 +397,8 @@ function Mappa() {
             setStartPosition(nextPoint);
             setStartQuery(nextLabel);
           } else if (point.kind === 'stop') {
-            setStops(prev => {
-              const arr = [...prev];
-              arr[stopIdx] = nextPoint;
-              return arr;
-            });
-            setStopQueries(prev => {
-              const arr = [...prev];
-              arr[stopIdx] = nextLabel;
-              return arr;
-            });
+            setStopPosition(nextPoint);
+            setStopQuery(nextLabel);
           } else {
             setDestinationPosition(nextPoint);
             setDestinationQuery(nextLabel);
@@ -638,14 +614,10 @@ function Mappa() {
         icon: makeIcon('A', '#00c853'),
       }).addTo(markersLayerRef.current).bindPopup(`Partenza: ${routeData.start.label}`);
     }
-    if (routeData.stops && Array.isArray(routeData.stops)) {
-      routeData.stops.forEach((stop, idx) => {
-        if (stop) {
-          L.marker([stop.lat, stop.lng], {
-            icon: makeIcon(`S${routeData.stops.length > 1 ? idx + 1 : ''}`, '#00a6ff'),
-          }).addTo(markersLayerRef.current).bindPopup(`Sosta: ${stop.label}`);
-        }
-      });
+    if (routeData.stop) {
+      L.marker([routeData.stop.lat, routeData.stop.lng], {
+        icon: makeIcon('S', '#00a6ff'),
+      }).addTo(markersLayerRef.current).bindPopup(`Sosta: ${routeData.stop.label}`);
     }
     if (routeData.end) {
       L.marker([routeData.end.lat, routeData.end.lng], {
@@ -787,50 +759,86 @@ function Mappa() {
       const start = new Date(Number(year), Number(month) - 1, Number(day), Number(startHour), Number(startMinute));
       const end = new Date(Number(year), Number(month) - 1, Number(day), Number(endHour), Number(endMinute));
 
-      try {
-        setStatus('Calcolo percorso...');
-        const profile = travelModeToProfile[travelMode] || 'driving';
-        const viaPoints = [
-          `${startPosition.lng},${startPosition.lat}`,
-          ...stops.filter(Boolean).map(s => `${s.lng},${s.lat}`),
-          `${destinationPosition.lng},${destinationPosition.lat}`,
-        ];
-        const response = await fetch(
-          `https://router.project-osrm.org/route/v1/${profile}/${viaPoints.join(';')}?overview=full&geometries=geojson&steps=true&alternatives=false`,
-        );
-        if (!response.ok) throw new Error('Percorso non disponibile');
-        const data = await response.json();
-        const route = data?.routes?.[0];
-        const coordinates = route?.geometry?.coordinates;
-        if (!route || !coordinates?.length) throw new Error('Percorso non trovato');
-
-        const latLngs = coordinates.map(([lng, lat]) => [lat, lng]);
-        await renderRoute({
+      await addEvent({
+        title: eventForm.title.trim(),
+        start,
+        end,
+        note: eventForm.note.trim(),
+        image: '',
+        mapRoute: {
           start: startPosition,
-          stops: stops.filter(Boolean),
+          stop: stopPosition,
           end: destinationPosition,
-          path: latLngs,
-          distanceKm: (route.distance / 1000).toFixed(1),
-          durationMin: Math.round(route.duration / 60),
-          steps: (route?.legs || []).flatMap(leg => leg?.steps || []),
-        });
+          path: routePath,
+          distance: routeInfo.distanceKm,
+          duration: routeInfo.durationMin,
+        },
+      });
 
-        setShowSearchPanel(false);
-        setShowRoutePanel(false);
-        setIsNavigating(false);
-        setNavigationDistanceKm(null);
-        setFollowNavigation(true);
-        setEventForm(prev => ({
-          ...prev,
-          title: prev.title || `Percorso: ${startPosition.label}${stops.filter(Boolean).map(s => ` -> ${s.label}`).join('')}${' -> ' + destinationPosition.label}`,
-          startTime: prev.startTime || new Date().toTimeString().slice(0, 5),
-          endTime: prev.endTime || new Date(Date.now() + route.duration * 1000).toTimeString().slice(0, 5),
-        }));
-        setStatus('Percorso creato sulla mappa.');
-      } catch {
-        setStatus('Impossibile calcolare il percorso.');
-      }
+      setShowEventModal(false);
+      setStatus('Evento creato con il percorso.');
+    } catch {
+      setStatus('Impossibile creare l evento dal percorso.');
     }
+  }
+
+  const hasRoute = Boolean(routeInfo && startPosition && destinationPosition);
+
+  return (
+    <>
+      <div
+        className="bb-page"
+        style={{
+          background: '#111',
+          color: '#fff',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 'calc(var(--bb-app-height, 100dvh) - var(--bb-mobile-bottom-nav-height, 0px))',
+          overflow: 'hidden',
+        }}
+      >
+        {!isMobile && <Link to="/" className="bb-back-btn" style={{ position: 'fixed', top: '24px', left: 'auto', right: '24px', zIndex: 7600, pointerEvents: 'auto' }}>&#8592; Home</Link>}
+
+        <div ref={mapRef} style={{ width: '100%', height: '100%', minHeight: 0 }} />
+
+        <div style={{ position: 'fixed', left: '10px', right: '10px', top: isMobile ? 'calc(10px + env(safe-area-inset-top))' : '94px', zIndex: 7200, pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', pointerEvents: 'auto' }}>
+            <button
+              type="button"
+              onClick={() => setShowSearchPanel(prev => !prev)}
+              style={{
+                background: showSearchPanel ? '#ff6600' : '#222',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '10px 14px',
+                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+                fontWeight: 700,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {showSearchPanel ? 'Nascondi ricerca' : 'Cerca'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCreateEventFromRoute}
+              disabled={!hasRoute}
+              style={{
+                background: hasRoute ? '#ff6600' : '#555',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '10px 14px',
+                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+                fontWeight: 700,
+                fontSize: '0.84rem',
+                cursor: hasRoute ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap',
               }}
             >
               Aggiungi evento
@@ -867,52 +875,30 @@ function Mappa() {
                   )}
                 </div>
 
-                {/* Soste multiple */}
-                {stopQueries.map((stopQuery, idx) => (
-                  <div style={{ position: 'relative', marginBottom: 4 }} key={idx}>
-                    <input
-                      type="text"
-                      value={stopQuery}
-                      onFocus={() => setActiveField('stop')}
-                      onChange={e => {
-                        setStopQueries(prev => {
-                          const arr = [...prev];
-                          arr[idx] = e.target.value;
-                          return arr;
-                        });
-                      }}
-                      placeholder={`Sosta ${stopQueries.length > 1 ? idx + 1 : ''} (opzionale)`}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', boxSizing: 'border-box' }}
-                    />
-                    {stopSuggestions[idx] && stopSuggestions[idx].length > 0 && stopQuery.trim().length >= 3 && (
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#222', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 6px 18px rgba(0,0,0,0.35)', zIndex: 2 }}>
-                        {stopSuggestions[idx].map(suggestion => (
-                          <button
-                            key={`${suggestion.lat}-${suggestion.lng}-${suggestion.label}`}
-                            type="button"
-                            onClick={() => selectLocation('stop', suggestion, idx)}
-                            style={{ width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer' }}
-                          >
-                            {suggestion.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {/* Rimuovi sosta */}
-                    {stopQueries.length > 1 && (
-                      <button type="button" style={{ position: 'absolute', right: 4, top: 4, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => {
-                        setStops(prev => prev.filter((_, i) => i !== idx));
-                        setStopQueries(prev => prev.filter((_, i) => i !== idx));
-                        setStopSuggestions(prev => prev.filter((_, i) => i !== idx));
-                      }}>×</button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" style={{ margin: '4px 0 8px 0', background: '#222', color: '#fff', border: '1px solid #ff6600', borderRadius: '8px', padding: '6px 10px', fontSize: '0.82rem', cursor: 'pointer' }} onClick={() => {
-                  setStops(prev => [...prev, null]);
-                  setStopQueries(prev => [...prev, '']);
-                  setStopSuggestions(prev => [...prev, []]);
-                }}>+ Aggiungi sosta</button>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={stopQuery}
+                    onFocus={() => setActiveField('stop')}
+                    onChange={e => setStopQuery(e.target.value)}
+                    placeholder="Sosta (opzionale)"
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', boxSizing: 'border-box' }}
+                  />
+                  {stopSuggestions.length > 0 && stopQuery.trim().length >= 3 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#222', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 6px 18px rgba(0,0,0,0.35)', zIndex: 2 }}>
+                      {stopSuggestions.map(suggestion => (
+                        <button
+                          key={`${suggestion.lat}-${suggestion.lng}-${suggestion.label}`}
+                          type="button"
+                          onClick={() => selectLocation('stop', suggestion)}
+                          style={{ width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer' }}
+                        >
+                          {suggestion.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div style={{ position: 'relative' }}>
                   <input
