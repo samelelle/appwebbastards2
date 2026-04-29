@@ -59,6 +59,34 @@ function normalizeRoutePath(path) {
     .filter(Boolean);
 }
 
+function normalizeWaypoint(point) {
+  if (!point || typeof point !== 'object') return null;
+  const lat = Number(point.lat);
+  const lng = Number(point.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return {
+    lat,
+    lng,
+    label: typeof point.label === 'string' && point.label.trim() ? point.label : `Punto selezionato (${lat.toFixed(5)}, ${lng.toFixed(5)})`,
+  };
+}
+
+function normalizeRouteStops(stops, legacyStop) {
+  if (Array.isArray(stops)) {
+    return stops.map(normalizeWaypoint).filter(Boolean);
+  }
+  const normalizedLegacyStop = normalizeWaypoint(legacyStop);
+  return normalizedLegacyStop ? [normalizedLegacyStop] : [];
+}
+
+function buildMarkerPoints(start, stops, destination) {
+  return [
+    ...(start ? [{ ...start, kind: 'start' }] : []),
+    ...((stops || []).map((stop, index) => ({ ...stop, kind: 'stop', stopIndex: index }))),
+    ...(destination ? [{ ...destination, kind: 'destination' }] : []),
+  ];
+}
+
 function haversineDistanceKm(a, b) {
   if (!a || !b) return null;
   const toRad = value => (value * Math.PI) / 180;
@@ -159,7 +187,7 @@ function Mappa() {
 
   const [currentPosition, setCurrentPosition] = useState(null);
   const [startPosition, setStartPosition] = useState(null);
-  const [stopPosition, setStopPosition] = useState(null);
+  const [stopPositions, setStopPositions] = useState([]);
   const [destinationPosition, setDestinationPosition] = useState(null);
 
   const [routeInfo, setRouteInfo] = useState(null);
@@ -233,6 +261,7 @@ function Mappa() {
             const normalizedRoute = {
               ...savedRoute,
               path: normalizeRoutePath(savedRoute?.path),
+              stops: normalizeRouteStops(savedRoute?.stops, savedRoute?.stop),
               distanceKm: savedRoute?.distanceKm ?? savedRoute?.distance ?? '',
               durationMin: savedRoute?.durationMin ?? savedRoute?.duration ?? '',
             };
@@ -242,10 +271,8 @@ function Mappa() {
               setStartPosition(savedRoute.start);
               setStartQuery(savedRoute.start.label || 'Partenza');
             }
-            if (savedRoute?.stop) {
-              setStopPosition(savedRoute.stop);
-              setStopQuery(savedRoute.stop.label || 'Sosta');
-            }
+            setStopPositions(normalizedRoute.stops);
+            setStopQuery('');
             if (savedRoute?.end) {
               setDestinationPosition(savedRoute.end);
               setDestinationQuery(savedRoute.end.label || 'Destinazione');
@@ -378,9 +405,11 @@ function Mappa() {
       points.forEach(point => {
         const isStart = point.kind === 'start';
         const isStop = point.kind === 'stop';
+        const stopIndex = Number.isInteger(point.stopIndex) ? point.stopIndex : 0;
+        const stopLabel = String(Math.min(stopIndex + 1, 99));
         const marker = L.marker([point.lat, point.lng], {
           draggable: true,
-          icon: makeIcon(isStart ? 'A' : isStop ? 'S' : 'B', isStart ? '#00c853' : isStop ? '#00a6ff' : '#ff6600'),
+          icon: makeIcon(isStart ? 'A' : isStop ? stopLabel : 'B', isStart ? '#00c853' : isStop ? '#00a6ff' : '#ff6600'),
         }).addTo(markersLayerRef.current).bindPopup(point.label);
 
         marker.on('dragend', async event => {
@@ -397,8 +426,7 @@ function Mappa() {
             setStartPosition(nextPoint);
             setStartQuery(nextLabel);
           } else if (point.kind === 'stop') {
-            setStopPosition(nextPoint);
-            setStopQuery(nextLabel);
+            setStopPositions(prev => prev.map((stop, index) => (index === stopIndex ? nextPoint : stop)));
           } else {
             setDestinationPosition(nextPoint);
             setDestinationQuery(nextLabel);
@@ -532,13 +560,16 @@ function Mappa() {
 
     setStartPosition(nextStart);
     setDestinationPosition(nextDestination);
-    setStopPosition(stopPosition ? { ...stopPosition, kind: 'stop' } : null);
+    setStopPositions(prev => prev.map(stop => ({ ...stop })));
     setStartQuery(nextStart?.label || '');
-    setStopQuery(stopPosition?.label || '');
+    setStopQuery('');
     setDestinationQuery(nextDestination?.label || '');
     setActiveField('start');
     clearRoute();
     setShowRoutePanel(false);
+    if (leafletMapRef.current) {
+      updateMarkers(buildMarkerPoints(nextStart, stopPositions, nextDestination));
+    }
   }
 
   async function selectLocation(type, suggestion) {
@@ -549,12 +580,16 @@ function Mappa() {
     setDestinationSuggestions([]);
     setActiveField(type);
 
+    const nextStart = type === 'start' ? point : startPosition;
+    const nextStops = type === 'stop' ? [...stopPositions, point] : stopPositions;
+    const nextDestination = type === 'destination' ? point : destinationPosition;
+
     if (type === 'start') {
       setStartPosition(point);
       setStartQuery(point.label);
     } else if (type === 'stop') {
-      setStopPosition(point);
-      setStopQuery(point.label);
+      setStopPositions(nextStops);
+      setStopQuery('');
     } else {
       setDestinationPosition(point);
       setDestinationQuery(point.label);
@@ -562,14 +597,10 @@ function Mappa() {
 
     if (leafletMapRef.current) {
       leafletMapRef.current.setView([point.lat, point.lng], 12);
-      updateMarkers([
-        ...(type === 'start' && point ? [point] : startPosition ? [{ ...startPosition, kind: 'start' }] : []),
-        ...(type === 'stop' && point ? [point] : stopPosition ? [{ ...stopPosition, kind: 'stop' }] : []),
-        ...(type === 'destination' && point ? [point] : destinationPosition ? [{ ...destinationPosition, kind: 'destination' }] : []),
-      ]);
+      updateMarkers(buildMarkerPoints(nextStart, nextStops, nextDestination));
     }
 
-    setStatus(type === 'start' ? 'Partenza impostata.' : type === 'stop' ? 'Sosta impostata.' : 'Destinazione impostata.');
+    setStatus(type === 'start' ? 'Partenza impostata.' : type === 'stop' ? 'Sosta aggiunta.' : 'Destinazione impostata.');
   }
 
   async function handleMapClick(lat, lng) {
@@ -578,8 +609,8 @@ function Mappa() {
       ? activeField
       : !startPosition
         ? 'start'
-        : !stopPosition
-          ? 'stop'
+        : !destinationPosition
+          ? 'destination'
           : 'destination';
     await selectLocation(kind, { lat, lng, label });
   }
@@ -614,11 +645,12 @@ function Mappa() {
         icon: makeIcon('A', '#00c853'),
       }).addTo(markersLayerRef.current).bindPopup(`Partenza: ${routeData.start.label}`);
     }
-    if (routeData.stop) {
-      L.marker([routeData.stop.lat, routeData.stop.lng], {
-        icon: makeIcon('S', '#00a6ff'),
-      }).addTo(markersLayerRef.current).bindPopup(`Sosta: ${routeData.stop.label}`);
-    }
+    const normalizedStops = normalizeRouteStops(routeData.stops, routeData.stop);
+    normalizedStops.forEach((stop, index) => {
+      L.marker([stop.lat, stop.lng], {
+        icon: makeIcon(String(Math.min(index + 1, 99)), '#00a6ff'),
+      }).addTo(markersLayerRef.current).bindPopup(`Sosta ${index + 1}: ${stop.label}`);
+    });
     if (routeData.end) {
       L.marker([routeData.end.lat, routeData.end.lng], {
         icon: makeIcon('B', '#ff6600'),
@@ -639,7 +671,7 @@ function Mappa() {
       duration: formatDuration(step.duration),
     })));
     if (routeData.start && routeData.end) {
-      const middle = routeData.stop ? ` -> ${routeData.stop.label}` : '';
+      const middle = normalizedStops.length ? ` -> ${normalizedStops.map(stop => stop.label).join(' -> ')}` : '';
       setRouteLabel(`${routeData.start.label}${middle} -> ${routeData.end.label}`);
     }
   }
@@ -667,11 +699,7 @@ function Mappa() {
 
         if (leafletMapRef.current) {
           leafletMapRef.current.setView([point.lat, point.lng], 14);
-          updateMarkers([
-            point,
-            ...(stopPosition ? [{ ...stopPosition, kind: 'stop' }] : []),
-            ...(destinationPosition ? [{ ...destinationPosition, kind: 'destination' }] : []),
-          ]);
+          updateMarkers(buildMarkerPoints(point, stopPositions, destinationPosition));
         }
       },
       () => setStatus('Impossibile ottenere la posizione attuale.'),
@@ -690,7 +718,7 @@ function Mappa() {
       const profile = travelModeToProfile[travelMode] || 'driving';
       const viaPoints = [
         `${startPosition.lng},${startPosition.lat}`,
-        ...(stopPosition ? [`${stopPosition.lng},${stopPosition.lat}`] : []),
+        ...stopPositions.map(stop => `${stop.lng},${stop.lat}`),
         `${destinationPosition.lng},${destinationPosition.lat}`,
       ];
       const response = await fetch(
@@ -706,7 +734,8 @@ function Mappa() {
       const latLngs = coordinates.map(([lng, lat]) => [lat, lng]);
       await renderRoute({
         start: startPosition,
-        stop: stopPosition,
+        stops: stopPositions,
+        stop: stopPositions[0] || null,
         end: destinationPosition,
         path: latLngs,
         distanceKm: (route.distance / 1000).toFixed(1),
@@ -721,7 +750,7 @@ function Mappa() {
       setFollowNavigation(true);
       setEventForm(prev => ({
         ...prev,
-        title: prev.title || `Percorso: ${startPosition.label}${stopPosition ? ` -> ${stopPosition.label}` : ''} -> ${destinationPosition.label}`,
+        title: prev.title || `Percorso: ${startPosition.label}${stopPositions.length ? ` -> ${stopPositions.map(stop => stop.label).join(' -> ')}` : ''} -> ${destinationPosition.label}`,
         startTime: prev.startTime || new Date().toTimeString().slice(0, 5),
         endTime: prev.endTime || new Date(Date.now() + route.duration * 1000).toTimeString().slice(0, 5),
       }));
@@ -767,7 +796,8 @@ function Mappa() {
         image: '',
         mapRoute: {
           start: startPosition,
-          stop: stopPosition,
+          stops: stopPositions,
+          stop: stopPositions[0] || null,
           end: destinationPosition,
           path: routePath,
           distance: routeInfo.distanceKm,
@@ -881,7 +911,7 @@ function Mappa() {
                     value={stopQuery}
                     onFocus={() => setActiveField('stop')}
                     onChange={e => setStopQuery(e.target.value)}
-                    placeholder="Sosta (opzionale)"
+                    placeholder="Aggiungi sosta"
                     style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', boxSizing: 'border-box' }}
                   />
                   {stopSuggestions.length > 0 && stopQuery.trim().length >= 3 && (
@@ -899,6 +929,37 @@ function Mappa() {
                     </div>
                   )}
                 </div>
+
+                {stopPositions.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {stopPositions.map((stop, index) => (
+                      <div key={`${stop.lat}-${stop.lng}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#1b1b1b', borderRadius: '10px', padding: '8px 10px' }}>
+                        <span style={{ minWidth: '22px', height: '22px', borderRadius: '999px', background: '#00a6ff', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}>
+                          {index + 1}
+                        </span>
+                        <span style={{ flex: 1, fontSize: '0.82rem', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {stop.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextStops = stopPositions.filter((_, stopIndex) => stopIndex !== index);
+                            clearRoute();
+                            setStopPositions(nextStops);
+                            setStopQuery('');
+                            if (leafletMapRef.current) {
+                              updateMarkers(buildMarkerPoints(startPosition, nextStops, destinationPosition));
+                            }
+                            setStatus('Sosta rimossa.');
+                          }}
+                          style={{ border: 'none', background: '#5a1d1d', color: '#fff', borderRadius: '8px', padding: '6px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                        >
+                          Rimuovi
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div style={{ position: 'relative' }}>
                   <input
@@ -944,7 +1005,7 @@ function Mappa() {
                     style={{ width: '100%', minWidth: 0, flex: '1 1 150px', height: '38px', fontSize: '0.82rem', padding: '6px 10px' }}
                     onClick={() => {
                       setStartPosition(null);
-                      setStopPosition(null);
+                      setStopPositions([]);
                       setDestinationPosition(null);
                       setStartQuery('');
                       setStopQuery('');
