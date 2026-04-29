@@ -831,15 +831,6 @@ function Mappa() {
         setStatus('Impossibile calcolare il percorso.');
       }
     }
-                color: '#fff',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '10px 14px',
-                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                cursor: hasRoute ? 'pointer' : 'not-allowed',
-                whiteSpace: 'nowrap',
               }}
             >
               Aggiungi evento
