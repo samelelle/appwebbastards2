@@ -831,33 +831,7 @@ function Mappa() {
         setStatus('Impossibile calcolare il percorso.');
       }
     }
-        <div style={{ position: 'fixed', left: '10px', right: '10px', top: isMobile ? 'calc(10px + env(safe-area-inset-top))' : '94px', zIndex: 7200, pointerEvents: 'none' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', pointerEvents: 'auto' }}>
-            <button
-              type="button"
-              onClick={() => setShowSearchPanel(prev => !prev)}
-              style={{
-                background: showSearchPanel ? '#ff6600' : '#222',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '10px 14px',
-                boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {showSearchPanel ? 'Nascondi ricerca' : 'Cerca'}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCreateEventFromRoute}
-              disabled={!hasRoute}
-              style={{
-                background: hasRoute ? '#ff6600' : '#555',
+  // ...existing code...
                 color: '#fff',
                 border: 'none',
                 borderRadius: '14px',
