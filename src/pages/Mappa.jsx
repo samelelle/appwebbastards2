@@ -831,7 +831,6 @@ function Mappa() {
         setStatus('Impossibile calcolare il percorso.');
       }
     }
-  // ...existing code...
                 color: '#fff',
                 border: 'none',
                 borderRadius: '14px',
