@@ -151,7 +151,8 @@ function Riunioni({ isDevMode }) {
             title: 'Nuova riunione',
             body: form.ordine,
             url: window.location.origin + '/riunioni',
-            exclude_user_id: myIscrittoId
+            exclude_user_id: myIscrittoId,
+            type: 'riunione'
           })
         });
       } catch (e) { /* ignora errori push */ }

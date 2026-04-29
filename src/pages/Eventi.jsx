@@ -346,7 +346,8 @@ function Eventi({ isDevMode }) {
             title: 'Nuovo evento',
             body: form.title,
             url: window.location.origin + '/eventi',
-            exclude_user_id: myIscrittoId
+            exclude_user_id: myIscrittoId,
+            type: 'evento'
           })
         });
       } catch (e) { /* ignora errori push */ }
