@@ -94,7 +94,14 @@ function Rubrica({ isDevMode }) {
       }
     const [searchIscritto, setSearchIscritto] = useState('');
   const isMobile = useIsMobile();
-  const categorieDisponibili = ['Full', 'Prospect', 'Viminale'];
+  // Mostra solo le categorie/gruppi a cui l'utente appartiene
+  const allCategorie = ['Full', 'Prospect', 'Viminale'];
+  const categorieUtente = useMemo(() => {
+    if (isDevMode) return allCategorie;
+    if (!identitaCorrente) return [];
+    return allCategorie.filter(cat => getCategorieArray(identitaCorrente).includes(cat));
+  }, [identitaCorrente, isDevMode]);
+  const categorieDisponibili = categorieUtente;
   const seenCategoryKey = 'bb-rubrica-seen-categories';
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
