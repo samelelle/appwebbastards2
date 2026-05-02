@@ -52,34 +52,24 @@ export default function ApprovaRegistrazione() {
   async function handleApprove() {
     setError('');
     setSuccess('');
-    // 1. Crea utente su Supabase Auth
-    const { data: user, error: userError } = await supabase.auth.admin.createUser({
-      email: pending.email,
-      password: pending.password,
-      email_confirm: true,
-    });
-    if (userError) {
-      setError('Errore creazione utente: ' + userError.message);
-      return;
+    // Chiamata API backend per approvazione
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/approva-registrazione', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ruolo, categorie }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        setError(result.error || 'Errore approvazione');
+        return;
+      }
+      setSuccess('Utente approvato e iscritto creato!');
+    } catch (err) {
+      setError('Errore di rete o server: ' + err.message);
     }
-    // 2. Inserisci in iscritti
-    const { error: iscrittiError } = await supabase.from('iscritti').insert([
-      {
-        email: pending.email,
-        ruolo: ruolo,
-        cognome: pending.cognome,
-        nome: pending.nome,
-        telefono: pending.telefono,
-        categorie: categorie.length ? categorie : [ruolo],
-      },
-    ]);
-    if (iscrittiError) {
-      setError('Utente creato, ma errore su iscritti: ' + iscrittiError.message);
-      return;
-    }
-    // 3. Elimina la richiesta pending
-    await supabase.from('pending_registrations').delete().eq('id', id);
-    setSuccess('Utente approvato e iscritto creato!');
   }
 
 
@@ -101,7 +91,11 @@ export default function ApprovaRegistrazione() {
       <div><b>Telefono:</b> {pending.telefono}</div>
       <div><b>Documento:</b> {pending.documento}</div>
       <div style={{ margin: '12px 0' }}>
-        <b>Categorie:</b> <input value={categorie.join(',')} onChange={e => setCategorie(e.target.value.split(',').map(s => s.trim()))} placeholder="es: Full, Viminale" />
+        <b>Categorie:</b> <select multiple value={categorie} onChange={e => setCategorie(Array.from(e.target.selectedOptions, o => o.value))} style={{width:'100%',marginTop:4}}>
+  <option value="Full">Full</option>
+  <option value="Prospect">Prospect</option>
+  <option value="Viminale">Viminale</option>
+</select>
       </div>
       <button onClick={handleApprove} style={{ padding: '10px 24px', background: '#0c0', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', marginRight: 12 }}>Approva</button>
       <button onClick={handleReject} disabled={loading} style={{background: '#e74c3c', color: 'white', padding: '10px 24px', border: 'none', borderRadius: 8, fontWeight: 'bold'}}>Rifiuta</button>
