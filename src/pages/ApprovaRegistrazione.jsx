@@ -23,12 +23,14 @@ export default function ApprovaRegistrazione() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    console.log('DEBUG: id ricevuto per approvazione:', id);
     supabase
       .from('pending_registrations')
       .select('*')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
+        console.log('DEBUG: risultato query pending_registrations:', { data, error });
         if (error || !data) {
           setError('Richiesta non trovata.');
         } else {
