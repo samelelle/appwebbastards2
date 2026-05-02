@@ -95,6 +95,16 @@ function Rubrica({ isDevMode }) {
     const [searchIscritto, setSearchIscritto] = useState('');
   const isMobile = useIsMobile();
   const categorieDisponibili = ['Full', 'Prospect', 'Viminale'];
+
+  // Utility: array categorie dell'utente corrente
+  function getCategorieArray(iscritto) {
+    if (!iscritto) return [];
+    if (Array.isArray(iscritto.categorie)) return iscritto.categorie.map(c => String(c).toLowerCase());
+    if (iscritto.categoria) return [String(iscritto.categoria).toLowerCase()];
+    return [];
+  }
+
+  const mieCategorie = getCategorieArray(identitaCorrente);
   const seenCategoryKey = 'bb-rubrica-seen-categories';
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
@@ -621,7 +631,12 @@ function Rubrica({ isDevMode }) {
     ? (chatByCategoria[categoriaAperta] || []).filter(msg => !hiddenMsgIds.includes(msg.id))
     : [];
   const isOverlayOpen = Boolean(categoriaAperta || showMembersModal || showIdentityModal || showAddModal);
+  // Conta solo le chat delle categorie a cui appartiene l'utente
   const categoryMessageCounts = categorieDisponibili.reduce((accumulator, categoria) => {
+    if (!mieCategorie.includes(String(categoria).toLowerCase())) {
+      accumulator[categoria] = 0;
+      return accumulator;
+    }
     const messages = Array.isArray(chatByCategoria[categoria]) ? chatByCategoria[categoria] : [];
     const seenCount = Number(seenByCategory[categoria] || 0);
     accumulator[categoria] = Math.max(0, messages.filter(message => !isOwnMessage(message)).length - seenCount);
@@ -660,10 +675,11 @@ function Rubrica({ isDevMode }) {
 
     knownMessageIdsRef.current = nextIds;
 
-    // NOTIFICA SOLO SE ESISTONO MESSAGGI NON VISTI IN ALMENO UNA CATEGORIA
+    // NOTIFICA SOLO SE ESISTONO MESSAGGI NON VISTI IN ALMENO UNA CATEGORIA A CUI L'UTENTE APPARTIENE
     let foundUnseen = false;
     let noticeText = '';
     for (const [categoria, messages] of Object.entries(chatByCategoria)) {
+      if (!mieCategorie.includes(String(categoria).toLowerCase())) continue;
       if (!Array.isArray(messages) || messages.length === 0) continue;
       // Prendi solo i messaggi non miei
       const notMyMessages = messages.filter(m => !isOwnMessage(m));
@@ -692,7 +708,7 @@ function Rubrica({ isDevMode }) {
     } else {
       setChatNotice('');
     }
-  }, [authorLabel, chatByCategoria, isOwnMessage, notificationsAllowed, categoriaAperta]);
+  }, [authorLabel, chatByCategoria, isOwnMessage, notificationsAllowed, categoriaAperta, mieCategorie]);
 
   useEffect(() => {
     if (!showAddModal) return undefined;

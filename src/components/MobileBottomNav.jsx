@@ -4,7 +4,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 
 // ...existing code...
-import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
+import { getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
 import { useState } from 'react';
 
 function MobileBottomNav() {
@@ -14,6 +14,7 @@ function MobileBottomNav() {
   const navRef = useRef(null);
   const [unreadEvents, setUnreadEvents] = useState(null);
   const [unreadChats, setUnreadChats] = useState(null);
+  const [mieCategorie, setMieCategorie] = useState([]);
   const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings());
 
   useEffect(() => {
@@ -32,9 +33,37 @@ function MobileBottomNav() {
   }, []);
 
   useEffect(() => {
+    // Recupera le categorie dell'utente corrente da localStorage (come in Rubrica)
+    function getCategorieArray(iscritto) {
+      if (!iscritto) return [];
+      if (Array.isArray(iscritto.categorie)) return iscritto.categorie.map(c => String(c).toLowerCase());
+      if (iscritto.categoria) return [String(iscritto.categoria).toLowerCase()];
+      return [];
+    }
+    function getIdentitaCorrente() {
+      try {
+        const raw = localStorage.getItem('bb-my-iscritto-id') || localStorage.getItem('bb-current-chat-user-id');
+        const rubrica = JSON.parse(localStorage.getItem('bb-rubrica') || '[]');
+        return rubrica.find(i => String(i.id) === String(raw));
+      } catch { return null; }
+    }
     const updateUnread = () => {
       setUnreadEvents(getUnreadEventCount());
-      setUnreadChats(getUnreadChatCount());
+      // Calcola unread chat solo per le categorie dell'utente
+      const identita = getIdentitaCorrente();
+      const mieCat = getCategorieArray(identita);
+      setMieCategorie(mieCat);
+      // Leggi chatByCategoria da localStorage
+      let chatByCategoria = {};
+      try {
+        chatByCategoria = JSON.parse(localStorage.getItem('bb-rubrica-chat') || '{}');
+      } catch {}
+      let count = 0;
+      for (const cat of mieCat) {
+        const messages = Array.isArray(chatByCategoria[cat]) ? chatByCategoria[cat] : [];
+        count += messages.length;
+      }
+      setUnreadChats(count);
     };
 
     updateUnread();
