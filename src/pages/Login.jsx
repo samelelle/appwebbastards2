@@ -6,6 +6,8 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [ruolo, setRuolo] = useState('');
+  const [cognome, setCognome] = useState('');
   const [nome, setNome] = useState('');
   const [telefono, setTelefono] = useState('');
   const [documento, setDocumento] = useState('');
@@ -38,9 +40,12 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
         if (loginError) throw loginError;
       } else {
         // Send registration info to backend for admin notification
+
         const registrationData = {
           email: email.trim(),
           password,
+          ruolo: ruolo.trim(),
+          cognome: cognome.trim(),
           nome: nome.trim(),
           telefono: telefono.trim(),
           documento: documento.trim(),
@@ -118,7 +123,27 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
 
           {mode === 'register' && (
             <>
-              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Nome e Cognome</label>
+              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Ruolo</label>
+              <input
+                type="text"
+                value={ruolo}
+                onChange={e => setRuolo(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
+                disabled={loading}
+              />
+
+              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Cognome</label>
+              <input
+                type="text"
+                value={cognome}
+                onChange={e => setCognome(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
+                disabled={loading}
+              />
+
+              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Nome</label>
               <input
                 type="text"
                 value={nome}
