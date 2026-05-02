@@ -94,7 +94,12 @@ function Rubrica({ isDevMode }) {
       }
     const [searchIscritto, setSearchIscritto] = useState('');
   const isMobile = useIsMobile();
-  const categorieDisponibili = ['Full', 'Prospect', 'Viminale'];
+  // Calcola le categorie disponibili solo per l'utente corrente
+  const categorieDisponibili = useMemo(() => {
+    if (isDevMode) return ['Full', 'Prospect', 'Viminale'];
+    if (!identitaCorrente) return [];
+    return getCategorieArray(identitaCorrente).filter(Boolean);
+  }, [identitaCorrente, isDevMode]);
   const seenCategoryKey = 'bb-rubrica-seen-categories';
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
@@ -784,54 +789,30 @@ function Rubrica({ isDevMode }) {
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: isMobile ? '100%' : '360px', maxWidth: '92vw', margin: '0 auto', marginTop: isMobile ? 0 : '3cm', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 72px) 12px 8px 12px' : 0, boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto' }}>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
-          onClick={() => {
-            setReplyTo(null);
-            if (isMembroCorrenteInCategoria('Full')) {
-              setCategoriaAperta('Full');
+
+        {/* Mostra solo le categorie a cui l'utente appartiene */}
+        {categorieDisponibili.length === 0 && (
+          <div style={{ color: '#ffb8b8', margin: '12px 0' }}>Non appartieni a nessuna categoria chat.</div>
+        )}
+        {categorieDisponibili.map(cat => (
+          <button
+            key={cat}
+            className="bb-event-btn"
+            style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+            onClick={() => {
+              setReplyTo(null);
+              setCategoriaAperta(cat);
               setChatPermissionError('');
-            } else {
-              setCategoriaAperta(null);
-              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
-              setTimeout(() => setChatPermissionError(''), 3500);
-            }
-          }}
-        >
-          Full
-          {categoryMessageCounts.Full > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Full > 99 ? '99+' : categoryMessageCounts.Full}</span>}
-        </button>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
-          onClick={() => {
-            setReplyTo(null);
-            if (isMembroCorrenteInCategoria('Prospect')) {
-              setCategoriaAperta('Prospect');
-              setChatPermissionError('');
-            } else {
-              setCategoriaAperta(null);
-              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
-              setTimeout(() => setChatPermissionError(''), 3500);
-            }
-          }}
-        >
-          Prospect
-          {categoryMessageCounts.Prospect > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Prospect > 99 ? '99+' : categoryMessageCounts.Prospect}</span>}
-        </button>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
-          onClick={() => {
-            setReplyTo(null);
-            if (isMembroCorrenteInCategoria('Viminale')) {
-              setCategoriaAperta('Viminale');
-              setChatPermissionError('');
-            } else {
-              setCategoriaAperta(null);
-              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
-              setTimeout(() => setChatPermissionError(''), 3500);
-            }
-          }}
-        >
-          Viminale
-          {categoryMessageCounts.Viminale > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Viminale > 99 ? '99+' : categoryMessageCounts.Viminale}</span>}
-        </button>
+            }}
+          >
+            {cat}
+            {categoryMessageCounts[cat] > 0 && (
+              <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>
+                {categoryMessageCounts[cat] > 99 ? '99+' : categoryMessageCounts[cat]}
+              </span>
+            )}
+          </button>
+        ))}
 
         <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => setShowIdentityModal(true)}>
           Identita chat: {identitaCorrente ? displayName(identitaCorrente) : 'Non selezionata'}
