@@ -143,7 +143,7 @@ function Rubrica({ isDevMode }) {
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const [iscritti, setIscritti] = useState([]);
   const [chatByCategoria, setChatByCategoria] = useState({});
-  const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', email: '', categorie: [] });
+  const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', email: '', documento: '', categorie: [] });
   const [seenByCategory, setSeenByCategory] = useState(() => {
     const saved = localStorage.getItem(seenCategoryKey);
     if (saved) {
@@ -566,6 +566,8 @@ function Rubrica({ isDevMode }) {
       cognome: iscritto.cognome || '',
       nome: iscritto.nome || '',
       telefono: iscritto.telefono || '',
+      email: iscritto.email || '',
+      documento: iscritto.documento || '',
       categorie: getCategorieArray(iscritto),
     });
     setSaveError('');
@@ -610,6 +612,7 @@ function Rubrica({ isDevMode }) {
         nome,
         telefono,
         email,
+        documento: form.documento,
         categorie: form.categorie,
       }).eq('id', editingIscrittoId);
       if (error) {
@@ -626,6 +629,7 @@ function Rubrica({ isDevMode }) {
           nome,
           telefono,
           email,
+          documento: form.documento,
           categorie: form.categorie,
         },
       ]).select();
@@ -636,6 +640,24 @@ function Rubrica({ isDevMode }) {
       if (data && data[0]) {
         setMyIscrittoId(data[0].id);
         nuovoId = data[0].id;
+        // Invia email a admin
+        try {
+          await fetch('/api/register-notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nome,
+              cognome,
+              telefono,
+              email,
+              documento: form.documento,
+              ruolo,
+              categorie: form.categorie,
+            }),
+          });
+        } catch (e) {
+          // Silenzia errori email
+        }
       }
     }
     // Aggiorna subito la rubrica in localStorage e l'identità locale se il nuovo/aggiornato iscritto è almeno full o viminale
@@ -1362,8 +1384,12 @@ function Rubrica({ isDevMode }) {
               <label style={{ fontWeight: 600 }}>Nome</label>
               <input name="nome" type="text" value={form.nome} onChange={handleInput} placeholder="Nome" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
 
+
               <label style={{ fontWeight: 600 }}>Telefono</label>
-              <input name="telefono" type="tel" value={form.telefono} onChange={handleInput} placeholder="Numero di telefono" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
+              <input name="telefono" type="tel" value={form.telefono} onChange={handleInput} placeholder="Numero di telefono" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} required />
+
+              <label style={{ fontWeight: 600 }}>Numero carta d'identità o patente</label>
+              <input name="documento" type="text" value={form.documento || ''} onChange={handleInput} placeholder="Numero documento" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} required />
 
               <label style={{ fontWeight: 600 }}>Categorie rubrica (selezione multipla)</label>
               {isMobile ? (
