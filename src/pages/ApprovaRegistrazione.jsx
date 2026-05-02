@@ -47,9 +47,7 @@ export default function ApprovaRegistrazione() {
 
   // Solo admin
   const adminEmail = 'mmonthz@gmail.com';
-  if (!session || session.user.email !== adminEmail) {
-    return <div>Accesso negato. Solo l'amministratore può approvare.</div>;
-  }
+
 
   async function handleApprove() {
     setError('');
