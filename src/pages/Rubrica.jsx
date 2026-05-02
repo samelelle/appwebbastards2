@@ -1299,8 +1299,10 @@ function Rubrica({ isDevMode }) {
                         <button
                           type="button"
                           className="bb-event-btn"
-                          style={{ width: 'auto', minWidth: '0', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem' }}
-                          onClick={() => handleDeleteIscritto(iscritto.id)}
+                          style={{ width: 'auto', minWidth: '0', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem', background: '#ff2222', color: '#fff' }}
+                          onClick={() => {
+                            if (window.confirm('Vuoi davvero cancellare questo iscritto?')) handleDeleteIscritto(iscritto.id);
+                          }}
                         >
                           Cancella
                         </button>
