@@ -6,6 +6,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Solo POST' });
   }
+  console.log('Ricevuta richiesta di registrazione:', req.body);
   const { email, password, ruolo, cognome, nome, telefono, documento } = req.body || {};
   if (!email || !password || !ruolo || !cognome || !nome || !telefono || !documento) {
     return res.status(400).json({ error: 'Tutti i campi sono obbligatori.' });
@@ -31,8 +32,10 @@ export default async function handler(req, res) {
 
   try {
     await transporter.sendMail(mailOptions);
+    console.log('Email inviata con successo a', mailOptions.to);
     return res.status(200).json({ success: true });
   } catch (err) {
+    console.error('Errore invio email:', err);
     return res.status(500).json({ error: 'Errore invio email', details: err.message });
   }
 }
