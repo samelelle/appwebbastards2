@@ -116,6 +116,11 @@ function Rubrica({ isDevMode }) {
   const [chatInput, setChatInput] = useState('');
   const [chatImageData, setChatImageData] = useState('');
   const [chatImageError, setChatImageError] = useState('');
+  const [chatAudioBlob, setChatAudioBlob] = useState(null);
+  const [chatAudioUrl, setChatAudioUrl] = useState('');
+  const [chatAudioError, setChatAudioError] = useState('');
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [showIdentityModal, setShowIdentityModal] = useState(false);
   const [myIscrittoId, setMyIscrittoId] = useState(
     () =>
@@ -154,12 +159,68 @@ function Rubrica({ isDevMode }) {
   const chatEndRef = useRef(null);
   const galleryInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const knownMessageIdsRef = useRef(new Set());
   const initializedMessagesRef = useRef(false);
 
   function openChatImage(imageData) {
     if (!imageData) return;
     setOpenedChatImage(imageData);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (chatAudioUrl) URL.revokeObjectURL(chatAudioUrl);
+    };
+  }, [chatAudioUrl]);
+
+  async function startAudioRecording() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setChatAudioError('Registrazione audio non supportata su questo dispositivo.');
+      return;
+    }
+    setChatAudioError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : undefined;
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        audioChunksRef.current = [];
+        if (chatAudioUrl) URL.revokeObjectURL(chatAudioUrl);
+        setChatAudioBlob(blob);
+        setChatAudioUrl(URL.createObjectURL(blob));
+        setIsRecordingAudio(false);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecordingAudio(true);
+    } catch {
+      setChatAudioError('Impossibile avviare la registrazione. Controlla i permessi microfono.');
+    }
+  }
+
+  function stopAudioRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop();
+    }
+  }
+
+  function clearAudioRecording() {
+    if (chatAudioUrl) URL.revokeObjectURL(chatAudioUrl);
+    setChatAudioBlob(null);
+    setChatAudioUrl('');
+    setChatAudioError('');
+    setIsRecordingAudio(false);
   }
 
   // Gestione selezione multipla messaggi
@@ -325,6 +386,7 @@ function Rubrica({ isDevMode }) {
               authorName: msg.authorName || msg.author || '',
               text: msg.message,
               imageData: msg.image_url,
+              audioUrl: msg.audio_url,
               timestamp: msg.created_at,
             });
           }
@@ -350,6 +412,7 @@ function Rubrica({ isDevMode }) {
               authorName: msg.authorName || msg.author || '',
               text: msg.message,
               imageData: msg.image_url,
+              audioUrl: msg.audio_url,
               timestamp: msg.created_at,
             });
             return { ...prev, [cat]: arr };
@@ -373,6 +436,7 @@ function Rubrica({ isDevMode }) {
                 authorName: msg.authorName || msg.author || '',
                 text: msg.message,
                 imageData: msg.image_url,
+                audioUrl: msg.audio_url,
                 timestamp: msg.created_at,
               };
             }
@@ -738,13 +802,40 @@ function Rubrica({ isDevMode }) {
     if (!message) return null;
     if (message.text) return message.text;
     if (message.imageData) return '[Foto]';
+    if (message.audioUrl) return '[Vocale]';
     return '[Messaggio]';
+  }
+
+  async function uploadChatAudio(blob) {
+    const bucket = 'chat-audio';
+    const ext = blob.type && blob.type.includes('ogg') ? 'ogg' : 'webm';
+    const fileName = `${identitaCorrente?.id || 'anon'}-${Date.now()}.${ext}`;
+    const filePath = `${String(categoriaAperta || 'general').toLowerCase()}/${fileName}`;
+    const { error } = await supabase
+      .storage
+      .from(bucket)
+      .upload(filePath, blob, { contentType: blob.type || 'audio/webm', upsert: true });
+    if (error) throw error;
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return data?.publicUrl || '';
   }
 
   async function handleSendMessage() {
     if (!categoriaAperta || !identitaCorrente || !membroCorrenteInCategoria) return;
     const testo = chatInput.trim();
-    if (!testo && !chatImageData) return;
+    if (!testo && !chatImageData && !chatAudioBlob) return;
+
+    let audioUrl = null;
+    if (chatAudioBlob) {
+      try {
+        setIsUploadingAudio(true);
+        audioUrl = await uploadChatAudio(chatAudioBlob);
+      } catch {
+        setChatAudioError('Errore durante il caricamento del vocale. Riprova.');
+        setIsUploadingAudio(false);
+        return;
+      }
+    }
 
     await supabase.from('chat').insert([
       {
@@ -752,6 +843,7 @@ function Rubrica({ isDevMode }) {
         user_id: identitaCorrente.id,
         message: testo,
         image_url: chatImageData || null,
+        audio_url: audioUrl || null,
         // puoi aggiungere altri campi se vuoi (es. replyTo)
       },
     ]);
@@ -763,7 +855,7 @@ function Rubrica({ isDevMode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: 'Nuovo messaggio in chat',
-          body: testo ? testo.slice(0, 60) : '[Foto]',
+          body: testo ? testo.slice(0, 60) : (audioUrl ? '[Vocale]' : '[Foto]'),
           url: window.location.origin + '/rubrica',
           exclude_user_id: identitaCorrente.id,
           type: 'chat',
@@ -775,6 +867,8 @@ function Rubrica({ isDevMode }) {
     setChatInput('');
     setChatImageData('');
     setChatImageError('');
+    clearAudioRecording();
+    setIsUploadingAudio(false);
     setReplyTo(null);
   }
 
@@ -804,54 +898,42 @@ function Rubrica({ isDevMode }) {
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: isMobile ? '100%' : '360px', maxWidth: '92vw', margin: '0 auto', marginTop: isMobile ? 0 : '3cm', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 72px) 12px 8px 12px' : 0, boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto' }}>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
-          onClick={() => {
-            setReplyTo(null);
-            if (isMembroCorrenteInCategoria('Full')) {
+        {isMembroCorrenteInCategoria('Full') && (
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+            onClick={() => {
+              setReplyTo(null);
               setCategoriaAperta('Full');
               setChatPermissionError('');
-            } else {
-              setCategoriaAperta(null);
-              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
-              setTimeout(() => setChatPermissionError(''), 3500);
-            }
-          }}
-        >
-          Full
-          {categoryMessageCounts.Full > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Full > 99 ? '99+' : categoryMessageCounts.Full}</span>}
-        </button>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
-          onClick={() => {
-            setReplyTo(null);
-            if (isMembroCorrenteInCategoria('Prospect')) {
+            }}
+          >
+            Full
+            {categoryMessageCounts.Full > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Full > 99 ? '99+' : categoryMessageCounts.Full}</span>}
+          </button>
+        )}
+        {isMembroCorrenteInCategoria('Prospect') && (
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+            onClick={() => {
+              setReplyTo(null);
               setCategoriaAperta('Prospect');
               setChatPermissionError('');
-            } else {
-              setCategoriaAperta(null);
-              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
-              setTimeout(() => setChatPermissionError(''), 3500);
-            }
-          }}
-        >
-          Prospect
-          {categoryMessageCounts.Prospect > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Prospect > 99 ? '99+' : categoryMessageCounts.Prospect}</span>}
-        </button>
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
-          onClick={() => {
-            setReplyTo(null);
-            if (isMembroCorrenteInCategoria('Viminale')) {
+            }}
+          >
+            Prospect
+            {categoryMessageCounts.Prospect > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Prospect > 99 ? '99+' : categoryMessageCounts.Prospect}</span>}
+          </button>
+        )}
+        {isMembroCorrenteInCategoria('Viminale') && (
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+            onClick={() => {
+              setReplyTo(null);
               setCategoriaAperta('Viminale');
               setChatPermissionError('');
-            } else {
-              setCategoriaAperta(null);
-              setChatPermissionError('Non hai i permessi per accedere a questa chat.');
-              setTimeout(() => setChatPermissionError(''), 3500);
-            }
-          }}
-        >
-          Viminale
-          {categoryMessageCounts.Viminale > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Viminale > 99 ? '99+' : categoryMessageCounts.Viminale}</span>}
-        </button>
+            }}
+          >
+            Viminale
+            {categoryMessageCounts.Viminale > 0 && <span style={{ position: 'absolute', top: '50%', right: '10px', transform: 'translateY(-50%)', minWidth: '20px', height: '20px', borderRadius: '999px', background: '#ff2b2b', color: '#fff', fontSize: '0.7rem', lineHeight: '20px', fontWeight: 800, textAlign: 'center', padding: '0 5px', boxSizing: 'border-box' }}>{categoryMessageCounts.Viminale > 99 ? '99+' : categoryMessageCounts.Viminale}</span>}
+          </button>
+        )}
 
         <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => setShowIdentityModal(true)}>
           Identita chat: {identitaCorrente ? displayName(identitaCorrente) : 'Non selezionata'}
@@ -969,6 +1051,13 @@ function Rubrica({ isDevMode }) {
                         </div>
                       )}
                       {msg.text && <div style={{ fontSize: '0.95em' }}>{msg.text}</div>}
+                      {msg.audioUrl && (
+                        <audio
+                          controls
+                          src={msg.audioUrl}
+                          style={{ marginTop: msg.text ? '6px' : 0, width: '100%' }}
+                        />
+                      )}
                       {msg.imageData && (
                         <button
                           type="button"
@@ -1045,8 +1134,19 @@ function Rubrica({ isDevMode }) {
                 </div>
               )}
 
+              {chatAudioUrl && (
+                <div style={{ marginTop: '8px', background: '#2a2a2a', borderRadius: '8px', padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <audio controls src={chatAudioUrl} style={{ flex: 1 }} />
+                  <button type="button" onClick={clearAudioRecording} style={{ background: '#444', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer' }}>Rimuovi</button>
+                </div>
+              )}
+
               {chatImageError && (
                 <div style={{ marginTop: '6px', color: '#ffb366', fontSize: '0.82em' }}>{chatImageError}</div>
+              )}
+
+              {chatAudioError && (
+                <div style={{ marginTop: '6px', color: '#ffb366', fontSize: '0.82em' }}>{chatAudioError}</div>
               )}
 
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
@@ -1068,6 +1168,18 @@ function Rubrica({ isDevMode }) {
                 >
                   Scatta
                 </button>
+                <button
+                  type="button"
+                  className="bb-add-btn"
+                  style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: isRecordingAudio ? '#a33' : undefined }}
+                  onClick={isRecordingAudio ? stopAudioRecording : startAudioRecording}
+                  disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || isUploadingAudio}
+                >
+                  {isRecordingAudio ? 'Stop' : 'Vocale'}
+                </button>
+                {isRecordingAudio && (
+                  <div style={{ color: '#ff6666', fontSize: '0.78rem', alignSelf: 'center' }}>● Rec</div>
+                )}
                 <input
                   ref={galleryInputRef}
                   type="file"
@@ -1100,7 +1212,7 @@ function Rubrica({ isDevMode }) {
                   style={{ flex: 1, padding: '10px', borderRadius: '18px', border: 'none', fontSize: '0.95rem' }}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 />
-                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData)}>Invia</button>
+                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatAudioBlob) || isUploadingAudio}>{isUploadingAudio ? 'Invio...' : 'Invia'}</button>
               </div>
               {membriCategoriaAperta.length === 0 && (
                 <div style={{ marginTop: '6px', color: '#999', fontSize: '0.82em' }}>
