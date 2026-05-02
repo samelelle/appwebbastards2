@@ -104,7 +104,6 @@ function Rubrica({ isDevMode }) {
     return [];
   }
 
-  const mieCategorie = getCategorieArray(identitaCorrente);
   const seenCategoryKey = 'bb-rubrica-seen-categories';
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
@@ -608,6 +607,7 @@ function Rubrica({ isDevMode }) {
 
   const membriCategoriaAperta = iscrittiCategoriaAperta.map(iscritto => ({ id: iscritto.id, name: displayName(iscritto) }));
   const identitaCorrente = iscritti.find(iscritto => iscritto.id === currentUserId) || null;
+  const mieCategorie = getCategorieArray(identitaCorrente);
   // Funzione per controllare se l'identità corrente è membro di una categoria
   function isMembroCorrenteInCategoria(cat) {
     if (isDevMode) return true;
