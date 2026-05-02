@@ -99,8 +99,13 @@ function Rubrica({ isDevMode }) {
   // Utility: array categorie dell'utente corrente
   function getCategorieArray(iscritto) {
     if (!iscritto) return [];
-    if (Array.isArray(iscritto.categorie)) return iscritto.categorie.map(c => String(c).toLowerCase());
-    if (iscritto.categoria) return [String(iscritto.categoria).toLowerCase()];
+    if (Array.isArray(iscritto.categorie)) {
+      return iscritto.categorie
+        .map(c => String(c).trim())
+        .filter(Boolean);
+    }
+    if (typeof iscritto.categorie === 'string' && iscritto.categorie.trim()) return [iscritto.categorie.trim()];
+    if (typeof iscritto.categoria === 'string' && iscritto.categoria.trim()) return [iscritto.categoria.trim()];
     return [];
   }
 
@@ -594,29 +599,28 @@ function Rubrica({ isDevMode }) {
   }
 // --- FINE MODIFICA SUPABASE ISCRITTI ---
 
-  function getCategorieArray(iscritto) {
-    if (Array.isArray(iscritto.categorie)) return iscritto.categorie;
-    if (typeof iscritto.categorie === 'string' && iscritto.categorie.trim()) return [iscritto.categorie.trim()];
-    if (typeof iscritto.categoria === 'string' && iscritto.categoria.trim()) return [iscritto.categoria.trim()];
-    return [];
-  }
-
   const iscrittiCategoriaAperta = categoriaAperta
-    ? iscritti.filter(iscritto => getCategorieArray(iscritto).includes(categoriaAperta))
+    ? iscritti.filter(iscritto =>
+      getCategorieArray(iscritto)
+        .some(cat => String(cat).toLowerCase() === String(categoriaAperta).toLowerCase())
+    )
     : [];
 
   const membriCategoriaAperta = iscrittiCategoriaAperta.map(iscritto => ({ id: iscritto.id, name: displayName(iscritto) }));
   const identitaCorrente = iscritti.find(iscritto => iscritto.id === currentUserId) || null;
   const mieCategorie = getCategorieArray(identitaCorrente);
+  const mieCategorieLower = mieCategorie.map(cat => String(cat).toLowerCase());
   // Funzione per controllare se l'identità corrente è membro di una categoria
   function isMembroCorrenteInCategoria(cat) {
     if (isDevMode) return true;
-    return identitaCorrente ? getCategorieArray(identitaCorrente).includes(cat) : false;
+    return identitaCorrente
+      ? mieCategorieLower.includes(String(cat).toLowerCase())
+      : false;
   }
   const membroCorrenteInCategoria = isDevMode
     ? true
     : (identitaCorrente && categoriaAperta
-      ? getCategorieArray(identitaCorrente).includes(categoriaAperta)
+      ? mieCategorieLower.includes(String(categoriaAperta).toLowerCase())
       : false);
 
   // Applica blacklist locale per "elimina per me"
@@ -633,7 +637,7 @@ function Rubrica({ isDevMode }) {
   const isOverlayOpen = Boolean(categoriaAperta || showMembersModal || showIdentityModal || showAddModal);
   // Conta solo le chat delle categorie a cui appartiene l'utente
   const categoryMessageCounts = categorieDisponibili.reduce((accumulator, categoria) => {
-    if (!mieCategorie.includes(String(categoria).toLowerCase())) {
+    if (!mieCategorieLower.includes(String(categoria).toLowerCase())) {
       accumulator[categoria] = 0;
       return accumulator;
     }
@@ -679,7 +683,7 @@ function Rubrica({ isDevMode }) {
     let foundUnseen = false;
     let noticeText = '';
     for (const [categoria, messages] of Object.entries(chatByCategoria)) {
-      if (!mieCategorie.includes(String(categoria).toLowerCase())) continue;
+      if (!mieCategorieLower.includes(String(categoria).toLowerCase())) continue;
       if (!Array.isArray(messages) || messages.length === 0) continue;
       // Prendi solo i messaggi non miei
       const notMyMessages = messages.filter(m => !isOwnMessage(m));
