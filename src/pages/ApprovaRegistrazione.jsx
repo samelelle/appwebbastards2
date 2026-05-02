@@ -82,18 +82,19 @@ export default function ApprovaRegistrazione() {
     setSuccess('Utente approvato e iscritto creato!');
   }
 
+
+  const handleReject = async () => {
+    setLoading(true);
+    await supabase.from('pending_registrations').delete().eq('id', id);
+    setLoading(false);
+    setSuccess('Richiesta rifiutata. Nessun utente creato.');
+    setTimeout(() => window.location.href = '/', 2000);
+  };
+
   return (
     <div style={{ maxWidth: 480, margin: '40px auto', background: '#222', color: '#fff', padding: 24, borderRadius: 12 }}>
       <h2>Approvazione Registrazione</h2>
       <div><b>Email:</b> {pending.email}</div>
-  const handleReject = async () => {
-    setLoading(true);
-    // Elimina la richiesta pending
-    await supabase.from('pending_registrations').delete().eq('id', id);
-    setLoading(false);
-    setSuccess('Richiesta rifiutata. Nessun utente creato.');
-    setTimeout(() => navigate('/'), 2000);
-  };
       <div><b>Ruolo:</b> <input value={ruolo} onChange={e => setRuolo(e.target.value)} /></div>
       <div><b>Cognome:</b> {pending.cognome}</div>
       <div><b>Nome:</b> {pending.nome}</div>
@@ -102,10 +103,10 @@ export default function ApprovaRegistrazione() {
       <div style={{ margin: '12px 0' }}>
         <b>Categorie:</b> <input value={categorie.join(',')} onChange={e => setCategorie(e.target.value.split(',').map(s => s.trim()))} placeholder="es: Full, Viminale" />
       </div>
-      <button onClick={handleApprove} style={{ padding: '10px 24px', background: '#0c0', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold' }}>Approva</button>
+      <button onClick={handleApprove} style={{ padding: '10px 24px', background: '#0c0', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', marginRight: 12 }}>Approva</button>
+      <button onClick={handleReject} disabled={loading} style={{background: '#e74c3c', color: 'white', padding: '10px 24px', border: 'none', borderRadius: 8, fontWeight: 'bold'}}>Rifiuta</button>
       {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
       {success && <div style={{ color: 'lime', marginTop: 12 }}>{success}</div>}
     </div>
   );
 }
-      <button onClick={handleReject} disabled={loading} style={{background: '#e74c3c', color: 'white'}}>Rifiuta</button>
