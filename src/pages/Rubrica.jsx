@@ -694,6 +694,16 @@ function Rubrica({ isDevMode }) {
 
   const membriCategoriaAperta = iscrittiCategoriaAperta.map(iscritto => ({ id: iscritto.id, name: displayName(iscritto) }));
   const identitaCorrente = iscritti.find(iscritto => iscritto.id === currentUserId) || null;
+
+  // Se l'identità locale non esiste più tra gli iscritti, rimuovi la registrazione locale
+  useEffect(() => {
+    if (myIscrittoId && !identitaCorrente) {
+      localStorage.removeItem('bb-my-iscritto-id');
+      localStorage.removeItem('bb-current-chat-user-id');
+      setMyIscrittoId('');
+      setShowAddModal(true); // Mostra subito il form di registrazione
+    }
+  }, [myIscrittoId, identitaCorrente]);
   const mieCategorie = getCategorieArray(identitaCorrente);
   const mieCategorieLower = mieCategorie.map(cat => String(cat).toLowerCase());
   // Funzione per controllare se l'identità corrente è membro di una categoria
