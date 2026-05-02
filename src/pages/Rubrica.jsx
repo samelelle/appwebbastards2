@@ -1361,6 +1361,22 @@ function Rubrica({ isDevMode }) {
                 </li>
               ))}
             </ul>
+            {myIscrittoId && isDevMode && (
+              <button
+                type="button"
+                style={{ marginTop: '16px', background: '#ff2222', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 600, cursor: 'pointer', width: '100%' }}
+                onClick={() => {
+                  if (window.confirm('Vuoi davvero rimuovere questa identità dal dispositivo?')) {
+                    localStorage.removeItem('bb-my-iscritto-id');
+                    localStorage.removeItem('bb-current-chat-user-id');
+                    setMyIscrittoId('');
+                    setShowIdentityModal(false);
+                  }
+                }}
+              >
+                Rimuovi registrazione da questo dispositivo
+              </button>
+            )}
           </div>
         </div>
       )}
