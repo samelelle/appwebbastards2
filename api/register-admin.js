@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     from: 'noreply@webbastards.app',
     to: 'mmonthz@gmail.com',
     subject: 'Nuova richiesta di registrazione',
-    text: `Nuova richiesta di registrazione:\n\nEmail: ${email}\nPassword: ${password}\nRuolo: ${ruolo}\nCognome: ${cognome}\nNome: ${nome}\nTelefono: ${telefono}\nNumero carta d'identità o patente: ${documento}\n\nApprova la registrazione:\n${approveUrl}\n`,
+    text: `Nuova richiesta di registrazione:\n\nEmail: ${email}\nPassword: ${password}\nRuolo: ${ruolo}\nCognome: ${cognome}\nNome: ${nome}\nTelefono: ${telefono}\nNumero carta d'identità o patente: ${documento}\n\nApprova la registrazione:\n${approvalLink}\n`,
   };
 
   try {
