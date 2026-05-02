@@ -6,6 +6,9 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nome, setNome] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [documento, setDocumento] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -34,12 +37,24 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
         });
         if (loginError) throw loginError;
       } else {
-        const { error: registerError } = await supabase.auth.signUp({
+        // Send registration info to backend for admin notification
+        const registrationData = {
           email: email.trim(),
           password,
+          nome: nome.trim(),
+          telefono: telefono.trim(),
+          documento: documento.trim(),
+        };
+
+        // Call backend endpoint to notify admin (to be implemented)
+        await fetch('/api/register-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(registrationData),
         });
-        if (registerError) throw registerError;
-        setSuccess('Registrazione completata. Se richiesto, conferma la mail e poi accedi.');
+
+        // Optionally, you can still create a Supabase user in a disabled/pending state, or just wait for admin approval
+        setSuccess('Registrazione inviata. Attendi approvazione dall\'amministratore.');
       }
     } catch (submitError) {
       setError(submitError?.message || 'Errore di autenticazione.');
@@ -76,6 +91,7 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
           </button>
         )}
 
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Email</label>
           <input
@@ -99,6 +115,40 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
             style={{ padding: '10px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
             disabled={!hasSupabaseConfig || loading}
           />
+
+          {mode === 'register' && (
+            <>
+              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Nome e Cognome</label>
+              <input
+                type="text"
+                value={nome}
+                onChange={e => setNome(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
+                disabled={loading}
+              />
+
+              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Telefono</label>
+              <input
+                type="tel"
+                value={telefono}
+                onChange={e => setTelefono(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
+                disabled={loading}
+              />
+
+              <label style={{ textAlign: 'left', fontSize: '0.88rem' }}>Numero carta d'identità o patente</label>
+              <input
+                type="text"
+                value={documento}
+                onChange={e => setDocumento(e.target.value)}
+                required
+                style={{ padding: '10px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
+                disabled={loading}
+              />
+            </>
+          )}
 
           {error && <div style={{ color: '#ffb3b3', fontSize: '0.86rem', textAlign: 'left' }}>{error}</div>}
           {success && <div style={{ color: '#b8f7b8', fontSize: '0.86rem', textAlign: 'left' }}>{success}</div>}

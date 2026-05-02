@@ -143,7 +143,7 @@ function Rubrica({ isDevMode }) {
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const [iscritti, setIscritti] = useState([]);
   const [chatByCategoria, setChatByCategoria] = useState({});
-  const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', email: '', documento: '', categorie: [] });
+  const [form, setForm] = useState({ ruolo: '', cognome: '', nome: '', telefono: '', email: '', categorie: [] });
   const [seenByCategory, setSeenByCategory] = useState(() => {
     const saved = localStorage.getItem(seenCategoryKey);
     if (saved) {
@@ -566,8 +566,6 @@ function Rubrica({ isDevMode }) {
       cognome: iscritto.cognome || '',
       nome: iscritto.nome || '',
       telefono: iscritto.telefono || '',
-      email: iscritto.email || '',
-      documento: iscritto.documento || '',
       categorie: getCategorieArray(iscritto),
     });
     setSaveError('');
@@ -612,7 +610,6 @@ function Rubrica({ isDevMode }) {
         nome,
         telefono,
         email,
-        documento: form.documento,
         categorie: form.categorie,
       }).eq('id', editingIscrittoId);
       if (error) {
@@ -629,7 +626,6 @@ function Rubrica({ isDevMode }) {
           nome,
           telefono,
           email,
-          documento: form.documento,
           categorie: form.categorie,
         },
       ]).select();
@@ -640,24 +636,6 @@ function Rubrica({ isDevMode }) {
       if (data && data[0]) {
         setMyIscrittoId(data[0].id);
         nuovoId = data[0].id;
-        // Invia email a admin
-        try {
-          await fetch('/api/register-notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nome,
-              cognome,
-              telefono,
-              email,
-              documento: form.documento,
-              ruolo,
-              categorie: form.categorie,
-            }),
-          });
-        } catch (e) {
-          // Silenzia errori email
-        }
       }
     }
     // Aggiorna subito la rubrica in localStorage e l'identità locale se il nuovo/aggiornato iscritto è almeno full o viminale
@@ -694,16 +672,6 @@ function Rubrica({ isDevMode }) {
 
   const membriCategoriaAperta = iscrittiCategoriaAperta.map(iscritto => ({ id: iscritto.id, name: displayName(iscritto) }));
   const identitaCorrente = iscritti.find(iscritto => iscritto.id === currentUserId) || null;
-
-  // Se l'identità locale non esiste più tra gli iscritti, rimuovi la registrazione locale
-  useEffect(() => {
-    if (myIscrittoId && !identitaCorrente) {
-      localStorage.removeItem('bb-my-iscritto-id');
-      localStorage.removeItem('bb-current-chat-user-id');
-      setMyIscrittoId('');
-      setShowAddModal(true); // Mostra subito il form di registrazione
-    }
-  }, [myIscrittoId, identitaCorrente]);
   const mieCategorie = getCategorieArray(identitaCorrente);
   const mieCategorieLower = mieCategorie.map(cat => String(cat).toLowerCase());
   // Funzione per controllare se l'identità corrente è membro di una categoria
@@ -1309,10 +1277,8 @@ function Rubrica({ isDevMode }) {
                         <button
                           type="button"
                           className="bb-event-btn"
-                          style={{ width: 'auto', minWidth: '0', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem', background: '#ff2222', color: '#fff' }}
-                          onClick={() => {
-                            if (window.confirm('Vuoi davvero cancellare questo iscritto?')) handleDeleteIscritto(iscritto.id);
-                          }}
+                          style={{ width: 'auto', minWidth: '0', minHeight: '34px', padding: '5px 10px', fontSize: '0.8rem' }}
+                          onClick={() => handleDeleteIscritto(iscritto.id)}
                         >
                           Cancella
                         </button>
@@ -1373,22 +1339,6 @@ function Rubrica({ isDevMode }) {
                 </li>
               ))}
             </ul>
-            {myIscrittoId && isDevMode && (
-              <button
-                type="button"
-                style={{ marginTop: '16px', background: '#ff2222', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 600, cursor: 'pointer', width: '100%' }}
-                onClick={() => {
-                  if (window.confirm('Vuoi davvero rimuovere questa identità dal dispositivo?')) {
-                    localStorage.removeItem('bb-my-iscritto-id');
-                    localStorage.removeItem('bb-current-chat-user-id');
-                    setMyIscrittoId('');
-                    setShowIdentityModal(false);
-                  }
-                }}
-              >
-                Rimuovi registrazione da questo dispositivo
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -1412,12 +1362,8 @@ function Rubrica({ isDevMode }) {
               <label style={{ fontWeight: 600 }}>Nome</label>
               <input name="nome" type="text" value={form.nome} onChange={handleInput} placeholder="Nome" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
 
-
               <label style={{ fontWeight: 600 }}>Telefono</label>
-              <input name="telefono" type="tel" value={form.telefono} onChange={handleInput} placeholder="Numero di telefono" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} required />
-
-              <label style={{ fontWeight: 600 }}>Numero carta d'identità o patente</label>
-              <input name="documento" type="text" value={form.documento || ''} onChange={handleInput} placeholder="Numero documento" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} required />
+              <input name="telefono" type="tel" value={form.telefono} onChange={handleInput} placeholder="Numero di telefono" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
 
               <label style={{ fontWeight: 600 }}>Categorie rubrica (selezione multipla)</label>
               {isMobile ? (
