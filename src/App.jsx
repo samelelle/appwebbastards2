@@ -15,6 +15,7 @@ import Mappa from './pages/Mappa';
 import Riunioni from './pages/Riunioni';
 import Rubrica from './pages/Rubrica';
 import QrCodeShare from './components/QrCodeShare';
+import ApprovaRegistrazione from './pages/ApprovaRegistrazione';
 import { subscribeUserToPush } from './lib/pushSubscription';
 
 const devBypassStorageKey = 'bb-dev-bypass-auth';
@@ -228,6 +229,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+          <Route path="/admin/approva" element={<ApprovaRegistrazione />} />
         <Route
           path="/login"
           element={(
