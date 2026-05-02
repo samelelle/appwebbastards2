@@ -91,11 +91,23 @@ export default function ApprovaRegistrazione() {
       <div><b>Telefono:</b> {pending.telefono}</div>
       <div><b>Documento:</b> {pending.documento}</div>
       <div style={{ margin: '12px 0' }}>
-        <b>Categorie:</b> <select multiple value={categorie} onChange={e => setCategorie(Array.from(e.target.selectedOptions, o => o.value))} style={{width:'100%',marginTop:4}}>
-  <option value="Full">Full</option>
-  <option value="Prospect">Prospect</option>
-  <option value="Viminale">Viminale</option>
-</select>
+        <b>Categorie:</b>
+  <div style={{display:'flex',gap:8,marginTop:4}}>
+    {['Full','Prospect','Viminale'].map(cat => (
+      <label key={cat} style={{display:'flex',alignItems:'center',gap:4}}>
+        <input
+          type="checkbox"
+          value={cat}
+          checked={categorie.includes(cat)}
+          onChange={e => {
+            if (e.target.checked) setCategorie([...categorie, cat]);
+            else setCategorie(categorie.filter(c => c !== cat));
+          }}
+        />
+        {cat}
+      </label>
+    ))}
+  </div>
       </div>
       <button onClick={handleApprove} style={{ padding: '10px 24px', background: '#0c0', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', marginRight: 12 }}>Approva</button>
       <button onClick={handleReject} disabled={loading} style={{background: '#e74c3c', color: 'white', padding: '10px 24px', border: 'none', borderRadius: 8, fontWeight: 'bold'}}>Rifiuta</button>
