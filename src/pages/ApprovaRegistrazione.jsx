@@ -26,7 +26,7 @@ export default function ApprovaRegistrazione() {
     console.log('DEBUG: id ricevuto per approvazione:', id);
     supabase
       .from('pending_registrations')
-      .select('id, email, password, ruolo, cognome, nome, telefono, documento')
+      .select('id, email, ruolo, cognome, nome, telefono, documento')
       .eq('id', id)
       .single()
       .then(({ data, error }) => {
