@@ -9,19 +9,15 @@
   "icons": [
     {
       "src": "/PHOTO-2025-11-13-22-29-21.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/PHOTO-2025-11-13-22-29-21.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/PHOTO-2025-11-13-22-29-21.png",
       "sizes": "any",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }
