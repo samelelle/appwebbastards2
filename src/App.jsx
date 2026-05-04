@@ -55,8 +55,7 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
   }
 
   if (!isAuthenticated) {
-    window.location.replace('https://appwebbastards2-3g9t.vercel.app/login');
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -149,23 +148,26 @@ function AppRoutes() {
           .select('*');
         if (!error && Array.isArray(data)) {
           localStorage.setItem('bb-rubrica', JSON.stringify(data));
+
+          let current = null;
           if (session?.user?.email) {
             setUserEmail(session.user.email);
-            const current = data.find(iscritto => (iscritto.email && iscritto.email.toLowerCase() === session.user.email.toLowerCase()));
-            if (current && current.id) {
-              localStorage.setItem('bb-my-iscritto-id', String(current.id));
-              localStorage.setItem('bb-current-chat-user-id', String(current.id));
-              subscribeUserToPush();
-              return;
-            }
+            current = data.find(iscritto => (iscritto.email && iscritto.email.toLowerCase() === session.user.email.toLowerCase()));
+          } else if (session?.user?.id) {
+            current = data.find(iscritto => String(iscritto.id) === String(session.user.id));
           }
-          if (session?.user?.id) {
-            const current = data.find(iscritto => String(iscritto.id) === String(session.user.id));
-            if (current && current.id) {
-              localStorage.setItem('bb-my-iscritto-id', String(current.id));
-              localStorage.setItem('bb-current-chat-user-id', String(current.id));
-              subscribeUserToPush();
-            }
+
+          if (current?.id) {
+            localStorage.setItem('bb-my-iscritto-id', String(current.id));
+            localStorage.setItem('bb-current-chat-user-id', String(current.id));
+            subscribeUserToPush();
+            return;
+          }
+
+          // User has a valid auth session but is no longer in the iscritti table
+          // (registration was removed). Force sign-out so they are redirected to login.
+          if (mounted && supabase && (session?.user?.email || session?.user?.id)) {
+            await supabase.auth.signOut();
           }
         }
       } catch {}
