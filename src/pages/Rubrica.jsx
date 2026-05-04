@@ -576,7 +576,24 @@ function Rubrica({ isDevMode }) {
     const confirmed = window.confirm('Vuoi cancellare davvero questo iscritto?');
     if (!confirmed) return;
     await supabase.from('iscritti').delete().eq('id', iscrittoId);
-    if (String(myIscrittoId) === String(iscrittoId)) setMyIscrittoId('');
+    if (String(myIscrittoId) === String(iscrittoId)) {
+      setMyIscrittoId('');
+      // Invalida sessione Supabase e pulisci storage
+      try {
+        await supabase.auth.signOut();
+      } catch {}
+      // Pulisci tutte le chiavi utente/locali
+      localStorage.removeItem('bb-my-iscritto-id');
+      localStorage.removeItem('bb-current-chat-user-id');
+      localStorage.removeItem('bb-rubrica');
+      localStorage.removeItem('bb-chat-hide-msg-ids');
+      localStorage.removeItem('bb-rubrica-seen-categories');
+      // Puoi aggiungere altre chiavi se necessario
+      sessionStorage.clear();
+      // Redirect a login
+      window.location.replace('/login');
+      return;
+    }
     if (editingIscrittoId === iscrittoId) {
       setEditingIscrittoId(null);
       setShowAddModal(false);

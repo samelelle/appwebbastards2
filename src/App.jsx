@@ -72,6 +72,36 @@ function App() {
 }
 
 function AppRoutes() {
+    // Polling: verifica se l'utente autenticato esiste ancora nella tabella iscritti
+    useEffect(() => {
+      if (!isAuthenticated || !session?.user?.email) return;
+      let intervalId;
+      let stopped = false;
+      async function checkUserStillExists() {
+        try {
+          const { data, error } = await supabase
+            .from('iscritti')
+            .select('id')
+            .eq('email', session.user.email.toLowerCase());
+          if ((!data || data.length === 0) && !error) {
+            // Utente non più presente: logout, pulizia storage e redirect
+            try { await supabase.auth.signOut(); } catch {}
+            localStorage.removeItem('bb-my-iscritto-id');
+            localStorage.removeItem('bb-current-chat-user-id');
+            localStorage.removeItem('bb-rubrica');
+            localStorage.removeItem('bb-chat-hide-msg-ids');
+            localStorage.removeItem('bb-rubrica-seen-categories');
+            sessionStorage.clear();
+            stopped = true;
+            window.location.replace('/login');
+          }
+        } catch {}
+      }
+      intervalId = setInterval(() => {
+        if (!stopped) checkUserStillExists();
+      }, 15000); // ogni 15 secondi
+      return () => { clearInterval(intervalId); stopped = true; };
+    }, [isAuthenticated, session?.user?.email]);
   const location = useLocation();
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
