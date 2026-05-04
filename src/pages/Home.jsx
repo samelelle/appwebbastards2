@@ -23,6 +23,13 @@ function formatPushError(result, fallbackMessage) {
 }
 
 function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMode }) {
+    // Controllo di sicurezza: se non c'è utente loggato, reindirizza sempre a /login
+    useEffect(() => {
+      const session = window.localStorage.getItem('supabase.auth.token');
+      if (!session) {
+        navigate('/login', { replace: true });
+      }
+    }, [navigate]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isTabletLandscape, setIsTabletLandscape] = useState(false);
