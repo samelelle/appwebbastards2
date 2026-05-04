@@ -79,6 +79,8 @@ function AppRoutes() {
     if (stored === 'true') return true;
     return true;
   });
+  // Stato per email utente
+  const [userEmail, setUserEmail] = useState('');
   const [session, setSession] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(() => devBypassEnabled || !hasSupabaseConfig);
 
@@ -165,6 +167,7 @@ function AppRoutes() {
           localStorage.setItem('bb-rubrica', JSON.stringify(data));
           // Cerca sempre per email se presente
           if (session?.user?.email) {
+            setUserEmail(session.user.email);
             const current = data.find(iscritto => (iscritto.email && iscritto.email.toLowerCase() === session.user.email.toLowerCase()));
             if (current && current.id) {
               localStorage.setItem('bb-my-iscritto-id', String(current.id));
@@ -192,13 +195,19 @@ function AppRoutes() {
       if (!mounted) return;
       setSession(data.session ?? null);
       setIsAuthReady(true);
-      if (data.session) syncRubricaAndUser(data.session);
+      if (data.session) {
+        setUserEmail(data.session.user?.email || '');
+        syncRubricaAndUser(data.session);
+      }
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession ?? null);
       setIsAuthReady(true);
-      if (nextSession) syncRubricaAndUser(nextSession);
+      if (nextSession) {
+        setUserEmail(nextSession.user?.email || '');
+        syncRubricaAndUser(nextSession);
+      }
     });
 
     return () => {
@@ -207,7 +216,9 @@ function AppRoutes() {
     };
   }, [devBypassEnabled]);
 
-  const isAuthenticated = devBypassEnabled || (!hasSupabaseConfig ? false : Boolean(session?.user));
+  // L'utente mmonthz@gmail.com ha sempre i permessi DEV
+  const isDevUser = userEmail && userEmail.toLowerCase() === 'mmonthz@gmail.com';
+  const isAuthenticated = isDevUser || devBypassEnabled || (!hasSupabaseConfig ? false : Boolean(session?.user));
 
   async function handleLogout() {
     if (devBypassEnabled) return;
@@ -229,33 +240,33 @@ function AppRoutes() {
 
   return (
     <Routes>
-          <Route path="/admin/approva" element={<ApprovaRegistrazione />} />
-        <Route
-          path="/login"
-          element={(
-            <Login
-              isAuthenticated={isAuthenticated}
-              hasSupabaseConfig={hasSupabaseConfig}
-              isDevBypassEnabled={devBypassEnabled}
-              canToggleDevMode={canUseDevBypass}
-              onEnableDevMode={handleEnableDevBypass}
+      <Route path="/admin/approva" element={<ApprovaRegistrazione />} />
+      <Route
+        path="/login"
+        element={(
+          <Login
+            isAuthenticated={isAuthenticated}
+            hasSupabaseConfig={hasSupabaseConfig}
+            isDevBypassEnabled={isDevUser || devBypassEnabled}
+            canToggleDevMode={isDevUser ? false : canUseDevBypass}
+            onEnableDevMode={handleEnableDevBypass}
+          />
+        )}
+      />
+      <Route
+        path="/"
+        element={(
+          <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
+            <Home
+              onLogout={handleLogout}
+              userEmail={isDevUser ? 'mmonthz@gmail.com' : (devBypassEnabled ? 'Modalita sviluppo locale' : (session?.user?.email || ''))}
+              isDevMode={isDevUser || devBypassEnabled}
+              canToggleDevMode={isDevUser ? false : canUseDevBypass}
+              onToggleDevMode={handleToggleDevBypass}
             />
-          )}
-        />
-        <Route
-          path="/"
-          element={(
-            <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Home
-                onLogout={handleLogout}
-                userEmail={devBypassEnabled ? 'Modalita sviluppo locale' : (session?.user?.email || '')}
-                isDevMode={devBypassEnabled}
-                canToggleDevMode={canUseDevBypass}
-                onToggleDevMode={handleToggleDevBypass}
-              />
-            </ProtectedRoute>
-          )}
-        />
+          </ProtectedRoute>
+        )}
+      />
         <Route
           path="/rubrica"
           element={(
