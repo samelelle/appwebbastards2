@@ -23,6 +23,27 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
   const [pushError, setPushError] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function ensureSubscribedWhenGranted() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+      const result = await subscribeUserToPush();
+      if (cancelled) return;
+      if (!result?.ok) {
+        const details = result?.details?.message || result?.details?.error_description || '';
+        setPushError(details ? `${result?.reason || 'errore'}: ${details}` : String(result?.reason || 'errore'));
+      }
+    }
+
+    ensureSubscribedWhenGranted();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const updateTabletLandscape = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -116,7 +137,8 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
         setPushStatus('granted');
       } else {
         setPushStatus(Notification.permission);
-        setPushError(result?.reason ? String(result.reason) : 'Impossibile attivare le notifiche');
+        const details = result?.details?.message || result?.details?.error_description || '';
+        setPushError(details ? `${result?.reason || 'errore'}: ${details}` : String(result?.reason || 'Impossibile attivare le notifiche'));
       }
     } finally {
       setPushBusy(false);

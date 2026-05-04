@@ -9,6 +9,50 @@ export function getCurrentUserId() {
   }
 }
 
+async function resolveCurrentUserId() {
+  const existing = getCurrentUserId();
+  if (existing) return existing;
+  if (!supabase) return null;
+
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+    if (!user) return null;
+
+    let resolved = null;
+    if (user.email) {
+      const { data: byEmail } = await supabase
+        .from("iscritti")
+        .select("id")
+        .ilike("email", user.email)
+        .limit(1)
+        .maybeSingle();
+      resolved = byEmail?.id ? String(byEmail.id) : null;
+    }
+
+    if (!resolved && user.id) {
+      const { data: byId } = await supabase
+        .from("iscritti")
+        .select("id")
+        .eq("id", user.id)
+        .limit(1)
+        .maybeSingle();
+      resolved = byId?.id ? String(byId.id) : null;
+    }
+
+    if (resolved) {
+      try {
+        localStorage.setItem("bb-current-chat-user-id", resolved);
+      } catch {
+        // Ignore storage failures.
+      }
+    }
+    return resolved;
+  } catch {
+    return null;
+  }
+}
+
 function hasPushSupport() {
   return (
     typeof window !== "undefined" &&
@@ -53,7 +97,7 @@ export async function subscribeUserToPush(options = {}) {
       }));
 
     // Salva la subscription su Supabase
-    const userId = getCurrentUserId();
+    const userId = await resolveCurrentUserId();
     if (!userId) throw new Error("userId non trovato");
 
     const subscriptionJson = subscription.toJSON();
@@ -74,6 +118,17 @@ export async function subscribeUserToPush(options = {}) {
         }),
       });
       if (response.ok) return { ok: true, via: "api" };
+      const apiErrorBody = await response.json().catch(() => null);
+      if (response.status !== 404) {
+        return {
+          ok: false,
+          reason: "api_error",
+          details: {
+            status: response.status,
+            body: apiErrorBody,
+          },
+        };
+      }
       // fallback su insert diretto se l'API non esiste o non è configurata
     } catch {
       // ignore, fallback below
