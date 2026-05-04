@@ -55,7 +55,8 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    window.location.replace('https://appwebbastards2-3g9t.vercel.app/login');
+    return null;
   }
 
   return children;
