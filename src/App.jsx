@@ -147,6 +147,8 @@ function AppRoutes() {
     }
 
     if (!hasSupabaseConfig || !supabase) {
+      setSession(null);
+      setIsAuthReady(true);
       return undefined;
     }
 
@@ -185,21 +187,28 @@ function AppRoutes() {
       } catch {}
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session ?? null);
-      setIsAuthReady(true);
-      if (data.session) {
-        setUserEmail(data.session.user?.email || '');
-        syncRubricaAndUser(data.session);
-      }
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session ?? null);
+        setUserEmail(data.session?.user?.email || '');
+        setIsAuthReady(true);
+        if (data.session) {
+          syncRubricaAndUser(data.session);
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSession(null);
+        setUserEmail('');
+        setIsAuthReady(true);
+      });
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession ?? null);
+      setUserEmail(nextSession?.user?.email || '');
       setIsAuthReady(true);
       if (nextSession) {
-        setUserEmail(nextSession.user?.email || '');
         syncRubricaAndUser(nextSession);
       }
     });
