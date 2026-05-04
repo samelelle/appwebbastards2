@@ -141,19 +141,7 @@ function AppRoutes() {
   }, []);
 
   useEffect(() => {
-    if (devBypassEnabled) {
-      setIsAuthReady(true);
-      return undefined;
-    }
-
-    if (!hasSupabaseConfig || !supabase) {
-      setSession(null);
-      setIsAuthReady(true);
-      return undefined;
-    }
-
     let mounted = true;
-
     async function syncRubricaAndUser(session) {
       try {
         const { data, error } = await supabase
@@ -161,30 +149,33 @@ function AppRoutes() {
           .select('*');
         if (!error && Array.isArray(data)) {
           localStorage.setItem('bb-rubrica', JSON.stringify(data));
-          // Cerca sempre per email se presente
           if (session?.user?.email) {
             setUserEmail(session.user.email);
             const current = data.find(iscritto => (iscritto.email && iscritto.email.toLowerCase() === session.user.email.toLowerCase()));
             if (current && current.id) {
               localStorage.setItem('bb-my-iscritto-id', String(current.id));
               localStorage.setItem('bb-current-chat-user-id', String(current.id));
-              // Iscrivi l'utente alle push
               subscribeUserToPush();
               return;
             }
           }
-          // Fallback su id Supabase solo se non c'è match per email
           if (session?.user?.id) {
             const current = data.find(iscritto => String(iscritto.id) === String(session.user.id));
             if (current && current.id) {
               localStorage.setItem('bb-my-iscritto-id', String(current.id));
               localStorage.setItem('bb-current-chat-user-id', String(current.id));
-              // Iscrivi l'utente alle push
               subscribeUserToPush();
             }
           }
         }
       } catch {}
+    }
+
+    if (!hasSupabaseConfig || !supabase) {
+      setSession(null);
+      setUserEmail('');
+      setIsAuthReady(true);
+      return;
     }
 
     supabase.auth.getSession()
