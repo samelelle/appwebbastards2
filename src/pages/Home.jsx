@@ -200,9 +200,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
           zIndex: 20,
         }}
       >
-          <span style={{ fontSize: '0.72rem', color: '#ffb366', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {userEmail || ''}
-          </span>
+          {/* Email utente rimossa */}
           {/* Nessun tasto Logout, nessun tasto DEV */}
           {/* DEV BYPASS button rimosso per tutti */}
           {'Notification' in window && pushStatus !== 'granted' && (
