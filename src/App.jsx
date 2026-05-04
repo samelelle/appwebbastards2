@@ -91,15 +91,15 @@ function AppRoutes() {
         if (!errIscritti && Array.isArray(iscritti) && active) {
           localStorage.setItem('bb-rubrica', JSON.stringify(iscritti));
         }
-        // Eventi
-        const { data: eventi, error: errEventi } = await supabase.from('eventi').select('*');
-        if (!errEventi && Array.isArray(eventi) && active) {
-          localStorage.setItem('bb-eventi', JSON.stringify(eventi));
+        // Events
+        const { data: events, error: errEvents } = await supabase.from('events').select('*');
+        if (!errEvents && Array.isArray(events) && active) {
+          localStorage.setItem('bb-events', JSON.stringify(events));
         }
-        // Riunioni
-        const { data: riunioni, error: errRiunioni } = await supabase.from('riunioni').select('*');
-        if (!errRiunioni && Array.isArray(riunioni) && active) {
-          localStorage.setItem('bb-riunioni', JSON.stringify(riunioni));
+        // Meetings
+        const { data: meetings, error: errMeetings } = await supabase.from('meetings').select('*');
+        if (!errMeetings && Array.isArray(meetings) && active) {
+          localStorage.setItem('bb-riunioni', JSON.stringify(meetings));
         }
       } catch {}
     }

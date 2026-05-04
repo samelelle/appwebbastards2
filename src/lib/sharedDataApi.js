@@ -208,7 +208,7 @@ export async function addEvent(eventPayload) {
       authorId,
       title: 'Nuovo evento',
       body: data.title,
-      url: window.location.origin + '/eventi',
+      url: window.location.origin + '/events',
     });
   } catch (e) { /* ignora errori push */ }
   return {
@@ -323,7 +323,7 @@ export async function addMeeting(meetingPayload) {
       authorId,
       title: 'Nuova riunione',
       body: `${data.data} ${data.ora || ''} - ${data.ordine || ''}`.trim(),
-      url: window.location.origin + '/riunioni',
+      url: window.location.origin + '/meetings',
     });
   } catch (e) { /* ignora errori push */ }
   return ensureId(data);
