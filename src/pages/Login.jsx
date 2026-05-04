@@ -15,10 +15,21 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  if (!hasSupabaseConfig) {
+    return (
+      <div style={{ minHeight: '100dvh', background: '#111', color: '#fff', display: 'grid', placeItems: 'center', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: '420px', background: '#1d1d1d', borderRadius: '14px', padding: '22px 18px', boxSizing: 'border-box', border: '1px solid #333' }}>
+          <h1 style={{ margin: '0 0 10px 0', color: '#ff6600', fontSize: '1.9rem', textAlign: 'center' }}>Errore configurazione</h1>
+          <div style={{ background: '#2a1c1c', color: '#ffb7b7', border: '1px solid #5d2c2c', borderRadius: '8px', padding: '10px', fontSize: '1.1rem', marginBottom: '12px', textAlign: 'center' }}>
+            Configurazione Supabase mancante o errata.<br />Contatta l'amministratore.<br /><br />VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY non trovati.
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-
   if (isDevBypassEnabled) {
     return <Navigate to="/" replace />;
   }
