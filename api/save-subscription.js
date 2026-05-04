@@ -44,19 +44,42 @@ export default async function handler(req, res) {
 
   if (error) {
     const message = String(error?.message || "");
+    const code = String(error?.code || "");
     // Se non esiste un vincolo UNIQUE su endpoint, l'upsert fallisce.
-    if (message.toLowerCase().includes("no unique") || message.toLowerCase().includes("on conflict")) {
+    if (code === "42P10" || message.toLowerCase().includes("no unique") || message.toLowerCase().includes("on conflict")) {
       const { error: delError } = await supabase.from("push_subscriptions").delete().eq("endpoint", String(endpoint));
-      if (delError) return res.status(500).json({ error: "Errore Supabase", details: delError });
+      if (delError) {
+        return res.status(500).json({
+          error: "Errore Supabase",
+          message: delError.message,
+          code: delError.code,
+          details: delError.details,
+          hint: delError.hint,
+        });
+      }
       const { error: insError } = await supabase.from("push_subscriptions").insert({
         user_id: String(user_id),
         endpoint: String(endpoint),
         keys,
       });
-      if (insError) return res.status(500).json({ error: "Errore Supabase", details: insError });
+      if (insError) {
+        return res.status(500).json({
+          error: "Errore Supabase",
+          message: insError.message,
+          code: insError.code,
+          details: insError.details,
+          hint: insError.hint,
+        });
+      }
       return res.json({ success: true, via: "delete_insert" });
     }
-    return res.status(500).json({ error: "Errore Supabase", details: error });
+    return res.status(500).json({
+      error: "Errore Supabase",
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
   }
 
   return res.json({ success: true });

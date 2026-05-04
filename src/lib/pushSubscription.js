@@ -135,9 +135,10 @@ export async function subscribeUserToPush(options = {}) {
       const apiErrorBody = await response.json().catch(() => null);
       if (response.status !== 404) {
         const bodyError =
-          apiErrorBody?.error ||
           apiErrorBody?.message ||
           apiErrorBody?.details?.message ||
+          apiErrorBody?.hint ||
+          apiErrorBody?.error ||
           null;
         return {
           ok: false,
