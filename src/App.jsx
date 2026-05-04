@@ -77,7 +77,8 @@ function AppRoutes() {
   // Stato per email utente
   const [userEmail, setUserEmail] = useState('');
   const [session, setSession] = useState(null);
-  const [isAuthReady, setIsAuthReady] = useState(() => devBypassEnabled || !hasSupabaseConfig);
+  // isAuthReady parte sempre da false: la Home non viene mai mostrata senza login
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   // Aggiorna la rubrica ogni volta che cambia schermata
   useEffect(() => {
