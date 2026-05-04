@@ -134,12 +134,18 @@ export async function subscribeUserToPush(options = {}) {
       if (response.ok) return { ok: true, via: "api" };
       const apiErrorBody = await response.json().catch(() => null);
       if (response.status !== 404) {
+        const bodyError =
+          apiErrorBody?.error ||
+          apiErrorBody?.message ||
+          apiErrorBody?.details?.message ||
+          null;
         return {
           ok: false,
-          reason: "api_error",
+          reason: `api_error_${response.status}`,
           details: {
             status: response.status,
             body: apiErrorBody,
+            message: bodyError,
           },
         };
       }

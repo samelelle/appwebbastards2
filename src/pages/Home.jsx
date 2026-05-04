@@ -7,6 +7,21 @@ import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
 import { subscribeUserToPush } from '../lib/pushSubscription';
 
+function formatPushError(result, fallbackMessage) {
+  const reason = result?.reason ? String(result.reason) : 'errore';
+  const detailsMessage = result?.details?.message || result?.details?.error_description || '';
+  const detailsStatus = result?.details?.status ? `status ${result.details.status}` : '';
+  const bodyError =
+    result?.details?.body?.error ||
+    result?.details?.body?.message ||
+    result?.details?.body?.details?.message ||
+    '';
+
+  const detail = detailsMessage || bodyError || detailsStatus;
+  if (detail) return `${reason}: ${detail}`;
+  return String(result?.reason || fallbackMessage || 'errore');
+}
+
 function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMode }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -31,8 +46,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
       const result = await subscribeUserToPush();
       if (cancelled) return;
       if (!result?.ok) {
-        const details = result?.details?.message || result?.details?.error_description || '';
-        setPushError(details ? `${result?.reason || 'errore'}: ${details}` : String(result?.reason || 'errore'));
+        setPushError(formatPushError(result, 'errore'));
       }
     }
 
@@ -137,8 +151,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
         setPushStatus('granted');
       } else {
         setPushStatus(Notification.permission);
-        const details = result?.details?.message || result?.details?.error_description || '';
-        setPushError(details ? `${result?.reason || 'errore'}: ${details}` : String(result?.reason || 'Impossibile attivare le notifiche'));
+        setPushError(formatPushError(result, 'Impossibile attivare le notifiche'));
       }
     } finally {
       setPushBusy(false);
