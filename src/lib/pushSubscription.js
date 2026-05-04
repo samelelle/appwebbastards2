@@ -63,6 +63,20 @@ function hasPushSupport() {
   );
 }
 
+async function getVapidPublicKey() {
+  const fromClientEnv = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  if (fromClientEnv) return fromClientEnv;
+
+  try {
+    const response = await fetch("/api/vapid-public-key");
+    if (!response.ok) return null;
+    const payload = await response.json().catch(() => null);
+    return payload?.publicKey || null;
+  } catch {
+    return null;
+  }
+}
+
 // Registra il service worker e iscrive l'utente alle push, salvando la subscription su Supabase
 export async function subscribeUserToPush(options = {}) {
   const { interactive = false } = options;
@@ -84,7 +98,7 @@ export async function subscribeUserToPush(options = {}) {
     if (permission !== "granted") return { ok: false, reason: permission };
 
     // Sostituisci con la tua chiave pubblica VAPID (base64 url safe)
-    const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    const VAPID_PUBLIC_KEY = await getVapidPublicKey();
     if (!VAPID_PUBLIC_KEY) throw new Error("VAPID public key mancante");
 
     // Usa subscription esistente o creane una nuova
