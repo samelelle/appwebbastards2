@@ -161,13 +161,14 @@ export async function subscribeUserToPush(options = {}) {
         endpoint: subscriptionJson.endpoint,
         keys: subscriptionJson.keys,
       },
-      { onConflict: "endpoint" }
+      { onConflict: "user_id" }
     );
     if (error) {
       const msg = String(error?.message || "");
+      const code = String(error?.code || "");
       if (msg.toLowerCase().includes("no unique") || msg.toLowerCase().includes("on conflict")) {
         // Fallback (può fallire con RLS): elimina + inserisci.
-        await supabase.from("push_subscriptions").delete().eq("endpoint", subscriptionJson.endpoint);
+        await supabase.from("push_subscriptions").delete().eq("user_id", userId);
         const { error: insError } = await supabase.from("push_subscriptions").insert({
           user_id: userId,
           endpoint: subscriptionJson.endpoint,
@@ -176,6 +177,16 @@ export async function subscribeUserToPush(options = {}) {
         if (insError) return { ok: false, reason: "supabase_error", details: insError };
         return { ok: true, via: "direct_delete_insert" };
       }
+
+      if (code === "23505" || msg.toLowerCase().includes("duplicate key")) {
+        const { error: updError } = await supabase
+          .from("push_subscriptions")
+          .update({ endpoint: subscriptionJson.endpoint, keys: subscriptionJson.keys })
+          .eq("user_id", userId);
+        if (updError) return { ok: false, reason: "supabase_error", details: updError };
+        return { ok: true, via: "direct_update_on_duplicate" };
+      }
+
       return { ok: false, reason: "supabase_error", details: error };
     }
     return { ok: true, via: "direct" };

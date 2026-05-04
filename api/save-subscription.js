@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         endpoint: String(endpoint),
         keys,
       },
-      { onConflict: "endpoint" }
+      { onConflict: "user_id" }
     );
 
   if (error) {
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     const code = String(error?.code || "");
     // Se non esiste un vincolo UNIQUE su endpoint, l'upsert fallisce.
     if (code === "42P10" || message.toLowerCase().includes("no unique") || message.toLowerCase().includes("on conflict")) {
-      const { error: delError } = await supabase.from("push_subscriptions").delete().eq("endpoint", String(endpoint));
+      const { error: delError } = await supabase.from("push_subscriptions").delete().eq("user_id", String(user_id));
       if (delError) {
         return res.status(500).json({
           error: "Errore Supabase",
@@ -73,6 +73,25 @@ export default async function handler(req, res) {
       }
       return res.json({ success: true, via: "delete_insert" });
     }
+
+    // Se esiste gia user_id come PK/UNIQUE, aggiorna la riga esistente.
+    if (code === "23505" || message.toLowerCase().includes("duplicate key")) {
+      const { error: updError } = await supabase
+        .from("push_subscriptions")
+        .update({ endpoint: String(endpoint), keys })
+        .eq("user_id", String(user_id));
+      if (!updError) {
+        return res.json({ success: true, via: "update_on_duplicate" });
+      }
+      return res.status(500).json({
+        error: "Errore Supabase",
+        message: updError.message,
+        code: updError.code,
+        details: updError.details,
+        hint: updError.hint,
+      });
+    }
+
     return res.status(500).json({
       error: "Errore Supabase",
       message: error.message,
