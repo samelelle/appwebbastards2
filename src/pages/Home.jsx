@@ -5,6 +5,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
+import { subscribeUserToPush } from '../lib/pushSubscription';
 
 function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMode }) {
   const navigate = useNavigate();
@@ -14,6 +15,12 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
   const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings());
   const [unreadEvents, setUnreadEvents] = useState(null);
   const [unreadChats, setUnreadChats] = useState(null);
+  const [pushStatus, setPushStatus] = useState(() => {
+    if (!('Notification' in window)) return 'unsupported';
+    return Notification.permission;
+  });
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState('');
 
   useEffect(() => {
     const updateTabletLandscape = () => {
@@ -100,6 +107,22 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
     };
   }, []);
 
+  async function handleEnablePush() {
+    setPushBusy(true);
+    setPushError('');
+    try {
+      const result = await subscribeUserToPush({ interactive: true });
+      if (result?.ok) {
+        setPushStatus('granted');
+      } else {
+        setPushStatus(Notification.permission);
+        setPushError(result?.reason ? String(result.reason) : 'Impossibile attivare le notifiche');
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
   return (
     <div
       className="bb-page"
@@ -175,7 +198,33 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
               DEV BYPASS: {isDevMode ? 'ON' : 'OFF'}
             </button>
           )}
+          {'Notification' in window && pushStatus !== 'granted' && (
+            <button
+              type="button"
+              onClick={handleEnablePush}
+              className="bb-add-btn"
+              disabled={pushBusy}
+              style={{
+                marginLeft: 0,
+                width: 'auto',
+                height: 'auto',
+                padding: '6px 10px',
+                fontSize: '0.72rem',
+                background: '#0a3a6b',
+                color: '#fff',
+              }}
+            >
+              {pushBusy ? 'Attiva...' : 'Abilita push'}
+            </button>
+          )}
       </div>
+      {pushError && (
+        <div style={{ position: 'absolute', top: '64px', right: '12px', left: '12px', zIndex: 30 }}>
+          <div style={{ background: '#2a1c1c', color: '#ffb7b7', border: '1px solid #5d2c2c', borderRadius: '10px', padding: '10px', fontSize: '0.85rem' }}>
+            Notifiche non attive: {pushError}
+          </div>
+        </div>
+      )}
       {/* IMMAGINE DEL TESCHIO */}
       <div
         style={{

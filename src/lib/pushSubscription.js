@@ -9,37 +9,103 @@ export function getCurrentUserId() {
   }
 }
 
+function hasPushSupport() {
+  return (
+    typeof window !== "undefined" &&
+    window.isSecureContext &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
+}
+
 // Registra il service worker e iscrive l'utente alle push, salvando la subscription su Supabase
-export async function subscribeUserToPush() {
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+export async function subscribeUserToPush(options = {}) {
+  const { interactive = false } = options;
+  if (!hasPushSupport()) {
+    return { ok: false, reason: "unsupported_or_insecure_context" };
+  }
   try {
     // Registra il service worker (assicurati che il path sia corretto)
-    const registration = await navigator.serviceWorker.register("/push-sw.js");
-    // Chiedi permesso
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return;
+    const registration =
+      (await navigator.serviceWorker.getRegistration("/push-sw.js")) ??
+      (await navigator.serviceWorker.register("/push-sw.js"));
+
+    // Permesso notifiche: sui browser moderni spesso richiede un gesto utente.
+    let permission = Notification.permission;
+    if (permission === "default") {
+      if (!interactive) return { ok: false, reason: "needs_user_gesture" };
+      permission = await Notification.requestPermission();
+    }
+    if (permission !== "granted") return { ok: false, reason: permission };
 
     // Sostituisci con la tua chiave pubblica VAPID (base64 url safe)
     const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!VAPID_PUBLIC_KEY) throw new Error("VAPID public key mancante");
 
-    // Iscrivi l'utente
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
+    // Usa subscription esistente o creane una nuova
+    const existing = await registration.pushManager.getSubscription();
+    const subscription =
+      existing ??
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      }));
 
     // Salva la subscription su Supabase
     const userId = getCurrentUserId();
     if (!userId) throw new Error("userId non trovato");
-    await supabase.from("push_subscriptions").upsert({
-      user_id: userId,
-      endpoint: subscription.endpoint,
-      keys: subscription.toJSON().keys,
-    });
+
+    const subscriptionJson = subscription.toJSON();
+
+    // Preferisci API server-side (bypassa RLS) se presente.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    try {
+      const response = await fetch("/api/save-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          subscription: subscriptionJson,
+        }),
+      });
+      if (response.ok) return { ok: true, via: "api" };
+      // fallback su insert diretto se l'API non esiste o non è configurata
+    } catch {
+      // ignore, fallback below
+    }
+
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        user_id: userId,
+        endpoint: subscriptionJson.endpoint,
+        keys: subscriptionJson.keys,
+      },
+      { onConflict: "endpoint" }
+    );
+    if (error) {
+      const msg = String(error?.message || "");
+      if (msg.toLowerCase().includes("no unique") || msg.toLowerCase().includes("on conflict")) {
+        // Fallback (può fallire con RLS): elimina + inserisci.
+        await supabase.from("push_subscriptions").delete().eq("endpoint", subscriptionJson.endpoint);
+        const { error: insError } = await supabase.from("push_subscriptions").insert({
+          user_id: userId,
+          endpoint: subscriptionJson.endpoint,
+          keys: subscriptionJson.keys,
+        });
+        if (insError) return { ok: false, reason: "supabase_error", details: insError };
+        return { ok: true, via: "direct_delete_insert" };
+      }
+      return { ok: false, reason: "supabase_error", details: error };
+    }
+    return { ok: true, via: "direct" };
   } catch (e) {
-    // Silenzia errori
     console.warn("Errore iscrizione push:", e);
+    return { ok: false, reason: "exception", details: e };
   }
 }
 
