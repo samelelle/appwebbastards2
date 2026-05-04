@@ -179,13 +179,34 @@ function AppRoutes() {
     }
 
     supabase.auth.getSession()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!mounted) return;
-        setSession(data.session ?? null);
-        setUserEmail(data.session?.user?.email || '');
-        setIsAuthReady(true);
         if (data.session) {
+          // Verifica server-side che l'utente esista ancora
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (!mounted) return;
+          if (userError || !userData?.user) {
+            // Token non valido o utente eliminato: forza logout
+            try { await supabase.auth.signOut(); } catch {}
+            localStorage.removeItem('bb-my-iscritto-id');
+            localStorage.removeItem('bb-current-chat-user-id');
+            localStorage.removeItem('bb-rubrica');
+            localStorage.removeItem('bb-chat-hide-msg-ids');
+            localStorage.removeItem('bb-rubrica-seen-categories');
+            sessionStorage.clear();
+            setSession(null);
+            setUserEmail('');
+            setIsAuthReady(true);
+            return;
+          }
+          setSession(data.session);
+          setUserEmail(data.session.user?.email || '');
+          setIsAuthReady(true);
           syncRubricaAndUser(data.session);
+        } else {
+          setSession(null);
+          setUserEmail('');
+          setIsAuthReady(true);
         }
       })
       .catch(() => {
