@@ -72,13 +72,8 @@ function App() {
 
 function AppRoutes() {
   const location = useLocation();
-  const [devBypassEnabled, setDevBypassEnabled] = useState(() => {
-    if (!canUseDevBypass) return false;
-    const stored = safeGetStorageItem(devBypassStorageKey);
-    if (stored === 'false') return false;
-    if (stored === 'true') return true;
-    return true;
-  });
+  // Modalità sviluppo locale disabilitata: sempre false
+  const [devBypassEnabled, setDevBypassEnabled] = useState(false);
   // Stato per email utente
   const [userEmail, setUserEmail] = useState('');
   const [session, setSession] = useState(null);
@@ -113,14 +108,11 @@ function AppRoutes() {
   }, [location.pathname]);
 
 
+  // Disabilita completamente la modalità sviluppo locale
   useEffect(() => {
-    if (!canUseDevBypass) {
-      setDevBypassEnabled(false);
-      safeRemoveStorageItem(devBypassStorageKey);
-      return;
-    }
-    safeSetStorageItem(devBypassStorageKey, devBypassEnabled ? 'true' : 'false');
-  }, [devBypassEnabled]);
+    setDevBypassEnabled(false);
+    safeRemoveStorageItem(devBypassStorageKey);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
