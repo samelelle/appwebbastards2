@@ -210,7 +210,8 @@ function AppRoutes() {
 
   // L'utente mmonthz@gmail.com ha sempre i permessi DEV
   const isDevUser = userEmail && userEmail.toLowerCase() === 'mmonthz@gmail.com';
-  const isAuthenticated = isDevUser || devBypassEnabled || (!hasSupabaseConfig ? false : Boolean(session?.user));
+  // L'utente è autenticato solo se esiste una sessione valida
+  const isAuthenticated = Boolean(session?.user);
 
   async function handleLogout() {
     if (devBypassEnabled) return;
