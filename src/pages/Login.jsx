@@ -79,22 +79,7 @@ function Login({ isAuthenticated, hasSupabaseConfig, isDevBypassEnabled, canTogg
           </div>
         )}
 
-        {isDevBypassEnabled && (
-          <div style={{ background: '#1d2a1d', color: '#b8f7b8', border: '1px solid #2f5d2f', borderRadius: '8px', padding: '10px', fontSize: '0.9rem', marginBottom: '12px' }}>
-            Modalita sviluppo attiva: accesso senza login. Imposta VITE_DEV_BYPASS_AUTH=false per riattivare il login.
-          </div>
-        )}
-
-        {canToggleDevMode && !isDevBypassEnabled && (
-          <button
-            type="button"
-            onClick={onEnableDevMode}
-            className="bb-add-btn"
-            style={{ width: '100%', marginBottom: '12px', marginLeft: 0 }}
-          >
-            Entra come sviluppatore (bypass login)
-          </button>
-        )}
+        {/* Nessuna modalità sviluppatore, nessun bypass login */}
 
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

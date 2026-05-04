@@ -271,7 +271,7 @@ function AppRoutes() {
           path="/rubrica"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Rubrica isDevMode={devBypassEnabled} />
+              <Rubrica isDevMode={isDevUser || devBypassEnabled} />
             </ProtectedRoute>
           )}
         />
@@ -279,7 +279,7 @@ function AppRoutes() {
           path="/eventi"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Eventi isDevMode={devBypassEnabled} />
+              <Eventi isDevMode={isDevUser || devBypassEnabled} />
             </ProtectedRoute>
           )}
         />
@@ -287,7 +287,7 @@ function AppRoutes() {
           path="/riunioni"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              {(canCurrentUserAccessMeetings() || devBypassEnabled) ? <Riunioni isDevMode={devBypassEnabled} /> : <Navigate to="/" replace />}
+              {(canCurrentUserAccessMeetings() || isDevUser || devBypassEnabled) ? <Riunioni isDevMode={isDevUser || devBypassEnabled} /> : <Navigate to="/" replace />}
             </ProtectedRoute>
           )}
         />

@@ -203,18 +203,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
           <span style={{ fontSize: '0.72rem', color: '#ffb366', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {userEmail || ''}
           </span>
-          {!isDevMode ? (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="bb-add-btn"
-              style={{ marginLeft: 0, width: 'auto', height: 'auto', padding: '6px 10px', fontSize: '0.78rem' }}
-            >
-              Logout
-            </button>
-          ) : (
-            <span style={{ fontSize: '0.72rem', color: '#7ff27f' }}>DEV</span>
-          )}
+          {/* Nessun tasto Logout, nessun tasto DEV */}
           {/* DEV BYPASS button rimosso per tutti */}
           {'Notification' in window && pushStatus !== 'granted' && (
             <button
