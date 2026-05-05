@@ -245,26 +245,26 @@ function Eventi({ isDevMode }) {
       setSyncError('Compila titolo e data prima di salvare la modifica.');
       return;
     }
-    // Conversione robusta della data
+    // Conversione robusta della data in UTC
     const [year, month, day] = editForm.date.split('-').map(Number);
     let start, end;
     if (editForm.start && editForm.end) {
       const [startHour, startMin] = editForm.start.split(':').map(Number);
       const [endHour, endMin] = editForm.end.split(':').map(Number);
-      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
-      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+      start = new Date(Date.UTC(year, month - 1, day, startHour, startMin, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0, 0));
     } else if (editForm.start && !editForm.end) {
       const [startHour, startMin] = editForm.start.split(':').map(Number);
-      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
-      end = new Date(year, month - 1, day, startHour, (startMin || 0) + 1, 0, 0); // default: 1 min dopo
+      start = new Date(Date.UTC(year, month - 1, day, startHour, startMin, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, startHour, (startMin || 0) + 1, 0, 0)); // default: 1 min dopo
     } else if (!editForm.start && editForm.end) {
       const [endHour, endMin] = editForm.end.split(':').map(Number);
-      start = new Date(year, month - 1, day, endHour, endMin, 0, 0);
-      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+      start = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0, 0));
     } else {
       // Nessuna ora: evento "tutto il giorno"
-      start = new Date(year, month - 1, day, 0, 0, 0, 0);
-      end = new Date(year, month - 1, day, 23, 59, 0, 0);
+      start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, 23, 59, 0, 0));
     }
     try {
       // Recupera la mapRoute dall'evento selezionato (se esiste)
@@ -321,26 +321,26 @@ function Eventi({ isDevMode }) {
       setSyncError('Compila titolo e data prima di salvare l evento.');
       return;
     }
-    // Conversione robusta della data
+    // Conversione robusta della data in UTC
     const [year, month, day] = form.date.split('-').map(Number);
     let start, end;
     if (form.start && form.end) {
       const [startHour, startMin] = form.start.split(':').map(Number);
       const [endHour, endMin] = form.end.split(':').map(Number);
-      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
-      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+      start = new Date(Date.UTC(year, month - 1, day, startHour, startMin, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0, 0));
     } else if (form.start && !form.end) {
       const [startHour, startMin] = form.start.split(':').map(Number);
-      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
-      end = new Date(year, month - 1, day, startHour, (startMin || 0) + 1, 0, 0); // default: 1 min dopo
+      start = new Date(Date.UTC(year, month - 1, day, startHour, startMin, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, startHour, (startMin || 0) + 1, 0, 0)); // default: 1 min dopo
     } else if (!form.start && form.end) {
       const [endHour, endMin] = form.end.split(':').map(Number);
-      start = new Date(year, month - 1, day, endHour, endMin, 0, 0);
-      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+      start = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, endHour, endMin, 0, 0));
     } else {
       // Nessuna ora: evento "tutto il giorno"
-      start = new Date(year, month - 1, day, 0, 0, 0, 0);
-      end = new Date(year, month - 1, day, 23, 59, 0, 0);
+      start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      end = new Date(Date.UTC(year, month - 1, day, 23, 59, 0, 0));
     }
     try {
       // Se il form contiene una mapRoute, salvala nell'evento
@@ -506,10 +506,6 @@ function Eventi({ isDevMode }) {
                 <form onSubmit={handleAddEvent} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', background: '#333', borderRadius: '8px', padding: '10px' }}>
                   <input name="title" type="text" placeholder="Titolo evento" value={form.title} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', fontSize: '1rem' }} />
                   <input className="bb-date-input" name="date" type="date" value={form.date} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <input className="bb-time-input" name="start" type="time" value={form.start} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} placeholder="Ora inizio (opzionale)" />
-                    <input className="bb-time-input" name="end" type="time" value={form.end} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} placeholder="Ora fine (opzionale)" />
-                  </div>
                   <textarea name="note" placeholder="Note evento" value={form.note} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', minHeight: '28px', resize: 'vertical', fontSize: '1rem' }} />
                   <input name="image" type="file" accept="image/*" onChange={handleInput} style={{ marginTop: '4px', color: '#fff', fontSize: '1rem' }} />
                   {form.image && <img src={form.image} alt="anteprima" style={{ maxWidth: '100%', maxHeight: '70px', marginTop: '4px', borderRadius: '6px' }} />}
@@ -564,7 +560,7 @@ function Eventi({ isDevMode }) {
                 >
                   <div onClick={() => setSelectedEvent(ev)}>
                     <b>{ev.title}</b><br />
-                    {ev.start.toLocaleDateString()} {isAllDay ? '' : `${ev.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${ev.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    {ev.start.toLocaleDateString()}
                     {ev.note && <div style={{ fontSize: '0.85em', color: '#ffb366', marginTop: '2px', wordBreak: 'break-word' }}><b>Note:</b> {ev.note}</div>}
                     {ev.image && <img src={ev.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '50px', marginTop: '4px', borderRadius: '6px' }} />}
                   </div>
@@ -592,10 +588,6 @@ function Eventi({ isDevMode }) {
                 <form onSubmit={handleUpdateEvent} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <input name="title" type="text" value={editForm.title} onChange={handleEditInput} placeholder="Titolo evento" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
                   <input className="bb-date-input" name="date" type="date" value={editForm.date} onChange={handleEditInput} style={{ padding: '8px', borderRadius: '6px', fontSize: '1rem' }} />
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input className="bb-time-input" name="start" type="time" value={editForm.start} onChange={handleEditInput} style={{ flex: 1, padding: '8px', borderRadius: '6px', fontSize: '1rem' }} placeholder="Ora inizio (opzionale)" />
-                    <input className="bb-time-input" name="end" type="time" value={editForm.end} onChange={handleEditInput} style={{ flex: 1, padding: '8px', borderRadius: '6px', fontSize: '1rem' }} placeholder="Ora fine (opzionale)" />
-                  </div>
                   <textarea name="note" placeholder="Note evento" value={editForm.note} onChange={handleEditInput} style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '32px', resize: 'vertical', fontSize: '1rem' }} />
                   <input name="image" type="file" accept="image/*" onChange={handleEditInput} style={{ marginTop: '4px', color: '#fff', fontSize: '1rem' }} />
                   {editForm.image && (
@@ -620,26 +612,12 @@ function Eventi({ isDevMode }) {
               <button onClick={handleCloseDetail} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
               <h2 style={{ color: '#ff6600', marginTop: 0 }}>{selectedEvent.title}</h2>
               <div style={{ marginBottom: '12px' }}><b>Data:</b> {selectedEvent.start instanceof Date ? selectedEvent.start.toLocaleDateString() : ''}</div>
-              {selectedEvent.start && selectedEvent.end && (selectedEvent.start.getHours() !== 0 || selectedEvent.start.getMinutes() !== 0 || selectedEvent.end.getHours() !== 23 || selectedEvent.end.getMinutes() !== 59) && (
-                <div style={{ marginBottom: '12px' }}><b>Orario:</b> {selectedEvent.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {selectedEvent.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-              )}
-              {selectedEvent.note && <div style={{ marginBottom: '12px', color: '#ffb366', wordBreak: 'break-word' }}><b>Note:</b> {selectedEvent.note}</div>}
-              {selectedEvent.image && <img src={selectedEvent.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '180px', marginBottom: '12px', borderRadius: '10px' }} />}
-              {selectedEvent.mapRoute && (
-                <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                  <button type="button" onClick={() => handleShowMapRoute(selectedEvent)} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', background: '#ff6600', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '1rem' }}>
-                    Mostra percorso
-                  </button>
-                  <button type="button" onClick={handleCloseDetail} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', background: '#444', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '1rem' }}>
-                    Chiudi
-                  </button>
-                </div>
-              )}
-              {!selectedEvent.mapRoute && (
-                <button type="button" onClick={handleCloseDetail} style={{ marginTop: '16px', width: '100%', padding: '8px 12px', borderRadius: '6px', background: '#444', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '1rem' }}>
-                  Chiudi
-                </button>
-              )}
+              {selectedEvent.note && <div style={{ fontSize: '1em', color: '#ffb366', marginTop: '2px', wordBreak: 'break-word' }}><b>Note:</b> {selectedEvent.note}</div>}
+              {selectedEvent.image && <img src={selectedEvent.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '120px', marginTop: '8px', borderRadius: '8px' }} />}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
+                <button className="bb-add-btn" style={{ flex: 1, fontSize: '1rem', padding: '8px 0', borderRadius: '6px' }} onClick={() => startEditEvent(selectedEvent)}>Modifica</button>
+                <button className="bb-event-btn" style={{ flex: 1, fontSize: '1rem', padding: '8px 0', borderRadius: '6px', background: '#ff4444' }} onClick={() => handleDeleteEvent(selectedEvent.id)}>Cancella</button>
+              </div>
             </div>
           </div>
         )}
