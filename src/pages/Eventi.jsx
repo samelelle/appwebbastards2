@@ -178,7 +178,7 @@ function Eventi({ isDevMode }) {
 
   const listedEvents = (showAllEventsList ? normalizedEvents : filteredEvents)
     .slice()
-    .sort((a, b) => b.start - a.start);
+    .sort((a, b) => a.start - b.start);
 
   function goToPrevMonth() {
     setCalendarDate(prev => {
