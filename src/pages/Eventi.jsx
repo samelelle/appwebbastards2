@@ -246,12 +246,19 @@ function Eventi({ isDevMode }) {
       return;
     }
     const dateParts = editForm.date.split('-');
-    let start;
-    let end;
+    let start, end;
     if (editForm.start && editForm.end) {
       const [startHour, startMin] = editForm.start.split(':');
       const [endHour, endMin] = editForm.end.split(':');
       start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
+      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+    } else if (editForm.start && !editForm.end) {
+      const [startHour, startMin] = editForm.start.split(':');
+      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
+      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, Number(startMin) + 1);
+    } else if (!editForm.start && editForm.end) {
+      const [endHour, endMin] = editForm.end.split(':');
+      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
       end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
     } else {
       start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 0, 0);
@@ -313,14 +320,22 @@ function Eventi({ isDevMode }) {
       return;
     }
     const dateParts = form.date.split('-');
-    let start;
-    let end;
+    let start, end;
     if (form.start && form.end) {
       const [startHour, startMin] = form.start.split(':');
       const [endHour, endMin] = form.end.split(':');
       start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
       end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+    } else if (form.start && !form.end) {
+      const [startHour, startMin] = form.start.split(':');
+      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
+      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, Number(startMin) + 1); // default: 1 min dopo
+    } else if (!form.start && form.end) {
+      const [endHour, endMin] = form.end.split(':');
+      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
     } else {
+      // Nessuna ora: evento "tutto il giorno"
       start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 0, 0);
       end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 23, 59);
     }
@@ -489,8 +504,8 @@ function Eventi({ isDevMode }) {
                   <input name="title" type="text" placeholder="Titolo evento" value={form.title} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', fontSize: '1rem' }} />
                   <input className="bb-date-input" name="date" type="date" value={form.date} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <input className="bb-time-input" name="start" type="time" value={form.start} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
-                    <input className="bb-time-input" name="end" type="time" value={form.end} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} />
+                    <input className="bb-time-input" name="start" type="time" value={form.start} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} placeholder="Ora inizio (opzionale)" />
+                    <input className="bb-time-input" name="end" type="time" value={form.end} onChange={handleInput} style={{ flex: 1, padding: '5px', borderRadius: '5px', fontSize: '1rem' }} placeholder="Ora fine (opzionale)" />
                   </div>
                   <textarea name="note" placeholder="Note evento" value={form.note} onChange={handleInput} style={{ padding: '5px', borderRadius: '5px', border: 'none', minHeight: '28px', resize: 'vertical', fontSize: '1rem' }} />
                   <input name="image" type="file" accept="image/*" onChange={handleInput} style={{ marginTop: '4px', color: '#fff', fontSize: '1rem' }} />
@@ -575,8 +590,8 @@ function Eventi({ isDevMode }) {
                   <input name="title" type="text" value={editForm.title} onChange={handleEditInput} placeholder="Titolo evento" style={{ padding: '8px', borderRadius: '6px', border: 'none', fontSize: '1rem' }} />
                   <input className="bb-date-input" name="date" type="date" value={editForm.date} onChange={handleEditInput} style={{ padding: '8px', borderRadius: '6px', fontSize: '1rem' }} />
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <input className="bb-time-input" name="start" type="time" value={editForm.start} onChange={handleEditInput} style={{ flex: 1, padding: '8px', borderRadius: '6px', fontSize: '1rem' }} />
-                    <input className="bb-time-input" name="end" type="time" value={editForm.end} onChange={handleEditInput} style={{ flex: 1, padding: '8px', borderRadius: '6px', fontSize: '1rem' }} />
+                    <input className="bb-time-input" name="start" type="time" value={editForm.start} onChange={handleEditInput} style={{ flex: 1, padding: '8px', borderRadius: '6px', fontSize: '1rem' }} placeholder="Ora inizio (opzionale)" />
+                    <input className="bb-time-input" name="end" type="time" value={editForm.end} onChange={handleEditInput} style={{ flex: 1, padding: '8px', borderRadius: '6px', fontSize: '1rem' }} placeholder="Ora fine (opzionale)" />
                   </div>
                   <textarea name="note" placeholder="Note evento" value={editForm.note} onChange={handleEditInput} style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '32px', resize: 'vertical', fontSize: '1rem' }} />
                   <input name="image" type="file" accept="image/*" onChange={handleEditInput} style={{ marginTop: '4px', color: '#fff', fontSize: '1rem' }} />
