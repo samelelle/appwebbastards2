@@ -226,11 +226,17 @@ function Eventi({ isDevMode }) {
     }
   }
 
+  // Utility per data locale in formato YYYY-MM-DD
+  function toLocalDateInputValue(date) {
+    const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return d.toISOString().slice(0, 10);
+  }
+
   function startEditEvent(ev) {
     setEditEventId(ev.id);
     setEditForm({
       title: ev.title,
-      date: ev.start.toISOString().slice(0, 10),
+      date: toLocalDateInputValue(ev.start),
       start: ev.start.toTimeString().slice(0, 5),
       end: ev.end.toTimeString().slice(0, 5),
       note: ev.note || '',
