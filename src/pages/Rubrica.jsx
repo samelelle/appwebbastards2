@@ -160,7 +160,8 @@ function Rubrica({ isDevMode }) {
   });
   const chatEndRef = useRef(null);
   const galleryInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
+  const cameraPhotoInputRef = useRef(null);
+  const cameraVideoInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const knownMessageIdsRef = useRef(new Set());
@@ -1227,10 +1228,19 @@ function Rubrica({ isDevMode }) {
                   type="button"
                   className="bb-add-btn"
                   style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem' }}
-                  onClick={() => cameraInputRef.current?.click()}
+                  onClick={() => cameraPhotoInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
-                  Scatta
+                  Scatta foto
+                </button>
+                <button
+                  type="button"
+                  className="bb-add-btn"
+                  style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem' }}
+                  onClick={() => cameraVideoInputRef.current?.click()}
+                  disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
+                >
+                  Registra video
                 </button>
                 <button
                   type="button"
@@ -1252,9 +1262,17 @@ function Rubrica({ isDevMode }) {
                   onChange={handleSelectMedia}
                 />
                 <input
-                  ref={cameraInputRef}
+                  ref={cameraPhotoInputRef}
                   type="file"
-                  accept="image/*,video/*"
+                  accept="image/*"
+                  capture
+                  style={{ display: 'none' }}
+                  onChange={handleSelectMedia}
+                />
+                <input
+                  ref={cameraVideoInputRef}
+                  type="file"
+                  accept="video/*"
                   capture
                   style={{ display: 'none' }}
                   onChange={handleSelectMedia}
