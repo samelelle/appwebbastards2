@@ -115,6 +115,8 @@ function Rubrica({ isDevMode }) {
   const [categoriaAperta, setCategoriaAperta] = useState(null);
   const [chatInput, setChatInput] = useState('');
   const [chatImageData, setChatImageData] = useState('');
+  const [chatVideoData, setChatVideoData] = useState('');
+  const [chatMediaType, setChatMediaType] = useState(''); // 'image' | 'video' | ''
   const [chatImageError, setChatImageError] = useState('');
   const [chatAudioBlob, setChatAudioBlob] = useState(null);
   const [chatAudioUrl, setChatAudioUrl] = useState('');
@@ -274,21 +276,38 @@ function Rubrica({ isDevMode }) {
     });
   }
 
-  async function handleSelectImage(event) {
+  async function handleSelectMedia(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setChatImageError('Seleziona un file immagine valido.');
-      return;
-    }
-
-    setChatImageError('');
-    try {
-      const optimized = await optimizeImage(file);
-      setChatImageData(optimized);
-    } catch {
-      setChatImageError('Impossibile caricare la foto, riprova.');
+    if (file.type.startsWith('image/')) {
+      setChatImageError('');
+      setChatVideoData('');
+      setChatMediaType('image');
+      try {
+        const optimized = await optimizeImage(file);
+        setChatImageData(optimized);
+      } catch {
+        setChatImageError('Impossibile caricare la foto, riprova.');
+      }
+    } else if (file.type.startsWith('video/')) {
+      setChatImageError('');
+      setChatImageData('');
+      setChatMediaType('video');
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setChatVideoData(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } catch {
+        setChatImageError('Impossibile caricare il video, riprova.');
+      }
+    } else {
+      setChatImageError('Seleziona un file immagine o video valido.');
+      setChatImageData('');
+      setChatVideoData('');
+      setChatMediaType('');
     }
   }
 
@@ -398,21 +417,21 @@ function Rubrica({ isDevMode }) {
     // Realtime: ascolta INSERT, UPDATE, DELETE
     const channel = supabase
       .channel('public:chat')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat' },
-        payload => {
-          const msg = payload.new;
-          setChatByCategoria(prev => {
-            const cat = msg.categoria;
-            const arr = prev[cat] ? [...prev[cat]] : [];
-            arr.push({
-              ...msg,
-              authorId: msg.authorId || msg.user_id || msg.userId || '',
-              authorName: msg.authorName || msg.author || '',
-              text: msg.message,
-              imageData: msg.image_url,
-              audioUrl: msg.audio_url,
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*,video/*"
+          style={{ display: 'none' }}
+          onChange={handleSelectMedia}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*,video/*"
+          capture
+          style={{ display: 'none' }}
+          onChange={handleSelectMedia}
+        />
               timestamp: msg.created_at,
             });
             return { ...prev, [cat]: arr };
@@ -851,7 +870,7 @@ function Rubrica({ isDevMode }) {
   async function handleSendMessage() {
     if (!categoriaAperta || !identitaCorrente || !membroCorrenteInCategoria) return;
     const testo = chatInput.trim();
-    if (!testo && !chatImageData && !chatAudioBlob) return;
+    if (!testo && !chatImageData && !chatVideoData && !chatAudioBlob) return;
 
     let audioUrl = null;
     if (chatAudioBlob) {
@@ -870,7 +889,9 @@ function Rubrica({ isDevMode }) {
         categoria: categoriaAperta,
         user_id: identitaCorrente.id,
         message: testo,
-        image_url: chatImageData || null,
+        image_url: chatMediaType === 'image' ? chatImageData : null,
+        video_url: chatMediaType === 'video' ? chatVideoData : null,
+        media_type: chatMediaType || null,
         audio_url: audioUrl || null,
         // puoi aggiungere altri campi se vuoi (es. replyTo)
       },
@@ -1095,29 +1116,54 @@ function Rubrica({ isDevMode }) {
                           style={{ marginTop: msg.text ? '6px' : 0, width: '100%' }}
                         />
                       )}
-                      {msg.imageData && (
-                        <button
-                          type="button"
-                          onClick={() => openChatImage(msg.imageData)}
-                          style={{
-                            marginTop: msg.text ? '6px' : 0,
-                            padding: 0,
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            display: 'block',
-                            width: '100%',
-                            touchAction: 'manipulation',
-                          }}
-                          aria-label="Apri foto inviata in chat"
-                        >
+                      {(chatImageData && chatMediaType === 'image') && (
+                        <div style={{ marginTop: 8, marginBottom: 8, position: 'relative', display: 'inline-block' }}>
                           <img
-                            src={msg.imageData}
-                            alt="Foto inviata in chat"
-                            style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.18)', display: 'block', touchAction: 'manipulation' }}
+                            src={chatImageData}
+                            alt="Anteprima"
+                            style={{ maxWidth: 120, maxHeight: 120, borderRadius: 8, border: '1px solid #ccc' }}
                           />
-                          <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>Tocca la foto per aprirla</div>
+                          <button
+                            type="button"
+                            onClick={() => { setChatImageData(''); setChatMediaType(''); }}
+                            style={{ position: 'absolute', top: 0, right: 0, background: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', padding: 2 }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+                      {(chatVideoData && chatMediaType === 'video') && (
+                        <div style={{ marginTop: 8, marginBottom: 8, position: 'relative', display: 'inline-block' }}>
+                          <video
+                            src={chatVideoData}
+                            controls
+                            style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, border: '1px solid #ccc', background: '#000' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setChatVideoData(''); setChatMediaType(''); }}
+                            style={{ position: 'absolute', top: 0, right: 0, background: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', padding: 2 }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+                        >
+                          {msg.imageData && (
+                            <img
+                              src={msg.imageData}
+                              alt="Foto inviata in chat"
+                              style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.18)', display: 'block', touchAction: 'manipulation' }}
+                            />
+                          )}
+                          {msg.video_url && (
+                            <video
+                              src={msg.video_url}
+                              controls
+                              style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', background: '#000', marginTop: msg.text ? '6px' : 0 }}
+                            />
+                          )}
+                          <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>Tocca la foto o il video per aprirlo</div>
                         </button>
                       )}
                       <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>

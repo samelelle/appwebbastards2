@@ -24,7 +24,8 @@ function Foto() {
     return [];
   });
   const [commento, setCommento] = useState('');
-  const [immagine, setImmagine] = useState('');
+  const [media, setMedia] = useState(''); // può essere image o video (data url)
+  const [mediaType, setMediaType] = useState(''); // 'image' o 'video'
   const [gruppo, setGruppo] = useState('');
   const [nuovoGruppo, setNuovoGruppo] = useState('');
   const [erroreSalvataggio, setErroreSalvataggio] = useState('');
@@ -69,20 +70,24 @@ function Foto() {
     };
   }, []);
 
-  function handleImageChange(e) {
+  function handleMediaChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    if (!isVideo && !isImage) return;
     const reader = new FileReader();
-    reader.onloadend = () => setImmagine(reader.result);
+    reader.onloadend = () => {
+      setMedia(reader.result);
+      setMediaType(isVideo ? 'video' : 'image');
+    };
     reader.readAsDataURL(file);
   }
 
   async function handleAddFoto(e) {
     e.preventDefault();
     setErroreSalvataggio('');
-    console.log('[DEBUG] handleAddFoto chiamata');
-    if (!immagine) {
-      console.log('[DEBUG] Nessuna immagine selezionata');
+    if (!media) {
       return;
     }
     let gruppoFinale = gruppo;
@@ -91,29 +96,28 @@ function Foto() {
     }
     const nuovoItem = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      image: immagine,
+      image: mediaType === 'image' ? media : null,
+      video: mediaType === 'video' ? media : null,
+      mediaType,
       commento: commento.trim(),
       gruppo: gruppoFinale,
       created_at: new Date().toISOString(),
     };
-    console.log('[DEBUG] nuovoItem da inserire:', nuovoItem);
     if (!supabase) {
-      console.error('[DEBUG] supabase è null!');
       setErroreSalvataggio('Errore di configurazione Supabase.');
       return;
     }
     const { error } = await supabase.from('foto').insert([nuovoItem]);
     if (error) {
-      console.error('[DEBUG] Errore Supabase:', error);
       setErroreSalvataggio(error.message || 'Errore durante il salvataggio.');
       return;
     }
     fetchFoto();
-    setImmagine('');
+    setMedia('');
+    setMediaType('');
     setCommento('');
     setGruppo('');
     setNuovoGruppo('');
-    console.log('[DEBUG] Foto inserita con successo');
   }
 
   function handleStartEditDescription(item) {
@@ -195,11 +199,15 @@ async function handleDeleteFoto(itemId) {
               disabled={!!gruppoSelezionato && gruppoSelezionato !== '__no_group__'}
             />
           </div>
-          <label style={{ fontWeight: 600 }}>Inserisci fotografia</label>
-          <input type="file" accept="image/*" onChange={handleImageChange} style={{ color: '#fff' }} />
 
-          {immagine && (
-            <img src={immagine} alt="anteprima foto" style={{ width: '100%', maxHeight: '220px', objectFit: 'cover', borderRadius: '8px' }} />
+          <label style={{ fontWeight: 600 }}>Inserisci foto o video</label>
+          <input type="file" accept="image/*,video/*" onChange={handleMediaChange} style={{ color: '#fff' }} />
+
+          {media && mediaType === 'image' && (
+            <img src={media} alt="anteprima foto" style={{ width: '100%', maxHeight: '220px', objectFit: 'cover', borderRadius: '8px' }} />
+          )}
+          {media && mediaType === 'video' && (
+            <video src={media} controls style={{ width: '100%', maxHeight: '220px', borderRadius: '8px', background: '#000' }} />
           )}
 
           <label style={{ fontWeight: 600 }}>Commento breve</label>
@@ -210,7 +218,7 @@ async function handleDeleteFoto(itemId) {
             maxLength={180}
             style={{ padding: '8px', borderRadius: '6px', border: 'none', minHeight: '46px', resize: 'vertical', fontSize: '0.95rem' }}
           />
-          <button className="bb-event-btn" type="submit" disabled={!immagine}>Salva foto</button>
+          <button className="bb-event-btn" type="submit" disabled={!media}>Salva</button>
         </form>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -295,7 +303,11 @@ async function handleDeleteFoto(itemId) {
                   )
                   .map(item => (
                     <div key={item.id} style={{ background: '#222', borderRadius: '12px', padding: '10px' }}>
-                      <img src={item.image} alt="foto caricata" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '8px' }} />
+                      {item.mediaType === 'video' && item.video ? (
+                        <video src={item.video} controls style={{ width: '100%', maxHeight: '260px', borderRadius: '8px', background: '#000' }} />
+                      ) : (
+                        <img src={item.image} alt="foto caricata" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '8px' }} />
+                      )}
                       {editingDescriptionId === item.id ? (
                         <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <textarea
