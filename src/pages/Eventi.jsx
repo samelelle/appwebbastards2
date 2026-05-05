@@ -245,24 +245,26 @@ function Eventi({ isDevMode }) {
       setSyncError('Compila titolo e data prima di salvare la modifica.');
       return;
     }
-    const dateParts = editForm.date.split('-');
+    // Conversione robusta della data
+    const [year, month, day] = editForm.date.split('-').map(Number);
     let start, end;
     if (editForm.start && editForm.end) {
-      const [startHour, startMin] = editForm.start.split(':');
-      const [endHour, endMin] = editForm.end.split(':');
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+      const [startHour, startMin] = editForm.start.split(':').map(Number);
+      const [endHour, endMin] = editForm.end.split(':').map(Number);
+      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
+      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
     } else if (editForm.start && !editForm.end) {
-      const [startHour, startMin] = editForm.start.split(':');
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, Number(startMin) + 1);
+      const [startHour, startMin] = editForm.start.split(':').map(Number);
+      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
+      end = new Date(year, month - 1, day, startHour, (startMin || 0) + 1, 0, 0); // default: 1 min dopo
     } else if (!editForm.start && editForm.end) {
-      const [endHour, endMin] = editForm.end.split(':');
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+      const [endHour, endMin] = editForm.end.split(':').map(Number);
+      start = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
     } else {
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 0, 0);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 23, 59);
+      // Nessuna ora: evento "tutto il giorno"
+      start = new Date(year, month - 1, day, 0, 0, 0, 0);
+      end = new Date(year, month - 1, day, 23, 59, 0, 0);
     }
     try {
       // Recupera la mapRoute dall'evento selezionato (se esiste)
@@ -319,25 +321,26 @@ function Eventi({ isDevMode }) {
       setSyncError('Compila titolo e data prima di salvare l evento.');
       return;
     }
-    const dateParts = form.date.split('-');
+    // Conversione robusta della data
+    const [year, month, day] = form.date.split('-').map(Number);
     let start, end;
     if (form.start && form.end) {
-      const [startHour, startMin] = form.start.split(':');
-      const [endHour, endMin] = form.end.split(':');
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+      const [startHour, startMin] = form.start.split(':').map(Number);
+      const [endHour, endMin] = form.end.split(':').map(Number);
+      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
+      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
     } else if (form.start && !form.end) {
-      const [startHour, startMin] = form.start.split(':');
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, startMin);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], startHour, Number(startMin) + 1); // default: 1 min dopo
+      const [startHour, startMin] = form.start.split(':').map(Number);
+      start = new Date(year, month - 1, day, startHour, startMin, 0, 0);
+      end = new Date(year, month - 1, day, startHour, (startMin || 0) + 1, 0, 0); // default: 1 min dopo
     } else if (!form.start && form.end) {
-      const [endHour, endMin] = form.end.split(':');
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endHour, endMin);
+      const [endHour, endMin] = form.end.split(':').map(Number);
+      start = new Date(year, month - 1, day, endHour, endMin, 0, 0);
+      end = new Date(year, month - 1, day, endHour, endMin, 0, 0);
     } else {
       // Nessuna ora: evento "tutto il giorno"
-      start = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 0, 0);
-      end = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 23, 59);
+      start = new Date(year, month - 1, day, 0, 0, 0, 0);
+      end = new Date(year, month - 1, day, 23, 59, 0, 0);
     }
     try {
       // Se il form contiene una mapRoute, salvala nell'evento
