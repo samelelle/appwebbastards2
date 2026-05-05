@@ -712,8 +712,19 @@ function Rubrica({ isDevMode }) {
     } catch { return []; }
   }, [chatByCategoria]);
 
+  // Stato e filtro per ricerca messaggi nella chat
+  const [searchChat, setSearchChat] = useState('');
   const messaggiCategoriaAperta = categoriaAperta
-    ? (chatByCategoria[categoriaAperta] || []).filter(msg => !hiddenMsgIds.includes(msg.id))
+    ? (chatByCategoria[categoriaAperta] || [])
+        .filter(msg => !hiddenMsgIds.includes(msg.id))
+        .filter(msg => {
+          if (!searchChat.trim()) return true;
+          const q = searchChat.trim().toLowerCase();
+          return (
+            (msg.text && msg.text.toLowerCase().includes(q)) ||
+            (msg.authorName && msg.authorName.toLowerCase().includes(q))
+          );
+        })
     : [];
   const isOverlayOpen = Boolean(categoriaAperta || showMembersModal || showIdentityModal || showAddModal);
   // Conta solo le chat delle categorie a cui appartiene l'utente
@@ -1007,7 +1018,16 @@ function Rubrica({ isDevMode }) {
             </div>
 
             <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+
               <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem' }}>Chat categoria</h3>
+              {/* Barra di ricerca messaggi */}
+              <input
+                type="text"
+                value={searchChat}
+                onChange={e => setSearchChat(e.target.value)}
+                placeholder="Cerca nei messaggi..."
+                style={{ width: '100%', marginBottom: '10px', padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem' }}
+              />
 
               <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
                 {messaggiCategoriaAperta.length === 0 && (
