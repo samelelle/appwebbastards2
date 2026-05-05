@@ -1255,7 +1255,7 @@ function Rubrica({ isDevMode }) {
                   ref={cameraInputRef}
                   type="file"
                   accept="image/*,video/*"
-                  capture="environment"
+                  capture
                   style={{ display: 'none' }}
                   onChange={handleSelectMedia}
                 />
