@@ -417,21 +417,21 @@ function Rubrica({ isDevMode }) {
     // Realtime: ascolta INSERT, UPDATE, DELETE
     const channel = supabase
       .channel('public:chat')
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*,video/*"
-          style={{ display: 'none' }}
-          onChange={handleSelectMedia}
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*,video/*"
-          capture
-          style={{ display: 'none' }}
-          onChange={handleSelectMedia}
-        />
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat' },
+        payload => {
+          const msg = payload.new;
+          setChatByCategoria(prev => {
+            const cat = msg.categoria;
+            const arr = prev[cat] ? [...prev[cat]] : [];
+            arr.push({
+              ...msg,
+              authorId: msg.authorId || msg.user_id || msg.userId || '',
+              authorName: msg.authorName || msg.author || '',
+              text: msg.message,
+              imageData: msg.image_url,
+              audioUrl: msg.audio_url,
               timestamp: msg.created_at,
             });
             return { ...prev, [cat]: arr };
@@ -915,6 +915,8 @@ function Rubrica({ isDevMode }) {
 
     setChatInput('');
     setChatImageData('');
+    setChatVideoData('');
+    setChatMediaType('');
     setChatImageError('');
     clearAudioRecording();
     setIsUploadingAudio(false);
@@ -1116,39 +1118,8 @@ function Rubrica({ isDevMode }) {
                           style={{ marginTop: msg.text ? '6px' : 0, width: '100%' }}
                         />
                       )}
-                      {(chatImageData && chatMediaType === 'image') && (
-                        <div style={{ marginTop: 8, marginBottom: 8, position: 'relative', display: 'inline-block' }}>
-                          <img
-                            src={chatImageData}
-                            alt="Anteprima"
-                            style={{ maxWidth: 120, maxHeight: 120, borderRadius: 8, border: '1px solid #ccc' }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => { setChatImageData(''); setChatMediaType(''); }}
-                            style={{ position: 'absolute', top: 0, right: 0, background: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', padding: 2 }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      )}
-                      {(chatVideoData && chatMediaType === 'video') && (
-                        <div style={{ marginTop: 8, marginBottom: 8, position: 'relative', display: 'inline-block' }}>
-                          <video
-                            src={chatVideoData}
-                            controls
-                            style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, border: '1px solid #ccc', background: '#000' }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => { setChatVideoData(''); setChatMediaType(''); }}
-                            style={{ position: 'absolute', top: 0, right: 0, background: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', padding: 2 }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      )}
-                        >
+                      {(msg.imageData || msg.video_url) && (
+                        <div style={{ marginTop: msg.text || msg.audioUrl ? '6px' : 0 }}>
                           {msg.imageData && (
                             <img
                               src={msg.imageData}
@@ -1160,11 +1131,13 @@ function Rubrica({ isDevMode }) {
                             <video
                               src={msg.video_url}
                               controls
-                              style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', background: '#000', marginTop: msg.text ? '6px' : 0 }}
+                              style={{ width: '100%', maxWidth: '240px', borderRadius: '10px', background: '#000', display: 'block', marginTop: msg.imageData ? '6px' : 0 }}
                             />
                           )}
-                          <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>Tocca la foto o il video per aprirlo</div>
-                        </button>
+                          <div style={{ marginTop: '4px', color: '#bbb', fontSize: '0.74em' }}>
+                            {msg.video_url ? 'Video inviato in chat' : 'Foto inviata in chat'}
+                          </div>
+                        </div>
                       )}
                       <div style={{ fontSize: '0.75em', color: '#aaa', marginTop: '2px' }}>
                         {new Date(msg.timestamp && !msg.timestamp.endsWith('Z') ? msg.timestamp + 'Z' : msg.timestamp).toLocaleString()}
@@ -1209,11 +1182,19 @@ function Rubrica({ isDevMode }) {
                 </div>
               )}
 
-              {chatImageData && (
+              {chatImageData && chatMediaType === 'image' && (
                 <div style={{ marginTop: '8px', background: '#2a2a2a', borderRadius: '8px', padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <img src={chatImageData} alt="Anteprima foto" style={{ width: '68px', height: '68px', objectFit: 'cover', borderRadius: '8px' }} />
                   <div style={{ flex: 1, fontSize: '0.86em', color: '#ddd' }}>Foto pronta da inviare</div>
-                  <button type="button" onClick={() => { setChatImageData(''); setChatImageError(''); }} style={{ background: '#444', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer' }}>Rimuovi</button>
+                  <button type="button" onClick={() => { setChatImageData(''); setChatMediaType(''); setChatImageError(''); }} style={{ background: '#444', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer' }}>Rimuovi</button>
+                </div>
+              )}
+
+              {chatVideoData && chatMediaType === 'video' && (
+                <div style={{ marginTop: '8px', background: '#2a2a2a', borderRadius: '8px', padding: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <video src={chatVideoData} controls style={{ width: '120px', maxHeight: '68px', borderRadius: '8px', background: '#000' }} />
+                  <div style={{ flex: 1, fontSize: '0.86em', color: '#ddd' }}>Video pronto da inviare</div>
+                  <button type="button" onClick={() => { setChatVideoData(''); setChatMediaType(''); setChatImageError(''); }} style={{ background: '#444', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 8px', cursor: 'pointer' }}>Rimuovi</button>
                 </div>
               )}
 
@@ -1266,17 +1247,17 @@ function Rubrica({ isDevMode }) {
                 <input
                   ref={galleryInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   style={{ display: 'none' }}
-                  onChange={handleSelectImage}
+                  onChange={handleSelectMedia}
                 />
                 <input
                   ref={cameraInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   capture="environment"
                   style={{ display: 'none' }}
-                  onChange={handleSelectImage}
+                  onChange={handleSelectMedia}
                 />
               </div>
 
