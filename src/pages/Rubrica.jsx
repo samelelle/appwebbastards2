@@ -868,7 +868,11 @@ function Rubrica({ isDevMode }) {
     return data?.publicUrl || '';
   }
 
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
   async function handleSendMessage() {
+    if (isSendingMessage) return;
+    setIsSendingMessage(true);
     console.log('DEBUG handleSendMessage', {
       categoriaAperta,
       identitaCorrente,
@@ -931,6 +935,7 @@ function Rubrica({ isDevMode }) {
       });
       setSaveError('Errore invio messaggio: ' + insertError.message);
       setIsUploadingAudio(false);
+      setIsSendingMessage(false);
       return;
     }
 
@@ -958,6 +963,7 @@ function Rubrica({ isDevMode }) {
     clearAudioRecording();
     setIsUploadingAudio(false);
     setReplyTo(null);
+    setIsSendingMessage(false);
   }
 
   const [showQr, setShowQr] = useState(false);
@@ -1321,16 +1327,16 @@ function Rubrica({ isDevMode }) {
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !isSendingMessage) {
                       e.preventDefault();
                       void handleSendMessage();
                     }
                   }}
                   placeholder="Scrivi un messaggio..."
                   style={{ flex: 1, padding: '10px', borderRadius: '18px', border: 'none', fontSize: '0.95rem' }}
-                  disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
+                  disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || isSendingMessage}
                 />
-                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatVideoData && !chatAudioBlob) || isUploadingAudio}>{isUploadingAudio ? 'Invio...' : 'Invia'}</button>
+                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatVideoData && !chatAudioBlob) || isUploadingAudio || isSendingMessage}>{isUploadingAudio ? 'Invio...' : isSendingMessage ? 'Invio...' : 'Invia'}</button>
               </div>
               {membriCategoriaAperta.length === 0 && (
                 <div style={{ marginTop: '6px', color: '#999', fontSize: '0.82em' }}>
