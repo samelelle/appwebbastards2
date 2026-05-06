@@ -999,7 +999,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         maxWidth: '92vw',
         margin: '0 auto',
         marginTop: isMobile ? 0 : '3cm',
-        padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 24px) 12px 8px 12px' : 0,
+        padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 2px) 12px 8px 12px' : 0,
         boxSizing: 'border-box',
         flex: isMobile ? '0 0 auto' : '1 1 auto',
         height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto',

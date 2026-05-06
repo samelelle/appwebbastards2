@@ -9,6 +9,18 @@ import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, 
 import { subscribeUserToPush } from '../lib/pushSubscription';
 import { unsubscribeUserFromPush } from '../lib/unsubscribePush';
 
+// Utility per decodificare base64url (come in pushSubscription.js)
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 function formatPushError(result, fallbackMessage) {
   const reason = result?.reason ? String(result.reason) : 'errore';
   const detailsMessage = result?.details?.message || result?.details?.error_description || '';
@@ -40,6 +52,53 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState('');
   const [showPushRenewBanner, setShowPushRenewBanner] = useState(false);
+
+    // Controlla se la subscription esistente ha la VAPID key giusta
+    useEffect(() => {
+      (async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+        if (Notification.permission !== 'granted') return;
+        try {
+          const registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
+          if (!registration) return;
+          const subscription = await registration.pushManager.getSubscription();
+          if (!subscription) return;
+          // Recupera la chiave pubblica attesa
+          let vapidKey = null;
+          if (import.meta.env.VITE_VAPID_PUBLIC_KEY) {
+            vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+          } else {
+            try {
+              const resp = await fetch('/api/vapid-public-key');
+              if (resp.ok) {
+                const data = await resp.json();
+                vapidKey = data?.publicKey || null;
+              }
+            } catch {}
+          }
+          if (!vapidKey) return;
+          // Confronta la chiave della subscription con quella attesa
+          const subKey = subscription.options?.applicationServerKey || subscription.options?.applicationServerKey;
+          if (!subKey) return;
+          // subKey può essere ArrayBuffer o base64
+          let subKeyArr;
+          if (subKey instanceof Uint8Array) {
+            subKeyArr = subKey;
+          } else if (subKey instanceof ArrayBuffer) {
+            subKeyArr = new Uint8Array(subKey);
+          } else if (Array.isArray(subKey)) {
+            subKeyArr = new Uint8Array(subKey);
+          } else {
+            // Prova a decodificare
+            subKeyArr = urlBase64ToUint8Array(subKey);
+          }
+          const expectedKeyArr = urlBase64ToUint8Array(vapidKey);
+          if (subKeyArr.length !== expectedKeyArr.length || !subKeyArr.every((v, i) => v === expectedKeyArr[i])) {
+            setShowPushRenewBanner(true);
+          }
+        } catch {}
+      })();
+    }, []);
 
   useEffect(() => {
     if (!pushError) {
