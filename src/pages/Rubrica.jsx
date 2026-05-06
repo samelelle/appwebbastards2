@@ -966,7 +966,9 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         position: 'fixed',
         inset: 0,
         overflow: 'hidden',
-        textAlign: isMobile ? 'center' : undefined
+        textAlign: isMobile ? 'center' : undefined,
+        justifyContent: isMobile ? 'center' : undefined,
+        alignItems: isMobile ? 'center' : undefined
       }}
     >
       {/* Pulsante QR code spostato sotto 'Crea iscritto' */}
@@ -991,6 +993,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: isMobile ? 'center' : undefined,
         gap: '14px',
         width: isMobile ? '100%' : '360px',
         maxWidth: '92vw',
@@ -1005,7 +1008,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         textAlign: isMobile ? 'center' : undefined
       }}>
         {isMembroCorrenteInCategoria('Full') && (
-          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
             onClick={() => {
               setReplyTo(null);
               setCategoriaAperta('Full');
@@ -1017,7 +1020,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
           </button>
         )}
         {isMembroCorrenteInCategoria('Prospect') && (
-          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
             onClick={() => {
               setReplyTo(null);
               setCategoriaAperta('Prospect');
@@ -1041,18 +1044,18 @@ function Rubrica({ isDevMode, maintenanceMode }) {
           </button>
         )}
 
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => setShowIdentityModal(true)}>
+        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }} onClick={() => setShowIdentityModal(true)}>
           Identita chat: {identitaCorrente ? displayName(identitaCorrente) : 'Non selezionata'}
         </button>
 
-        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }} onClick={() => setShowMembersModal(true)}>
+        <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }} onClick={() => setShowMembersModal(true)}>
           Lista iscritti
-        </button>
-
-        {(!myIscrittoId || isDevMode) && (
-          <button
-            className="bb-add-btn"
-            style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined }}
+        <button
+          type="button"
+          className="bb-add-btn"
+          style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined, display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
+          onClick={() => setShowQr(true)}
+        >
             onClick={() => {
               setEditingIscrittoId(null);
               setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
