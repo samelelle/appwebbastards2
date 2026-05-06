@@ -7,6 +7,7 @@ import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
 import { subscribeUserToPush } from '../lib/pushSubscription';
+import { unsubscribeUserFromPush } from '../lib/unsubscribePush';
 
 function formatPushError(result, fallbackMessage) {
   const reason = result?.reason ? String(result.reason) : 'errore';
@@ -24,6 +25,46 @@ function formatPushError(result, fallbackMessage) {
 }
 
 function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMaintenance, onToggleMaintenance, canToggleDevMode, onToggleDevMode }) {
+    // Mostra banner se errore push "chiave" o "not valid" o "auth" o "vapid" o "subscription" o "410" o "invalid"
+    const [showPushRenewBanner, setShowPushRenewBanner] = useState(false);
+
+    useEffect(() => {
+      if (!pushError) {
+        setShowPushRenewBanner(false);
+        return;
+      }
+      const err = pushError.toLowerCase();
+      if (
+        err.includes('vapid') ||
+        err.includes('auth') ||
+        err.includes('not valid') ||
+        err.includes('subscription') ||
+        err.includes('410') ||
+        err.includes('chiave') ||
+        err.includes('invalid')
+      ) {
+        setShowPushRenewBanner(true);
+      } else {
+        setShowPushRenewBanner(false);
+      }
+    }, [pushError]);
+    async function handleRenewPush() {
+      setPushBusy(true);
+      setPushError('');
+      try {
+        await unsubscribeUserFromPush();
+        const result = await subscribeUserToPush({ interactive: true });
+        if (result?.ok) {
+          setPushStatus('granted');
+          setShowPushRenewBanner(false);
+        } else {
+          setPushStatus(Notification.permission);
+          setPushError(formatPushError(result, 'Impossibile riattivare le notifiche'));
+        }
+      } finally {
+        setPushBusy(false);
+      }
+    }
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const showMaintenanceNotice = isMaintenanceMode && !isDevMode;
@@ -223,7 +264,26 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
             )}
         </div>
       )}
-      {!showMaintenanceNotice && pushError && (
+      {!showMaintenanceNotice && showPushRenewBanner && (
+        <div style={{ position: 'absolute', top: '64px', right: '12px', left: '12px', zIndex: 30 }}>
+          <div style={{ background: '#2a1c1c', color: '#ffb7b7', border: '1px solid #5d2c2c', borderRadius: '10px', padding: '10px', fontSize: '0.95rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <span>Le notifiche push non funzionano più su questo dispositivo.<br/>Per favore riattivale per continuare a riceverle.</span>
+            <button
+              type="button"
+              onClick={handleRenewPush}
+              className="bb-add-btn"
+              disabled={pushBusy}
+              style={{ marginTop: '4px', fontSize: '0.95em', background: '#0a3a6b', color: '#fff', padding: '7px 16px', borderRadius: '8px' }}
+            >
+              {pushBusy ? 'Riattivo...' : 'Riattiva notifiche'}
+            </button>
+            {pushError && (
+              <span style={{ color: '#ffb7b7', fontSize: '0.85em', marginTop: '2px' }}>Errore: {pushError}</span>
+            )}
+          </div>
+        </div>
+      )}
+      {!showMaintenanceNotice && !showPushRenewBanner && pushError && (
         <div style={{ position: 'absolute', top: '64px', right: '12px', left: '12px', zIndex: 30 }}>
           <div style={{ background: '#2a1c1c', color: '#ffb7b7', border: '1px solid #5d2c2c', borderRadius: '10px', padding: '10px', fontSize: '0.85rem' }}>
             Notifiche non attive: {pushError}
