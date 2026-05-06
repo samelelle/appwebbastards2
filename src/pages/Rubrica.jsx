@@ -869,6 +869,16 @@ function Rubrica({ isDevMode }) {
   }
 
   async function handleSendMessage() {
+    console.log('DEBUG handleSendMessage', {
+      categoriaAperta,
+      identitaCorrente,
+      membroCorrenteInCategoria,
+      chatInput,
+      chatImageData,
+      chatVideoData,
+      chatMediaType,
+      chatAudioBlob
+    });
     if (!categoriaAperta || !identitaCorrente || !membroCorrenteInCategoria) return;
     const testo = chatInput.trim();
     if (!testo && !chatImageData && !chatVideoData && !chatAudioBlob) return;
@@ -897,6 +907,32 @@ function Rubrica({ isDevMode }) {
         // puoi aggiungere altri campi se vuoi (es. replyTo)
       },
     ]);
+    const { data: insertData, error: insertError } = await supabase.from('chat').insert([
+      {
+        categoria: categoriaAperta,
+        user_id: identitaCorrente.id,
+        message: testo,
+        image_url: chatMediaType === 'image' ? chatImageData : null,
+        video_url: chatMediaType === 'video' ? chatVideoData : null,
+        media_type: chatMediaType || null,
+        audio_url: audioUrl || null,
+        // puoi aggiungere altri campi se vuoi (es. replyTo)
+      },
+    ]);
+    if (insertError) {
+      console.error('ERRORE INSERT SUPABASE', insertError, {
+        categoria: categoriaAperta,
+        user_id: identitaCorrente.id,
+        message: testo,
+        image_url: chatMediaType === 'image' ? chatImageData : null,
+        video_url: chatMediaType === 'video' ? chatVideoData : null,
+        media_type: chatMediaType || null,
+        audio_url: audioUrl || null,
+      });
+      setSaveError('Errore invio messaggio: ' + insertError.message);
+      setIsUploadingAudio(false);
+      return;
+    }
 
     // Invia notifica push a tutti tramite API Vercel
     try {
@@ -1294,7 +1330,7 @@ function Rubrica({ isDevMode }) {
                   style={{ flex: 1, padding: '10px', borderRadius: '18px', border: 'none', fontSize: '0.95rem' }}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 />
-                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatAudioBlob) || isUploadingAudio}>{isUploadingAudio ? 'Invio...' : 'Invia'}</button>
+                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatVideoData && !chatAudioBlob) || isUploadingAudio}>{isUploadingAudio ? 'Invio...' : 'Invia'}</button>
               </div>
               {membriCategoriaAperta.length === 0 && (
                 <div style={{ marginTop: '6px', color: '#999', fontSize: '0.82em' }}>
@@ -1376,7 +1412,7 @@ function Rubrica({ isDevMode }) {
 
       {showIdentityModal && (
         <div style={{ position: 'fixed', inset: 0, background: '#111', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 8100, padding: 0, boxSizing: 'border-box' }}>
-          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#222', paddingBottom: '8px' }}>
               <button onClick={() => setShowIdentityModal(false)} style={{ position: 'absolute', top: isMobile ? '14px' : 10, right: 14, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
               <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: 0 }}>Identita chat</h2>
