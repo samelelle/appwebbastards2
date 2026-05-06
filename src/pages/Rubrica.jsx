@@ -954,7 +954,20 @@ function Rubrica({ isDevMode, maintenanceMode }) {
   return (
     <div
       className="bb-page"
-      style={{ height: 'var(--bb-app-height, 100dvh)', background: '#111', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: isMobile ? 0 : '48px', paddingBottom: 0, position: 'fixed', inset: 0, overflow: 'hidden' }}
+      style={{
+        height: 'var(--bb-app-height, 100dvh)',
+        background: '#111',
+        color: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: isMobile ? 0 : '48px',
+        paddingBottom: 0,
+        position: 'fixed',
+        inset: 0,
+        overflow: 'hidden',
+        textAlign: isMobile ? 'center' : undefined
+      }}
     >
       {/* Pulsante QR code spostato sotto 'Crea iscritto' */}
       {chatNotice && (
@@ -974,7 +987,23 @@ function Rubrica({ isDevMode, maintenanceMode }) {
           <h1 className="bb-title" style={{ margin: 0 }}>RUBRICA</h1>
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: isMobile ? '100%' : '360px', maxWidth: '92vw', margin: '0 auto', marginTop: isMobile ? 0 : '3cm', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 72px) 12px 8px 12px' : 0, boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto' }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '14px',
+        width: isMobile ? '100%' : '360px',
+        maxWidth: '92vw',
+        margin: '0 auto',
+        marginTop: isMobile ? 0 : '3cm',
+        padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 72px) 12px 8px 12px' : 0,
+        boxSizing: 'border-box',
+        flex: isMobile ? '0 0 auto' : '1 1 auto',
+        height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto',
+        maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none',
+        overflowY: 'auto',
+        textAlign: isMobile ? 'center' : undefined
+      }}>
         {isMembroCorrenteInCategoria('Full') && (
           <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
             onClick={() => {
@@ -1057,7 +1086,22 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
       {categoriaAperta && (
         <div style={{ position: 'fixed', inset: 0, background: '#111', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 8100, padding: 0, boxSizing: 'border-box' }}>
-          <div style={{ background: '#1b1b1b', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(14px + env(safe-area-inset-top)) 12px 0 12px' : '18px', width: '100vw', height: '100dvh', maxHeight: '100dvh', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{
+            background: '#1b1b1b',
+            color: '#fff',
+            borderRadius: isMobile ? '0' : '16px',
+            padding: isMobile ? 'calc(14px + env(safe-area-inset-top)) 12px 0 12px' : '18px',
+            width: '100vw',
+            height: '100dvh',
+            maxHeight: '100dvh',
+            boxShadow: isMobile ? 'none' : '0 4px 24px #000a',
+            position: 'relative',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            textAlign: isMobile ? 'center' : undefined
+          }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#1b1b1b', paddingBottom: '8px' }}>
               <button onClick={() => { setReplyTo(null); setCategoriaAperta(null); }} style={{ position: 'absolute', top: isMobile ? '14px' : 10, right: 14, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
               <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: '8px' }}>Stanza categoria: {categoriaAperta}</h2>
@@ -1066,9 +1110,9 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', textAlign: isMobile ? 'center' : undefined }}>
 
-              <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem' }}>Chat categoria</h3>
+              <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem', textAlign: isMobile ? 'center' : undefined }}>Chat categoria</h3>
               {/* Barra di ricerca messaggi */}
               <input
                 type="text"
@@ -1078,7 +1122,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 style={{ width: '100%', marginBottom: '10px', padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem' }}
               />
 
-              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
+              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
                 )}
