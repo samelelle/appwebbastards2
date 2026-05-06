@@ -64,12 +64,14 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
   return children;
 }
 
+
 function App() {
+  const { updateAvailable, updateApp } = useServiceWorkerUpdate();
   console.log('[APP DEBUG] updateAvailable:', updateAvailable);
   return (
     <Router>
       <ScrollToTopOnRouteChange />
-      <AppRoutes />
+      <AppRoutes updateAvailable={updateAvailable} updateApp={updateApp} />
     </Router>
   );
 }
