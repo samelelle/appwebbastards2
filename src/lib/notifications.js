@@ -12,11 +12,17 @@ export async function ensureNotificationPermission() {
 }
 
 export function notifyUser(title, body) {
+  // Blocca notifiche se modalità manutenzione attiva (tranne per DEV)
+  try {
+    const isMaintenance = localStorage.getItem('bb-maintenance-mode') === '1';
+    const userEmail = localStorage.getItem('bb-user-email') || '';
+    const isDev = userEmail.toLowerCase() === 'mmonthz@gmail.com';
+    if (isMaintenance && !isDev) return;
+  } catch {}
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
 
   try {
-    // Notification is best-effort and should never break app flow.
     new Notification(title, {
       body,
       icon: '/favicon.svg',

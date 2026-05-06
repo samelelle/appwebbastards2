@@ -10,7 +10,16 @@ import useIsMobile from '../hooks/useIsMobile';
 import { markChatSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
 
-function Rubrica({ isDevMode }) {
+function Rubrica({ isDevMode, maintenanceMode }) {
+          // Se in manutenzione e non DEV, mostra schermata blocco e non caricare altro
+          if (maintenanceMode && !isDevMode) {
+            return (
+              <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#fff', fontSize: '1.5rem' }}>
+                <div style={{ marginBottom: 32, fontSize: '2.2rem', color: '#ff6600' }}>🛠️ In manutenzione</div>
+                <div>La rubrica è temporaneamente non disponibile.<br />Riprova più tardi.</div>
+              </div>
+            );
+          }
         // Stato per modifica messaggio
         const [editingMsgId, setEditingMsgId] = useState(null);
         const [editingMsgText, setEditingMsgText] = useState('');
@@ -871,18 +880,12 @@ function Rubrica({ isDevMode }) {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   async function handleSendMessage() {
+    if (maintenanceMode && !isDevMode) {
+      setSaveError('L\'app è in manutenzione. Invio messaggi disabilitato.');
+      return;
+    }
     if (isSendingMessage) return;
     setIsSendingMessage(true);
-    console.log('DEBUG handleSendMessage', {
-      categoriaAperta,
-      identitaCorrente,
-      membroCorrenteInCategoria,
-      chatInput,
-      chatImageData,
-      chatVideoData,
-      chatMediaType,
-      chatAudioBlob
-    });
     if (!categoriaAperta || !identitaCorrente || !membroCorrenteInCategoria) return;
     const testo = chatInput.trim();
     if (!testo && !chatImageData && !chatVideoData && !chatAudioBlob) return;
@@ -899,18 +902,6 @@ function Rubrica({ isDevMode }) {
       }
     }
 
-    await supabase.from('chat').insert([
-      {
-        categoria: categoriaAperta,
-        user_id: identitaCorrente.id,
-        message: testo,
-        image_url: chatMediaType === 'image' ? chatImageData : null,
-        video_url: chatMediaType === 'video' ? chatVideoData : null,
-        media_type: chatMediaType || null,
-        audio_url: audioUrl || null,
-        // puoi aggiungere altri campi se vuoi (es. replyTo)
-      },
-    ]);
     const { data: insertData, error: insertError } = await supabase.from('chat').insert([
       {
         categoria: categoriaAperta,
@@ -920,40 +911,32 @@ function Rubrica({ isDevMode }) {
         video_url: chatMediaType === 'video' ? chatVideoData : null,
         media_type: chatMediaType || null,
         audio_url: audioUrl || null,
-        // puoi aggiungere altri campi se vuoi (es. replyTo)
       },
     ]);
     if (insertError) {
-      console.error('ERRORE INSERT SUPABASE', insertError, {
-        categoria: categoriaAperta,
-        user_id: identitaCorrente.id,
-        message: testo,
-        image_url: chatMediaType === 'image' ? chatImageData : null,
-        video_url: chatMediaType === 'video' ? chatVideoData : null,
-        media_type: chatMediaType || null,
-        audio_url: audioUrl || null,
-      });
       setSaveError('Errore invio messaggio: ' + insertError.message);
       setIsUploadingAudio(false);
       setIsSendingMessage(false);
       return;
     }
 
-    // Invia notifica push a tutti tramite API Vercel
-    try {
-      await fetch('https://appwebbastards2-3g9t.vercel.app/api/send-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Nuovo messaggio in chat',
-          body: testo ? testo.slice(0, 60) : (audioUrl ? '[Vocale]' : '[Foto]'),
-          url: window.location.origin + '/rubrica',
-          exclude_user_id: identitaCorrente.id,
-          type: 'chat',
-          chatCategory: categoriaAperta ? String(categoriaAperta).toLowerCase() : undefined
-        })
-      });
-    } catch (e) { /* ignora errori push */ }
+    // Invia notifica push solo se NON in manutenzione
+    if (!maintenanceMode) {
+      try {
+        await fetch('https://appwebbastards2-3g9t.vercel.app/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Nuovo messaggio in chat',
+            body: testo ? testo.slice(0, 60) : (audioUrl ? '[Vocale]' : '[Foto]'),
+            url: window.location.origin + '/rubrica',
+            exclude_user_id: identitaCorrente.id,
+            type: 'chat',
+            chatCategory: categoriaAperta ? String(categoriaAperta).toLowerCase() : undefined
+          })
+        });
+      } catch (e) { /* ignora errori push */ }
+    }
 
     setChatInput('');
     setChatImageData('');

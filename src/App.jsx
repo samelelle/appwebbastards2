@@ -1,5 +1,25 @@
 
 import React, { useEffect, useState } from 'react';
+// Chiave localStorage per modalità manutenzione
+const maintenanceStorageKey = 'bb-maintenance-mode';
+// Funzioni sicure per localStorage modalità manutenzione
+function getMaintenanceMode() {
+  try {
+    return localStorage.getItem(maintenanceStorageKey) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setMaintenanceMode(enabled) {
+  try {
+    if (enabled) {
+      localStorage.setItem(maintenanceStorageKey, '1');
+    } else {
+      localStorage.removeItem(maintenanceStorageKey);
+    }
+  } catch {}
+}
 import { useLocation } from 'react-router-dom';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
@@ -73,6 +93,24 @@ function App() {
 
 function AppRoutes() {
   const location = useLocation();
+    // Stato modalità manutenzione globale
+    const [maintenanceMode, setMaintenanceModeState] = useState(getMaintenanceMode());
+    // Aggiorna stato se cambia in localStorage (multi-tab)
+    useEffect(() => {
+      const handler = (e) => {
+        if (e.key === maintenanceStorageKey) {
+          setMaintenanceModeState(getMaintenanceMode());
+        }
+      };
+      window.addEventListener('storage', handler);
+      return () => window.removeEventListener('storage', handler);
+    }, []);
+    // Funzione per DEV: attiva/disattiva modalità manutenzione
+    function handleToggleMaintenance() {
+      const newValue = !maintenanceMode;
+      setMaintenanceMode(newValue);
+      setMaintenanceModeState(newValue);
+    }
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
   // Stato per email utente
@@ -284,40 +322,60 @@ function AppRoutes() {
     setIsAuthReady(true);
   }
 
+  // Se modalità manutenzione attiva e NON DEV, mostra schermata blocco
+  if (maintenanceMode && !isDevUser) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#fff', fontSize: '1.5rem' }}>
+        <div style={{ marginBottom: 32, fontSize: '2.2rem', color: '#ff6600' }}>🛠️ In manutenzione</div>
+        <div>L'app è temporaneamente non disponibile.<br />Riprova più tardi.</div>
+      </div>
+    );
+  }
+
   return (
-    <Routes>
-      <Route path="/admin/approva" element={<ApprovaRegistrazione />} />
-      <Route
-        path="/login"
-        element={(
-          <Login
-            isAuthenticated={isAuthenticated}
-            hasSupabaseConfig={hasSupabaseConfig}
-            isDevBypassEnabled={isDevUser || devBypassEnabled}
-            canToggleDevMode={isDevUser ? false : canUseDevBypass}
-            onEnableDevMode={handleEnableDevBypass}
-          />
-        )}
-      />
-      <Route
-        path="/"
-        element={(
-          <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-            <Home
-              onLogout={handleLogout}
-              userEmail={isDevUser ? 'mmonthz@gmail.com' : (devBypassEnabled ? 'Modalita sviluppo locale' : (session?.user?.email || ''))}
-              isDevMode={isDevUser || devBypassEnabled}
+    <>
+      {/* Tasto DEV per attivare/disattivare manutenzione */}
+      {isDevUser && (
+        <button
+          style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: maintenanceMode ? '#ff6600' : '#222', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 2px 8px #0006', cursor: 'pointer' }}
+          onClick={handleToggleMaintenance}
+        >
+          {maintenanceMode ? 'DISATTIVA MANUTENZIONE' : 'ATTIVA MANUTENZIONE'}
+        </button>
+      )}
+      <Routes>
+        <Route path="/admin/approva" element={<ApprovaRegistrazione />} />
+        <Route
+          path="/login"
+          element={(
+            <Login
+              isAuthenticated={isAuthenticated}
+              hasSupabaseConfig={hasSupabaseConfig}
+              isDevBypassEnabled={isDevUser || devBypassEnabled}
               canToggleDevMode={isDevUser ? false : canUseDevBypass}
-              onToggleDevMode={handleToggleDevBypass}
+              onEnableDevMode={handleEnableDevBypass}
             />
-          </ProtectedRoute>
-        )}
-      />
+          )}
+        />
+        <Route
+          path="/"
+          element={(
+            <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
+              <Home
+                onLogout={handleLogout}
+                userEmail={isDevUser ? 'mmonthz@gmail.com' : (devBypassEnabled ? 'Modalita sviluppo locale' : (session?.user?.email || ''))}
+                isDevMode={isDevUser || devBypassEnabled}
+                canToggleDevMode={isDevUser ? false : canUseDevBypass}
+                onToggleDevMode={handleToggleDevBypass}
+              />
+            </ProtectedRoute>
+          )}
+        />
         <Route
           path="/rubrica"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Rubrica isDevMode={isDevUser || devBypassEnabled} />
+              <Rubrica isDevMode={isDevUser || devBypassEnabled} maintenanceMode={maintenanceMode} />
             </ProtectedRoute>
           )}
         />
@@ -362,7 +420,7 @@ function AppRoutes() {
           )}
         />
       </Routes>
-
+    </>
   );
 }
 
