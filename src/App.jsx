@@ -93,72 +93,18 @@ function App() {
 
 function AppRoutes() {
   const location = useLocation();
-    // Stato modalità manutenzione globale
-    const [maintenanceMode, setMaintenanceModeState] = useState(getMaintenanceMode());
-    // Aggiorna stato se cambia in localStorage (multi-tab)
-    useEffect(() => {
-      const handler = (e) => {
-        if (e.key === maintenanceStorageKey) {
-          setMaintenanceModeState(getMaintenanceMode());
-        }
-      };
-      window.addEventListener('storage', handler);
-      return () => window.removeEventListener('storage', handler);
-    }, []);
+  const [maintenanceMode, setMaintenanceModeState] = useState(getMaintenanceMode());
 
-    // Componente tasto manutenzione DEV
+  useEffect(() => {
+    const handler = event => {
+      if (event.key === maintenanceStorageKey) {
+        setMaintenanceModeState(getMaintenanceMode());
+      }
+    };
 
-  // Componente MaintenanceToggleButton ora a livello modulo
-  import React from 'react';
-  export function MaintenanceToggleButton() {
-    // Questi valori vanno letti direttamente qui
-    const isDevUser = (() => {
-      try {
-        const email = localStorage.getItem('bb-user-email') || '';
-        return email.toLowerCase() === 'mmonthz@gmail.com';
-      } catch { return false; }
-    })();
-    const maintenanceMode = (() => {
-      try {
-        return localStorage.getItem('bb-maintenance-mode') === '1';
-      } catch { return false; }
-    })();
-    const [mode, setMode] = React.useState(maintenanceMode);
-    React.useEffect(() => {
-      const handler = () => setMode(localStorage.getItem('bb-maintenance-mode') === '1');
-      window.addEventListener('storage', handler);
-      return () => window.removeEventListener('storage', handler);
-    }, []);
-    if (!isDevUser) return null;
-    return (
-      <button
-        style={{
-          margin: '18px auto 0 auto',
-          display: 'block',
-          background: mode ? '#ff6600' : '#222',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 8,
-          padding: '8px 18px',
-          fontWeight: 700,
-          fontSize: '1.1rem',
-          boxShadow: '0 2px 8px #0006',
-          cursor: 'pointer',
-        }}
-        onClick={() => {
-          const newValue = !mode;
-          if (newValue) {
-            localStorage.setItem('bb-maintenance-mode', '1');
-          } else {
-            localStorage.removeItem('bb-maintenance-mode');
-          }
-          setMode(newValue);
-        }}
-      >
-        {mode ? 'DISATTIVA MANUTENZIONE' : 'ATTIVA MANUTENZIONE'}
-      </button>
-    );
-  }
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
   // Stato per email utente
@@ -322,6 +268,14 @@ function AppRoutes() {
   // L'utente è autenticato solo se esiste una sessione valida
   const isAuthenticated = Boolean(session?.user);
 
+  useEffect(() => {
+    if (!userEmail) {
+      safeRemoveStorageItem('bb-user-email');
+      return;
+    }
+    safeSetStorageItem('bb-user-email', userEmail);
+  }, [userEmail]);
+
   // Polling: verifica se l'utente autenticato esiste ancora nella tabella iscritti
   useEffect(() => {
     if (!isAuthenticated || !session?.user?.email) return;
@@ -370,6 +324,12 @@ function AppRoutes() {
     setIsAuthReady(true);
   }
 
+  function handleToggleMaintenance() {
+    const nextValue = !maintenanceMode;
+    setMaintenanceMode(nextValue);
+    setMaintenanceModeState(nextValue);
+  }
+
   // Se modalità manutenzione attiva e NON DEV, mostra schermata blocco
   if (maintenanceMode && !isDevUser) {
     return (
@@ -406,6 +366,9 @@ function AppRoutes() {
                 onLogout={handleLogout}
                 userEmail={isDevUser ? 'mmonthz@gmail.com' : (devBypassEnabled ? 'Modalita sviluppo locale' : (session?.user?.email || ''))}
                 isDevMode={isDevUser || devBypassEnabled}
+                isMaintenanceMode={maintenanceMode}
+                canToggleMaintenance={isDevUser}
+                onToggleMaintenance={handleToggleMaintenance}
                 canToggleDevMode={isDevUser ? false : canUseDevBypass}
                 onToggleDevMode={handleToggleDevBypass}
               />

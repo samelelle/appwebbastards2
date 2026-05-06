@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { MaintenanceToggleButton } from '../App';
 import { useNavigate } from 'react-router-dom';
 import teschioImg from '../assets/teschio1.png';
+import MaintenanceToggleButton from '../components/MaintenanceToggleButton';
 import MobileBottomNav from '../components/MobileBottomNav';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
@@ -23,7 +23,7 @@ function formatPushError(result, fallbackMessage) {
   return String(result?.reason || fallbackMessage || 'errore');
 }
 
-function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMode }) {
+function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMaintenance, onToggleMaintenance, canToggleDevMode, onToggleDevMode }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isTabletLandscape, setIsTabletLandscape] = useState(false);
@@ -284,7 +284,11 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
         Law Enforcement<br />Motorcycle Club
       </div>
       {/* Tasto manutenzione DEV sotto la scritta principale */}
-      <MaintenanceToggleButton />
+      <MaintenanceToggleButton
+        visible={canToggleMaintenance}
+        maintenanceMode={isMaintenanceMode}
+        onToggle={onToggleMaintenance}
+      />
       {/* QR code popup rimosso */}
       <MobileBottomNav />
     </div>
