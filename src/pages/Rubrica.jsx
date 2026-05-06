@@ -999,7 +999,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         maxWidth: '92vw',
         margin: '0 auto',
         marginTop: isMobile ? 0 : '3cm',
-        padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 72px) 12px 8px 12px' : 0,
+        padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 24px) 12px 8px 12px' : 0,
         boxSizing: 'border-box',
         flex: isMobile ? '0 0 auto' : '1 1 auto',
         height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto',
@@ -1102,7 +1102,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden',
+            overflow: 'auto',
             textAlign: isMobile ? 'center' : undefined
           }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#1b1b1b', paddingBottom: '8px' }}>
@@ -1113,7 +1113,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', textAlign: isMobile ? 'center' : undefined }}>
+            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', textAlign: isMobile ? 'center' : undefined }}>
 
               <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem', textAlign: isMobile ? 'center' : undefined }}>Chat categoria</h3>
               {/* Barra di ricerca messaggi */}
@@ -1380,7 +1380,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
       {showMembersModal && (
         <div style={{ position: 'fixed', inset: 0, background: '#111', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 8100, padding: 0, boxSizing: 'border-box' }}>
-          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflowY: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'auto' }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#222', paddingBottom: '8px', minHeight: '56px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
                 <button onClick={() => setShowMembersModal(false)} style={{ background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer', marginLeft: '2px' }} title="Chiudi">&times;</button>
@@ -1448,7 +1448,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
       {showIdentityModal && (
         <div style={{ position: 'fixed', inset: 0, background: '#111', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 8100, padding: 0, boxSizing: 'border-box' }}>
-          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflow: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#222', paddingBottom: '8px' }}>
               <button onClick={() => setShowIdentityModal(false)} style={{ position: 'absolute', top: isMobile ? '14px' : 10, right: 14, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
               <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: 0 }}>Identita chat</h2>
@@ -1499,7 +1499,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, background: '#111', display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', zIndex: 8100, padding: 0, boxSizing: 'border-box' }}>
-          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: '#222', color: '#fff', borderRadius: isMobile ? '0' : '16px', padding: isMobile ? 'calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)) 16px' : '24px', width: '100vw', height: '100dvh', maxHeight: '100dvh', overflow: 'auto', boxShadow: isMobile ? 'none' : '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
             <div style={{ flex: '0 0 auto', position: 'relative', background: '#222', paddingBottom: '8px' }}>
               <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: isMobile ? '14px' : 10, right: 14, background: 'none', border: 'none', color: '#ff6600', fontSize: '1.8rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
               <h2 style={{ color: '#ff6600', marginTop: 0, marginBottom: 0 }}>{editingIscrittoId ? 'Modifica iscritto' : 'Nuovo iscritto'}</h2>
