@@ -135,15 +135,24 @@ function Riunioni({ isDevMode }) {
         .eq('id', currentDeliberaId);
       if (error) throw error;
       setEditDeliberaMode(false);
-      // Refetch per mostrare la versione aggiornata
+      // Refetch forzato tramite handleShowDelibera
       if (currentDeliberaId) {
-        const { data, error: fetchError } = await supabase
-          .from('delibere')
-          .select('id, testo')
-          .eq('id', currentDeliberaId)
-          .single();
-        if (!fetchError && data) {
-          setDeliberaViewText(data.testo || '');
+        // Trova la riunione collegata
+        const meetingRow = riunioni.find(r => r && r.id && currentDeliberaId && typeof currentDeliberaId === 'string');
+        // Se non la trovi, usa la vecchia logica (fallback)
+        const meetingId = meetingRow ? meetingRow.id : null;
+        if (meetingId) {
+          await handleShowDelibera(meetingId);
+        } else {
+          // fallback: refetch by delibera id
+          const { data, error: fetchError } = await supabase
+            .from('delibere')
+            .select('id, testo, meeting_id')
+            .eq('id', currentDeliberaId)
+            .single();
+          if (!fetchError && data && data.meeting_id) {
+            await handleShowDelibera(data.meeting_id);
+          }
         }
       }
     } catch {
@@ -159,15 +168,27 @@ function Riunioni({ isDevMode }) {
     setEditDeliberaLoading(true);
     setEditDeliberaError('');
     try {
+      // Recupera meeting_id prima di eliminare
+      let meetingId = null;
+      const { data: deliberaRow } = await supabase
+        .from('delibere')
+        .select('meeting_id')
+        .eq('id', currentDeliberaId)
+        .single();
+      if (deliberaRow && deliberaRow.meeting_id) meetingId = deliberaRow.meeting_id;
       const { error } = await supabase
         .from('delibere')
         .delete()
         .eq('id', currentDeliberaId);
       if (error) throw error;
       setEditDeliberaMode(false);
-      // Refetch per mostrare che non c'è più delibera
-      setDeliberaViewText('Nessuna delibera trovata.');
-      setCurrentDeliberaId(null);
+      // Refetch forzato tramite handleShowDelibera
+      if (meetingId) {
+        await handleShowDelibera(meetingId);
+      } else {
+        setDeliberaViewText('Nessuna delibera trovata.');
+        setCurrentDeliberaId(null);
+      }
     } catch {
       setEditDeliberaError('Errore eliminazione delibera.');
     } finally {
