@@ -5,15 +5,23 @@ export default function useServiceWorkerUpdate() {
 
   useEffect(() => {
     let regRef = null;
-    function checkForUpdate() {
+    async function checkForUpdateAndWaiting() {
       if (regRef) {
-        regRef.update();
+        await regRef.update();
+        // Se c'è già un worker waiting, mostra subito il banner
+        if (regRef.waiting) {
+          setUpdateAvailable(true);
+        }
       }
     }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration().then(reg => {
         if (!reg) return;
         regRef = reg;
+        // Se c'è già un worker waiting (es. dopo deploy), mostra subito il banner
+        if (reg.waiting) {
+          setUpdateAvailable(true);
+        }
         reg.onupdatefound = () => {
           const newWorker = reg.installing;
           if (newWorker) {
@@ -25,15 +33,16 @@ export default function useServiceWorkerUpdate() {
           }
         };
       });
-      document.addEventListener('visibilitychange', () => {
+      const visHandler = () => {
         if (document.visibilityState === 'visible') {
-          checkForUpdate();
+          checkForUpdateAndWaiting();
         }
-      });
+      };
+      document.addEventListener('visibilitychange', visHandler);
+      return () => {
+        document.removeEventListener('visibilitychange', visHandler);
+      };
     }
-    return () => {
-      document.removeEventListener('visibilitychange', checkForUpdate);
-    };
   }, []);
 
   const updateApp = () => {
