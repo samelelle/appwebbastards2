@@ -6,6 +6,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addMeeting, deleteMeeting, getMeetings, updateMeeting } from '../lib/sharedDataApi';
+import { supabase } from '../lib/supabaseClient';
 
 function Riunioni({ isDevMode }) {
   const isMobile = useIsMobile();
@@ -18,6 +19,37 @@ function Riunioni({ isDevMode }) {
   const [showDeliberaModal, setShowDeliberaModal] = useState(false);
   const [deliberaMeetingId, setDeliberaMeetingId] = useState('');
   const [deliberaText, setDeliberaText] = useState('');
+  const [deliberaLoading, setDeliberaLoading] = useState(false);
+  const [deliberaError, setDeliberaError] = useState('');
+
+  async function handleSubmitDelibera(e) {
+    e.preventDefault();
+    setDeliberaError('');
+    if (!deliberaMeetingId || !deliberaText.trim()) {
+      setDeliberaError('Seleziona una riunione e scrivi la delibera.');
+      return;
+    }
+    setDeliberaLoading(true);
+    try {
+      // Salva su tabella 'delibere' con campi: id, meeting_id, testo, created_at
+      const { error } = await supabase
+        .from('delibere')
+        .insert([
+          {
+            meeting_id: deliberaMeetingId,
+            testo: deliberaText,
+          },
+        ]);
+      if (error) throw error;
+      setShowDeliberaModal(false);
+      setDeliberaMeetingId('');
+      setDeliberaText('');
+    } catch (err) {
+      setDeliberaError('Errore salvataggio delibera.');
+    } finally {
+      setDeliberaLoading(false);
+    }
+  }
 
   function parseMeetingDate(dateString) {
     if (!dateString) return null;
@@ -334,7 +366,8 @@ function Riunioni({ isDevMode }) {
                       <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: isMobile ? '22px' : '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
                         <button onClick={() => setShowDeliberaModal(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
                         <h2 style={{ color: '#0a3a6b', marginTop: 0, marginBottom: '18px', fontSize: '1.3em' }}>Aggiungi delibera</h2>
-                        <form onSubmit={e => { e.preventDefault(); /* TODO: salva delibera */ setShowDeliberaModal(false); setDeliberaMeetingId(''); setDeliberaText(''); }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <form onSubmit={handleSubmitDelibera} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                        {deliberaError && <div style={{ color: '#ffb366', fontSize: '0.95em', marginBottom: '-6px' }}>{deliberaError}</div>}
                           <label style={{ fontWeight: 600, fontSize: '1em' }}>Scegli riunione:</label>
                           <select value={deliberaMeetingId} onChange={e => setDeliberaMeetingId(e.target.value)} required style={{ padding: '7px', borderRadius: '6px', fontSize: '1em', width: '100%', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #555' }}>
                             <option value="">-- Seleziona riunione --</option>
@@ -344,7 +377,9 @@ function Riunioni({ isDevMode }) {
                           </select>
                           <label style={{ fontWeight: 600, fontSize: '1em' }}>Testo delibera:</label>
                           <textarea value={deliberaText} onChange={e => setDeliberaText(e.target.value)} required placeholder="Scrivi la delibera..." style={{ padding: '7px', borderRadius: '6px', minHeight: '70px', fontSize: '1em', width: '100%', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #555' }} />
-                          <button type="submit" className="bb-event-btn" style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 0', fontSize: '1em', fontWeight: 700, marginTop: '8px' }}>Salva delibera</button>
+                          <button type="submit" className="bb-event-btn" style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 0', fontSize: '1em', fontWeight: 700, marginTop: '8px' }} disabled={deliberaLoading}>
+                            {deliberaLoading ? 'Salvataggio...' : 'Salva delibera'}
+                          </button>
                         </form>
                       </div>
                     </div>
