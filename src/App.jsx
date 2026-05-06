@@ -330,16 +330,6 @@ function AppRoutes() {
     setMaintenanceModeState(nextValue);
   }
 
-  // Se modalità manutenzione attiva e NON DEV, mostra schermata blocco
-  if (maintenanceMode && !isDevUser) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#fff', fontSize: '1.5rem' }}>
-        <div style={{ marginBottom: 32, fontSize: '2.2rem', color: '#ff6600' }}>🛠️ In manutenzione</div>
-        <div>L'app è temporaneamente non disponibile.<br />Riprova più tardi.</div>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* Tasto DEV per attivare/disattivare manutenzione */}
@@ -379,7 +369,9 @@ function AppRoutes() {
           path="/rubrica"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Rubrica isDevMode={isDevUser || devBypassEnabled} maintenanceMode={maintenanceMode} />
+              {maintenanceMode && !isDevUser
+                ? <Navigate to="/" replace />
+                : <Rubrica isDevMode={isDevUser || devBypassEnabled} maintenanceMode={maintenanceMode} />}
             </ProtectedRoute>
           )}
         />
@@ -387,7 +379,9 @@ function AppRoutes() {
           path="/eventi"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Eventi isDevMode={isDevUser || devBypassEnabled} />
+              {maintenanceMode && !isDevUser
+                ? <Navigate to="/" replace />
+                : <Eventi isDevMode={isDevUser || devBypassEnabled} />}
             </ProtectedRoute>
           )}
         />
@@ -395,7 +389,9 @@ function AppRoutes() {
           path="/riunioni"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              {(canCurrentUserAccessMeetings() || isDevUser || devBypassEnabled) ? <Riunioni isDevMode={isDevUser || devBypassEnabled} /> : <Navigate to="/" replace />}
+              {maintenanceMode && !isDevUser
+                ? <Navigate to="/" replace />
+                : ((canCurrentUserAccessMeetings() || isDevUser || devBypassEnabled) ? <Riunioni isDevMode={isDevUser || devBypassEnabled} /> : <Navigate to="/" replace />)}
             </ProtectedRoute>
           )}
         />
@@ -403,7 +399,7 @@ function AppRoutes() {
           path="/foto"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Foto />
+              {maintenanceMode && !isDevUser ? <Navigate to="/" replace /> : <Foto />}
             </ProtectedRoute>
           )}
         />
@@ -411,7 +407,7 @@ function AppRoutes() {
           path="/mappa"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <Mappa />
+              {maintenanceMode && !isDevUser ? <Navigate to="/" replace /> : <Mappa />}
             </ProtectedRoute>
           )}
         />
@@ -419,7 +415,7 @@ function AppRoutes() {
           path="/qrcode"
           element={(
             <ProtectedRoute isReady={isAuthReady} isAuthenticated={isAuthenticated}>
-              <QrCodeShare />
+              {maintenanceMode && !isDevUser ? <Navigate to="/" replace /> : <QrCodeShare />}
             </ProtectedRoute>
           )}
         />

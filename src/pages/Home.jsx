@@ -26,6 +26,7 @@ function formatPushError(result, fallbackMessage) {
 function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMaintenance, onToggleMaintenance, canToggleDevMode, onToggleDevMode }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const showMaintenanceNotice = isMaintenanceMode && !isDevMode;
   const [isTabletLandscape, setIsTabletLandscape] = useState(false);
   const [isPhoneLandscape, setIsPhoneLandscape] = useState(false);
   const [canAccessMeetings, setCanAccessMeetings] = useState(() => canCurrentUserAccessMeetings());
@@ -184,47 +185,45 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
       >
         BORN BASTARDS
       </h1>
-      {/* Pulsanti rimossi: solo titolo e logo in Home */}
-      <div
-        style={{
-          position: 'absolute',
-          top: isPhoneLandscape ? 'auto' : isMobile ? 'calc(10px + env(safe-area-inset-top))' : '14px',
-          bottom: isPhoneLandscape ? 'calc(var(--bb-mobile-bottom-nav-height, 94px) + 10px + env(safe-area-inset-bottom))' : 'auto',
-          right: '12px',
-          left: isPhoneLandscape ? '12px' : 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          maxWidth: isPhoneLandscape ? '92vw' : '72vw',
-          flexWrap: 'wrap',
-          justifyContent: 'flex-end',
-          zIndex: 20,
-        }}
-      >
-          {/* Email utente rimossa */}
-          {/* Nessun tasto Logout, nessun tasto DEV */}
-          {/* DEV BYPASS button rimosso per tutti */}
-          {'Notification' in window && pushStatus !== 'granted' && (
-            <button
-              type="button"
-              onClick={handleEnablePush}
-              className="bb-add-btn"
-              disabled={pushBusy}
-              style={{
-                marginLeft: 0,
-                width: 'auto',
-                height: 'auto',
-                padding: '6px 10px',
-                fontSize: '0.72rem',
-                background: '#0a3a6b',
-                color: '#fff',
-              }}
-            >
-              {pushBusy ? 'Attiva...' : 'Abilita push'}
-            </button>
-          )}
-      </div>
-      {pushError && (
+      {!showMaintenanceNotice && (
+        <div
+          style={{
+            position: 'absolute',
+            top: isPhoneLandscape ? 'auto' : isMobile ? 'calc(10px + env(safe-area-inset-top))' : '14px',
+            bottom: isPhoneLandscape ? 'calc(var(--bb-mobile-bottom-nav-height, 94px) + 10px + env(safe-area-inset-bottom))' : 'auto',
+            right: '12px',
+            left: isPhoneLandscape ? '12px' : 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            maxWidth: isPhoneLandscape ? '92vw' : '72vw',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
+            zIndex: 20,
+          }}
+        >
+            {'Notification' in window && pushStatus !== 'granted' && (
+              <button
+                type="button"
+                onClick={handleEnablePush}
+                className="bb-add-btn"
+                disabled={pushBusy}
+                style={{
+                  marginLeft: 0,
+                  width: 'auto',
+                  height: 'auto',
+                  padding: '6px 10px',
+                  fontSize: '0.72rem',
+                  background: '#0a3a6b',
+                  color: '#fff',
+                }}
+              >
+                {pushBusy ? 'Attiva...' : 'Abilita push'}
+              </button>
+            )}
+        </div>
+      )}
+      {!showMaintenanceNotice && pushError && (
         <div style={{ position: 'absolute', top: '64px', right: '12px', left: '12px', zIndex: 30 }}>
           <div style={{ background: '#2a1c1c', color: '#ffb7b7', border: '1px solid #5d2c2c', borderRadius: '10px', padding: '10px', fontSize: '0.85rem' }}>
             Notifiche non attive: {pushError}
@@ -289,8 +288,18 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
         maintenanceMode={isMaintenanceMode}
         onToggle={onToggleMaintenance}
       />
+      {showMaintenanceNotice && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px 20px 0 20px', color: '#fff' }}>
+          <div style={{ fontSize: isMobile ? '2rem' : '2.4rem', fontWeight: 800, color: '#ff6600', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Manutenzione
+          </div>
+          <div style={{ marginTop: '12px', fontSize: isMobile ? '1rem' : '1.1rem', lineHeight: 1.5, maxWidth: '440px', color: '#ddd' }}>
+            L'app non è disponibile in questo momento. Riprova più tardi.
+          </div>
+        </div>
+      )}
       {/* QR code popup rimosso */}
-      <MobileBottomNav />
+      {!showMaintenanceNotice && <MobileBottomNav />}
     </div>
   );
 }
