@@ -25,46 +25,6 @@ function formatPushError(result, fallbackMessage) {
 }
 
 function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMaintenance, onToggleMaintenance, canToggleDevMode, onToggleDevMode }) {
-    // Mostra banner se errore push "chiave" o "not valid" o "auth" o "vapid" o "subscription" o "410" o "invalid"
-    const [showPushRenewBanner, setShowPushRenewBanner] = useState(false);
-
-    useEffect(() => {
-      if (!pushError) {
-        setShowPushRenewBanner(false);
-        return;
-      }
-      const err = pushError.toLowerCase();
-      if (
-        err.includes('vapid') ||
-        err.includes('auth') ||
-        err.includes('not valid') ||
-        err.includes('subscription') ||
-        err.includes('410') ||
-        err.includes('chiave') ||
-        err.includes('invalid')
-      ) {
-        setShowPushRenewBanner(true);
-      } else {
-        setShowPushRenewBanner(false);
-      }
-    }, [pushError]);
-    async function handleRenewPush() {
-      setPushBusy(true);
-      setPushError('');
-      try {
-        await unsubscribeUserFromPush();
-        const result = await subscribeUserToPush({ interactive: true });
-        if (result?.ok) {
-          setPushStatus('granted');
-          setShowPushRenewBanner(false);
-        } else {
-          setPushStatus(Notification.permission);
-          setPushError(formatPushError(result, 'Impossibile riattivare le notifiche'));
-        }
-      } finally {
-        setPushBusy(false);
-      }
-    }
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const showMaintenanceNotice = isMaintenanceMode && !isDevMode;
@@ -79,6 +39,28 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
   });
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState('');
+  const [showPushRenewBanner, setShowPushRenewBanner] = useState(false);
+
+  useEffect(() => {
+    if (!pushError) {
+      setShowPushRenewBanner(false);
+      return;
+    }
+    const err = pushError.toLowerCase();
+    if (
+      err.includes('vapid') ||
+      err.includes('auth') ||
+      err.includes('not valid') ||
+      err.includes('subscription') ||
+      err.includes('410') ||
+      err.includes('chiave') ||
+      err.includes('invalid')
+    ) {
+      setShowPushRenewBanner(true);
+    } else {
+      setShowPushRenewBanner(false);
+    }
+  }, [pushError]);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,6 +177,24 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
       } else {
         setPushStatus(Notification.permission);
         setPushError(formatPushError(result, 'Impossibile attivare le notifiche'));
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleRenewPush() {
+    setPushBusy(true);
+    setPushError('');
+    try {
+      await unsubscribeUserFromPush();
+      const result = await subscribeUserToPush({ interactive: true });
+      if (result?.ok) {
+        setPushStatus('granted');
+        setShowPushRenewBanner(false);
+      } else {
+        setPushStatus(Notification.permission);
+        setPushError(formatPushError(result, 'Impossibile riattivare le notifiche'));
       }
     } finally {
       setPushBusy(false);
