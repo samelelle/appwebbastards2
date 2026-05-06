@@ -657,10 +657,12 @@ function Riunioni({ isDevMode }) {
             ) : (
               <>
                 <div style={{ whiteSpace: 'pre-line', fontSize: '1.08em', color: '#fff', marginTop: '10px', marginBottom: '18px' }}>{deliberaViewText}</div>
-                <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
-                  <button onClick={handleEditDelibera} disabled={!currentDeliberaId} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: currentDeliberaId ? 'pointer' : 'not-allowed', opacity: currentDeliberaId ? 1 : 0.6 }}>Modifica</button>
-                  <button onClick={handleDeleteDelibera} disabled={!currentDeliberaId || editDeliberaLoading} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: currentDeliberaId ? 'pointer' : 'not-allowed', opacity: currentDeliberaId ? 1 : 0.6 }}>{editDeliberaLoading ? 'Eliminazione...' : 'Elimina'}</button>
-                </div>
+                {isDevMode && (
+                  <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
+                    <button onClick={handleEditDelibera} disabled={!currentDeliberaId} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: currentDeliberaId ? 'pointer' : 'not-allowed', opacity: currentDeliberaId ? 1 : 0.6 }}>Modifica</button>
+                    <button onClick={handleDeleteDelibera} disabled={!currentDeliberaId || editDeliberaLoading} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: currentDeliberaId ? 'pointer' : 'not-allowed', opacity: currentDeliberaId ? 1 : 0.6 }}>{editDeliberaLoading ? 'Eliminazione...' : 'Elimina'}</button>
+                  </div>
+                )}
                 {editDeliberaError && <div style={{ color: '#ffb366', fontSize: '1em', marginTop: '12px' }}>{editDeliberaError}</div>}
               </>
             )}
