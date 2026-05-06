@@ -14,6 +14,10 @@ function Riunioni({ isDevMode }) {
   const [searchText, setSearchText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllMeetingsList, setShowAllMeetingsList] = useState(false);
+  // Stato per popup delibera
+  const [showDeliberaModal, setShowDeliberaModal] = useState(false);
+  const [deliberaMeetingId, setDeliberaMeetingId] = useState('');
+  const [deliberaText, setDeliberaText] = useState('');
 
   function parseMeetingDate(dateString) {
     if (!dateString) return null;
@@ -307,10 +311,44 @@ function Riunioni({ isDevMode }) {
                 type="button"
                 className="bb-event-btn"
                 style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '12px', padding: isMobile ? 'clamp(10px, 2.6vw, 12px)' : '18px', fontSize: isMobile ? 'clamp(0.84rem, 2.9vw, 0.92rem)' : 'clamp(0.92rem, 3vw, 1rem)', height: 'fit-content', alignSelf: 'flex-start', marginTop: isMobile ? 0 : 'auto', minWidth: '160px', fontWeight: 700 }}
-                onClick={() => alert('TODO: Apri popup aggiungi delibera')}
+                onClick={() => setShowDeliberaModal(true)}
               >
                 Aggiungi delibera
               </button>
+                  {/* MODAL DELIBERA */}
+                  {showDeliberaModal && (
+                    <div
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        background: 'rgba(0,0,0,0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 4000,
+                      }}
+                    >
+                      <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: isMobile ? '22px' : '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
+                        <button onClick={() => setShowDeliberaModal(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
+                        <h2 style={{ color: '#0a3a6b', marginTop: 0, marginBottom: '18px', fontSize: '1.3em' }}>Aggiungi delibera</h2>
+                        <form onSubmit={e => { e.preventDefault(); /* TODO: salva delibera */ setShowDeliberaModal(false); setDeliberaMeetingId(''); setDeliberaText(''); }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <label style={{ fontWeight: 600, fontSize: '1em' }}>Scegli riunione:</label>
+                          <select value={deliberaMeetingId} onChange={e => setDeliberaMeetingId(e.target.value)} required style={{ padding: '7px', borderRadius: '6px', fontSize: '1em', width: '100%', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #555' }}>
+                            <option value="">-- Seleziona riunione --</option>
+                            {riunioni.map(r => (
+                              <option key={r.id} value={r.id}>{r.data} {r.ora ? r.ora : ''} - {r.ordine?.slice(0, 32)}</option>
+                            ))}
+                          </select>
+                          <label style={{ fontWeight: 600, fontSize: '1em' }}>Testo delibera:</label>
+                          <textarea value={deliberaText} onChange={e => setDeliberaText(e.target.value)} required placeholder="Scrivi la delibera..." style={{ padding: '7px', borderRadius: '6px', minHeight: '70px', fontSize: '1em', width: '100%', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #555' }} />
+                          <button type="submit" className="bb-event-btn" style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 0', fontSize: '1em', fontWeight: 700, marginTop: '8px' }}>Salva delibera</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
             </div>
           )}
 
