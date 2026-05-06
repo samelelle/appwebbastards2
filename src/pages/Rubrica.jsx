@@ -1032,7 +1032,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
           </button>
         )}
         {isMembroCorrenteInCategoria('Viminale') && (
-          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative' }}
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
             onClick={() => {
               setReplyTo(null);
               setCategoriaAperta('Viminale');
@@ -1050,12 +1050,12 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
         <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }} onClick={() => setShowMembersModal(true)}>
           Lista iscritti
-        <button
-          type="button"
-          className="bb-add-btn"
-          style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined, display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
-          onClick={() => setShowQr(true)}
-        >
+        </button>
+
+        {(!myIscrittoId || isDevMode) && (
+          <button
+            className="bb-add-btn"
+            style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined, display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
             onClick={() => {
               setEditingIscrittoId(null);
               setForm({ ruolo: '', cognome: '', nome: '', telefono: '', categorie: [] });
@@ -1069,7 +1069,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         <button
           type="button"
           className="bb-add-btn"
-          style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined, background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+          style={{ width: 'auto', marginTop: '12px', alignSelf: 'center', minHeight: isMobile ? '38px' : undefined, padding: isMobile ? '7px 12px' : undefined, fontSize: isMobile ? '0.86rem' : undefined, background: '#222', color: '#fff', borderRadius: 8, border: 'none', cursor: 'pointer', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
           onClick={() => setShowQr(true)}
         >
           📱 Condividi app
