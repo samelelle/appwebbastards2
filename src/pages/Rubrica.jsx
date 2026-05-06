@@ -999,7 +999,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         maxWidth: '92vw',
         margin: '0 auto',
         marginTop: isMobile ? 0 : '3cm',
-        padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + 2px) 12px 8px 12px' : 0,
+        padding: isMobile ? 'calc(env(safe-area-inset-top) + 8px) 12px 8px 12px' : 0,
         boxSizing: 'border-box',
         flex: isMobile ? '0 0 auto' : '1 1 auto',
         height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto',
@@ -1102,7 +1102,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'auto',
+            overflow: 'hidden',
             textAlign: isMobile ? 'center' : undefined
           }}>
             <div style={{ position: 'sticky', top: 0, zIndex: 4, background: '#1b1b1b', paddingBottom: '8px' }}>
@@ -1113,7 +1113,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', textAlign: isMobile ? 'center' : undefined }}>
+            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', maxHeight: 'calc(100dvh - 60px)', textAlign: isMobile ? 'center' : undefined }}>
 
               <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem', textAlign: isMobile ? 'center' : undefined }}>Chat categoria</h3>
               {/* Barra di ricerca messaggi */}
