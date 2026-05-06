@@ -90,7 +90,13 @@ export default async function handler(req, res) {
       );
       results.push({ user_id: sub.user_id, status: 'ok' });
     } catch (err) {
-      results.push({ user_id: sub.user_id, status: 'error', error: err.message });
+      results.push({
+        user_id: sub.user_id,
+        status: 'error',
+        error: err.message,
+        code: err.statusCode,
+        body: err.body
+      });
     }
   }
 
