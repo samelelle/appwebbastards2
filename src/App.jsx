@@ -107,37 +107,58 @@ function AppRoutes() {
     }, []);
 
     // Componente tasto manutenzione DEV
-    function MaintenanceToggleButton() {
-      if (!isDevUser) return null;
-      return (
-        <button
-          style={{
-            margin: '18px auto 0 auto',
-            display: 'block',
-            background: maintenanceMode ? '#ff6600' : '#222',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: '8px 18px',
-            fontWeight: 700,
-            fontSize: '1.1rem',
-            boxShadow: '0 2px 8px #0006',
-            cursor: 'pointer',
-          }}
-          onClick={() => {
-            const newValue = !maintenanceMode;
-            setMaintenanceMode(newValue);
-            setMaintenanceModeState(newValue);
-          }}
-        >
-          {maintenanceMode ? 'DISATTIVA MANUTENZIONE' : 'ATTIVA MANUTENZIONE'}
-        </button>
-      );
-    }
 
-    // Esporta il componente per uso esterno
-    App.MaintenanceToggleButton = MaintenanceToggleButton;
-    export { MaintenanceToggleButton };
+  // Componente MaintenanceToggleButton ora a livello modulo
+  import React from 'react';
+  export function MaintenanceToggleButton() {
+    // Questi valori vanno letti direttamente qui
+    const isDevUser = (() => {
+      try {
+        const email = localStorage.getItem('bb-user-email') || '';
+        return email.toLowerCase() === 'mmonthz@gmail.com';
+      } catch { return false; }
+    })();
+    const maintenanceMode = (() => {
+      try {
+        return localStorage.getItem('bb-maintenance-mode') === '1';
+      } catch { return false; }
+    })();
+    const [mode, setMode] = React.useState(maintenanceMode);
+    React.useEffect(() => {
+      const handler = () => setMode(localStorage.getItem('bb-maintenance-mode') === '1');
+      window.addEventListener('storage', handler);
+      return () => window.removeEventListener('storage', handler);
+    }, []);
+    if (!isDevUser) return null;
+    return (
+      <button
+        style={{
+          margin: '18px auto 0 auto',
+          display: 'block',
+          background: mode ? '#ff6600' : '#222',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 8,
+          padding: '8px 18px',
+          fontWeight: 700,
+          fontSize: '1.1rem',
+          boxShadow: '0 2px 8px #0006',
+          cursor: 'pointer',
+        }}
+        onClick={() => {
+          const newValue = !mode;
+          if (newValue) {
+            localStorage.setItem('bb-maintenance-mode', '1');
+          } else {
+            localStorage.removeItem('bb-maintenance-mode');
+          }
+          setMode(newValue);
+        }}
+      >
+        {mode ? 'DISATTIVA MANUTENZIONE' : 'ATTIVA MANUTENZIONE'}
+      </button>
+    );
+  }
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
   // Stato per email utente
