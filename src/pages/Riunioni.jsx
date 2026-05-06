@@ -84,21 +84,30 @@ function Riunioni({ isDevMode }) {
   const [deliberaViewText, setDeliberaViewText] = useState('');
   const [deliberaViewLoading, setDeliberaViewLoading] = useState(false);
   const [deliberaViewError, setDeliberaViewError] = useState('');
+  const [editDeliberaMode, setEditDeliberaMode] = useState(false);
+  const [editDeliberaText, setEditDeliberaText] = useState('');
+  const [editDeliberaLoading, setEditDeliberaLoading] = useState(false);
+  const [editDeliberaError, setEditDeliberaError] = useState('');
+  const [currentDeliberaId, setCurrentDeliberaId] = useState(null);
 
   async function handleShowDelibera(meetingId) {
     setShowDeliberaView(true);
     setDeliberaViewLoading(true);
     setDeliberaViewError('');
     setDeliberaViewText('');
+    setCurrentDeliberaId(null);
+    setEditDeliberaMode(false);
+    setEditDeliberaError('');
     try {
       const { data, error } = await supabase
         .from('delibere')
-        .select('testo')
+        .select('id, testo')
         .eq('meeting_id', meetingId)
         .limit(1);
       if (error) throw error;
       if (Array.isArray(data) && data.length > 0) {
         setDeliberaViewText(data[0].testo || 'Nessuna delibera trovata.');
+        setCurrentDeliberaId(data[0].id || null);
       } else {
         setDeliberaViewText('Nessuna delibera trovata.');
       }
@@ -106,6 +115,52 @@ function Riunioni({ isDevMode }) {
       setDeliberaViewError('Errore caricamento delibera.');
     } finally {
       setDeliberaViewLoading(false);
+    }
+  }
+
+  function handleEditDelibera() {
+    setEditDeliberaText(deliberaViewText);
+    setEditDeliberaMode(true);
+    setEditDeliberaError('');
+  }
+
+  async function handleSaveEditDelibera() {
+    if (!currentDeliberaId || !editDeliberaText.trim()) return;
+    setEditDeliberaLoading(true);
+    setEditDeliberaError('');
+    try {
+      const { error } = await supabase
+        .from('delibere')
+        .update({ testo: editDeliberaText.trim() })
+        .eq('id', currentDeliberaId);
+      if (error) throw error;
+      setDeliberaViewText(editDeliberaText.trim());
+      setEditDeliberaMode(false);
+    } catch {
+      setEditDeliberaError('Errore salvataggio modifica.');
+    } finally {
+      setEditDeliberaLoading(false);
+    }
+  }
+
+  async function handleDeleteDelibera() {
+    if (!currentDeliberaId) return;
+    if (!window.confirm('Vuoi eliminare questa delibera?')) return;
+    setEditDeliberaLoading(true);
+    setEditDeliberaError('');
+    try {
+      const { error } = await supabase
+        .from('delibere')
+        .delete()
+        .eq('id', currentDeliberaId);
+      if (error) throw error;
+      setDeliberaViewText('Nessuna delibera trovata.');
+      setCurrentDeliberaId(null);
+      setEditDeliberaMode(false);
+    } catch {
+      setEditDeliberaError('Errore eliminazione delibera.');
+    } finally {
+      setEditDeliberaLoading(false);
     }
   }
   const today = new Date();
@@ -558,133 +613,28 @@ function Riunioni({ isDevMode }) {
               <div style={{ color: '#bbb', fontSize: '1em' }}>Caricamento...</div>
             ) : deliberaViewError ? (
               <div style={{ color: '#ffb366', fontSize: '1em' }}>{deliberaViewError}</div>
+            ) : editDeliberaMode ? (
+              <>
+                {editDeliberaError && <div style={{ color: '#ffb366', fontSize: '1em', marginBottom: '10px' }}>{editDeliberaError}</div>}
+                <textarea value={editDeliberaText} onChange={e => setEditDeliberaText(e.target.value)} style={{ width: '100%', minHeight: '90px', borderRadius: '8px', padding: '10px', fontSize: '1em', background: '#111', color: '#fff', border: '1px solid #555', marginBottom: '18px', boxSizing: 'border-box' }} />
+                <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
+                  <button onClick={handleSaveEditDelibera} disabled={editDeliberaLoading} style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: 'pointer' }}>{editDeliberaLoading ? 'Salvataggio...' : 'Salva'}</button>
+                  <button onClick={() => setEditDeliberaMode(false)} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: 'pointer' }}>Annulla</button>
+                </div>
+              </>
             ) : (
               <>
                 <div style={{ whiteSpace: 'pre-line', fontSize: '1.08em', color: '#fff', marginTop: '10px', marginBottom: '18px' }}>{deliberaViewText}</div>
                 <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
-                  <button onClick={handleEditDelibera} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: 'pointer' }}>Modifica</button>
-                  <button onClick={handleDeleteDelibera} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: 'pointer' }}>Elimina</button>
+                  <button onClick={handleEditDelibera} disabled={!currentDeliberaId} style={{ background: '#ffb366', color: '#222', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: currentDeliberaId ? 'pointer' : 'not-allowed', opacity: currentDeliberaId ? 1 : 0.6 }}>Modifica</button>
+                  <button onClick={handleDeleteDelibera} disabled={!currentDeliberaId || editDeliberaLoading} style={{ background: '#ff4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: currentDeliberaId ? 'pointer' : 'not-allowed', opacity: currentDeliberaId ? 1 : 0.6 }}>{editDeliberaLoading ? 'Eliminazione...' : 'Elimina'}</button>
                 </div>
+                {editDeliberaError && <div style={{ color: '#ffb366', fontSize: '1em', marginTop: '12px' }}>{editDeliberaError}</div>}
               </>
             )}
           </div>
         </div>
       )}
-  // Stato per modifica delibera
-  const [editDeliberaMode, setEditDeliberaMode] = useState(false);
-  const [editDeliberaText, setEditDeliberaText] = useState('');
-  const [editDeliberaLoading, setEditDeliberaLoading] = useState(false);
-  const [editDeliberaError, setEditDeliberaError] = useState('');
-
-  // Salva id della delibera visualizzata
-  const [currentDeliberaId, setCurrentDeliberaId] = useState(null);
-
-  // Modifica handleShowDelibera per salvare anche id
-  async function handleShowDelibera(meetingId) {
-    setShowDeliberaView(true);
-    setDeliberaViewLoading(true);
-    setDeliberaViewError('');
-    setDeliberaViewText('');
-    setCurrentDeliberaId(null);
-    try {
-      const { data, error } = await supabase
-        .from('delibere')
-        .select('id, testo')
-        .eq('meeting_id', meetingId)
-        .limit(1);
-      if (error) throw error;
-      if (Array.isArray(data) && data.length > 0) {
-        setDeliberaViewText(data[0].testo || 'Nessuna delibera trovata.');
-        setCurrentDeliberaId(data[0].id);
-      } else {
-        setDeliberaViewText('Nessuna delibera trovata.');
-      }
-    } catch {
-      setDeliberaViewError('Errore caricamento delibera.');
-    } finally {
-      setDeliberaViewLoading(false);
-    }
-  }
-
-  // Gestione modifica delibera
-  function handleEditDelibera() {
-    setEditDeliberaText(deliberaViewText);
-    setEditDeliberaMode(true);
-    setEditDeliberaError('');
-  }
-
-  async function handleSaveEditDelibera() {
-    if (!currentDeliberaId || !editDeliberaText.trim()) return;
-    setEditDeliberaLoading(true);
-    setEditDeliberaError('');
-    try {
-      const { error } = await supabase
-        .from('delibere')
-        .update({ testo: editDeliberaText })
-        .eq('id', currentDeliberaId);
-      if (error) throw error;
-      setDeliberaViewText(editDeliberaText);
-      setEditDeliberaMode(false);
-    } catch {
-      setEditDeliberaError('Errore salvataggio modifica.');
-    } finally {
-      setEditDeliberaLoading(false);
-    }
-  }
-
-  async function handleDeleteDelibera() {
-    if (!currentDeliberaId) return;
-    if (!window.confirm('Vuoi eliminare questa delibera?')) return;
-    setEditDeliberaLoading(true);
-    setEditDeliberaError('');
-    try {
-      const { error } = await supabase
-        .from('delibere')
-        .delete()
-        .eq('id', currentDeliberaId);
-      if (error) throw error;
-      setDeliberaViewText('');
-      setShowDeliberaView(false);
-      setCurrentDeliberaId(null);
-    } catch {
-      setEditDeliberaError('Errore eliminazione delibera.');
-    } finally {
-      setEditDeliberaLoading(false);
-    }
-  }
-
-  // Modale modifica delibera
-  if (editDeliberaMode && showDeliberaView) {
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 4100,
-        }}
-      >
-        <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: isMobile ? '22px' : '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
-          <button onClick={() => { setEditDeliberaMode(false); }} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
-          <h2 style={{ color: '#0a3a6b', marginTop: 0, marginBottom: '18px', fontSize: '1.3em' }}>Modifica delibera</h2>
-          {editDeliberaError && <div style={{ color: '#ffb366', fontSize: '1em', marginBottom: '10px' }}>{editDeliberaError}</div>}
-          <textarea value={editDeliberaText} onChange={e => setEditDeliberaText(e.target.value)} style={{ width: '100%', minHeight: '90px', borderRadius: '8px', padding: '10px', fontSize: '1em', background: '#111', color: '#fff', border: '1px solid #555', marginBottom: '18px' }} />
-          <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
-            <button onClick={handleSaveEditDelibera} disabled={editDeliberaLoading} style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: 'pointer' }}>{editDeliberaLoading ? 'Salvataggio...' : 'Salva'}</button>
-            <button onClick={() => setEditDeliberaMode(false)} style={{ background: '#bbb', color: '#222', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, cursor: 'pointer' }}>Annulla</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-
       {detailMeeting && (
         <div
           style={{
