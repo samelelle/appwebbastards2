@@ -39,8 +39,15 @@ export default function useServiceWorkerUpdate() {
         }
       };
       document.addEventListener('visibilitychange', visHandler);
+
+      // Polling periodico per forzare il check anche su schermate statiche (es. manutenzione)
+      const intervalId = setInterval(() => {
+        checkForUpdateAndWaiting();
+      }, 20000); // ogni 20 secondi
+
       return () => {
         document.removeEventListener('visibilitychange', visHandler);
+        clearInterval(intervalId);
       };
     }
   }, []);
