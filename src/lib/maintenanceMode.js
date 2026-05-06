@@ -1,8 +1,8 @@
+
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
 const maintenanceStorageKey = 'bb-maintenance-mode';
-const maintenanceBucket = 'chat-audio';
-const maintenanceFilePath = 'system/maintenance.json';
+
 
 function readCachedMaintenanceMode() {
   try {
@@ -32,17 +32,17 @@ export async function fetchSharedMaintenanceMode() {
   if (!hasSupabaseConfig || !supabase) {
     return readCachedMaintenanceMode();
   }
-
   try {
-    const { data, error } = await supabase.storage.from(maintenanceBucket).download(maintenanceFilePath);
-    if (error) {
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .single();
+    if (error || !data) {
       cacheMaintenanceMode(false);
       return false;
     }
-
-    const text = await data.text();
-    const parsed = JSON.parse(text || '{}');
-    const enabled = parsed?.enabled === true;
+    const enabled = data.value?.enabled === true;
     cacheMaintenanceMode(enabled);
     return enabled;
   } catch {
@@ -52,26 +52,17 @@ export async function fetchSharedMaintenanceMode() {
 
 export async function updateSharedMaintenanceMode(enabled) {
   cacheMaintenanceMode(enabled);
-
   if (!hasSupabaseConfig || !supabase) {
     return enabled;
   }
-
-  const payload = JSON.stringify({
-    enabled,
-    updatedAt: new Date().toISOString(),
-  });
-
-  const { error } = await supabase.storage
-    .from(maintenanceBucket)
-    .upload(maintenanceFilePath, new Blob([payload], { type: 'application/json' }), {
-      upsert: true,
-      contentType: 'application/json',
-    });
-
+  const payload = { enabled, updatedAt: new Date().toISOString() };
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert([
+      { key: 'maintenance_mode', value: payload }
+    ], { onConflict: ['key'] });
   if (error) {
     throw error;
   }
-
   return enabled;
 }
