@@ -584,6 +584,7 @@ function Riunioni({ isDevMode }) {
             <div style={{ marginBottom: '12px' }}><b>Data:</b> {formatDateEuropean(detailMeeting.data)}</div>
             <div style={{ marginBottom: '12px' }}><b>Ora:</b> {formatMeetingTime(detailMeeting.ora)}</div>
             <div style={{ marginBottom: '12px', whiteSpace: 'pre-line' }}><b>Ordine del giorno:</b><br />{detailMeeting.ordine}</div>
+            <button onClick={() => { setDetailMeeting(null); handleShowDelibera(detailMeeting.id); }} style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, marginTop: '18px', cursor: 'pointer' }}>Mostra delibera</button>
           </div>
         </div>
       )}
