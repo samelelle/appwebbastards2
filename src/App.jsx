@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import useServiceWorkerUpdate from './hooks/useServiceWorkerUpdate';
 import { useLocation } from 'react-router-dom';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
@@ -75,6 +76,8 @@ function App() {
 function AppRoutes() {
   const location = useLocation();
   const [maintenanceMode, setMaintenanceModeState] = useState(getCachedMaintenanceMode());
+  // Hook per aggiornamento forzato
+  const { updateAvailable, updateApp } = useServiceWorkerUpdate();
 
   useEffect(() => {
     let active = true;
@@ -328,6 +331,21 @@ function AppRoutes() {
 
   return (
     <>
+      {/* Overlay/modal di aggiornamento forzato se disponibile nuova versione */}
+      {updateAvailable && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.85)', color: 'white', zIndex: 99999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22
+        }}>
+          <h2 style={{marginBottom: 16}}>Nuova versione disponibile</h2>
+          <p style={{marginBottom: 24}}>Per continuare, aggiorna l'applicazione.</p>
+          <button onClick={updateApp} style={{ fontSize: 20, padding: '1em 2em', borderRadius: 8, border: 'none', background: '#fff', color: '#222', cursor: 'pointer', fontWeight: 700 }}>
+            Aggiorna
+          </button>
+        </div>
+      )}
       {/* Tasto DEV per attivare/disattivare manutenzione */}
       {/* Il tasto manutenzione ora va inserito in Home.jsx dove serve */}
       <Routes>
