@@ -105,11 +105,34 @@ function AppRoutes() {
       window.addEventListener('storage', handler);
       return () => window.removeEventListener('storage', handler);
     }, []);
-    // Funzione per DEV: attiva/disattiva modalità manutenzione
-    function handleToggleMaintenance() {
-      const newValue = !maintenanceMode;
-      setMaintenanceMode(newValue);
-      setMaintenanceModeState(newValue);
+
+    // Componente tasto manutenzione DEV
+    function MaintenanceToggleButton() {
+      if (!isDevUser) return null;
+      return (
+        <button
+          style={{
+            margin: '18px auto 0 auto',
+            display: 'block',
+            background: maintenanceMode ? '#ff6600' : '#222',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 8,
+            padding: '8px 18px',
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            boxShadow: '0 2px 8px #0006',
+            cursor: 'pointer',
+          }}
+          onClick={() => {
+            const newValue = !maintenanceMode;
+            setMaintenanceMode(newValue);
+            setMaintenanceModeState(newValue);
+          }}
+        >
+          {maintenanceMode ? 'DISATTIVA MANUTENZIONE' : 'ATTIVA MANUTENZIONE'}
+        </button>
+      );
     }
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
@@ -335,14 +358,7 @@ function AppRoutes() {
   return (
     <>
       {/* Tasto DEV per attivare/disattivare manutenzione */}
-      {isDevUser && (
-        <button
-          style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: maintenanceMode ? '#ff6600' : '#222', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 2px 8px #0006', cursor: 'pointer' }}
-          onClick={handleToggleMaintenance}
-        >
-          {maintenanceMode ? 'DISATTIVA MANUTENZIONE' : 'ATTIVA MANUTENZIONE'}
-        </button>
-      )}
+      {/* Il tasto manutenzione ora va inserito in Home.jsx dove serve */}
       <Routes>
         <Route path="/admin/approva" element={<ApprovaRegistrazione />} />
         <Route
