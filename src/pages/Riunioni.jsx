@@ -95,12 +95,11 @@ function Riunioni({ isDevMode }) {
         .from('delibere')
         .select('testo')
         .eq('meeting_id', meetingId)
-        .order('created_at', { ascending: false })
-        .maybeSingle();
+        .single();
       if (error && error.code !== 'PGRST116') throw error;
       setDeliberaViewText(data?.testo || 'Nessuna delibera trovata.');
     } catch {
-      setDeliberaViewError('Errore caricamento delibera.');
+      setDeliberaViewError('Errore caricamento delibera o più di una delibera trovata per questa riunione.');
     } finally {
       setDeliberaViewLoading(false);
     }
