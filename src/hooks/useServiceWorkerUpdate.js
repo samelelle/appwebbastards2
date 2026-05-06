@@ -4,9 +4,16 @@ export default function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
+    let regRef = null;
+    function checkForUpdate() {
+      if (regRef) {
+        regRef.update();
+      }
+    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration().then(reg => {
         if (!reg) return;
+        regRef = reg;
         reg.onupdatefound = () => {
           const newWorker = reg.installing;
           if (newWorker) {
@@ -18,7 +25,15 @@ export default function useServiceWorkerUpdate() {
           }
         };
       });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          checkForUpdate();
+        }
+      });
     }
+    return () => {
+      document.removeEventListener('visibilitychange', checkForUpdate);
+    };
   }, []);
 
   const updateApp = () => {
