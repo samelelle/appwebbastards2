@@ -684,6 +684,7 @@ function Riunioni({ isDevMode }) {
     );
   }
 
+
       {detailMeeting && (
         <div
           style={{
