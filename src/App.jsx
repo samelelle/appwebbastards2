@@ -65,6 +65,7 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
 }
 
 function App() {
+  console.log('[APP DEBUG] updateAvailable:', updateAvailable);
   return (
     <Router>
       <ScrollToTopOnRouteChange />
