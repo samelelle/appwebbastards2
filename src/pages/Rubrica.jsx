@@ -999,7 +999,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         maxWidth: '92vw',
         margin: '0 auto',
         marginTop: isMobile ? 0 : '3cm',
-        padding: isMobile ? 'calc(env(safe-area-inset-top) + 8px) 12px 8px 12px' : 0,
+        padding: isMobile ? 'calc(env(safe-area-inset-top) + 2px) 12px 8px 12px' : 0,
         boxSizing: 'border-box',
         flex: isMobile ? '0 0 auto' : '1 1 auto',
         height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto',
@@ -1093,7 +1093,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
             background: '#1b1b1b',
             color: '#fff',
             borderRadius: isMobile ? '0' : '16px',
-            padding: isMobile ? 'calc(14px + env(safe-area-inset-top)) 12px 0 12px' : '18px',
+            padding: isMobile ? 'calc(8px + env(safe-area-inset-top)) 8px 0 8px' : '18px',
             width: '100vw',
             height: '100dvh',
             maxHeight: '100dvh',
@@ -1113,7 +1113,8 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', maxHeight: 'calc(100dvh - 60px)', textAlign: isMobile ? 'center' : undefined }}>
+            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', textAlign: isMobile ? 'center' : undefined }}>
+              <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100dvh - 120px)' }}>
 
               <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem', textAlign: isMobile ? 'center' : undefined }}>Chat categoria</h3>
               {/* Barra di ricerca messaggi */}
@@ -1126,6 +1127,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               />
 
               <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
+                              </div>
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
                 )}
