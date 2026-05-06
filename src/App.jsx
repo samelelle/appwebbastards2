@@ -134,6 +134,10 @@ function AppRoutes() {
         </button>
       );
     }
+
+    // Esporta il componente per uso esterno
+    App.MaintenanceToggleButton = MaintenanceToggleButton;
+    export { MaintenanceToggleButton };
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
   // Stato per email utente

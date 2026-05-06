@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import App from '../App'; // Per accedere a MaintenanceToggleButton
+import { MaintenanceToggleButton } from '../App';
 import { useNavigate } from 'react-router-dom';
 import teschioImg from '../assets/teschio1.png';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -284,7 +284,7 @@ function Home({ onLogout, userEmail, isDevMode, canToggleDevMode, onToggleDevMod
         Law Enforcement<br />Motorcycle Club
       </div>
       {/* Tasto manutenzione DEV sotto la scritta principale */}
-      {App.MaintenanceToggleButton ? <App.MaintenanceToggleButton /> : null}
+      <MaintenanceToggleButton />
       {/* QR code popup rimosso */}
       <MobileBottomNav />
     </div>
