@@ -79,6 +79,33 @@ function Riunioni({ isDevMode }) {
   const [form, setForm] = useState({ data: '', ora: '', ordine: '' });
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({ data: '', ora: '', ordine: '' });
+  // Stato per mostra delibera
+  const [showDeliberaView, setShowDeliberaView] = useState(false);
+  const [deliberaViewText, setDeliberaViewText] = useState('');
+  const [deliberaViewLoading, setDeliberaViewLoading] = useState(false);
+  const [deliberaViewError, setDeliberaViewError] = useState('');
+
+  async function handleShowDelibera(meetingId) {
+    setShowDeliberaView(true);
+    setDeliberaViewLoading(true);
+    setDeliberaViewError('');
+    setDeliberaViewText('');
+    try {
+      const { data, error } = await supabase
+        .from('delibere')
+        .select('testo')
+        .eq('meeting_id', meetingId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      setDeliberaViewText(data?.testo || 'Nessuna delibera trovata.');
+    } catch {
+      setDeliberaViewError('Errore caricamento delibera.');
+    } finally {
+      setDeliberaViewLoading(false);
+    }
+  }
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -501,6 +528,37 @@ function Riunioni({ isDevMode }) {
             <div style={{ marginBottom: '12px' }}><b>Data:</b> {formatDateEuropean(prossimaRiunione.data)}</div>
             <div style={{ marginBottom: '12px' }}><b>Ora:</b> {formatMeetingTime(prossimaRiunione.ora)}</div>
             <div style={{ marginBottom: '12px', whiteSpace: 'pre-line' }}><b>Ordine del giorno:</b><br />{prossimaRiunione.ordine}</div>
+            <button onClick={() => handleShowDelibera(prossimaRiunione.id)} style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 18px', fontSize: '1em', fontWeight: 700, marginTop: '18px', cursor: 'pointer' }}>Mostra delibera</button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MOSTRA DELIBERA */}
+      {showDeliberaView && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 4000,
+          }}
+        >
+          <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: isMobile ? '22px' : '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
+            <button onClick={() => setShowDeliberaView(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
+            <h2 style={{ color: '#0a3a6b', marginTop: 0, marginBottom: '18px', fontSize: '1.3em' }}>Delibera</h2>
+            {deliberaViewLoading ? (
+              <div style={{ color: '#bbb', fontSize: '1em' }}>Caricamento...</div>
+            ) : deliberaViewError ? (
+              <div style={{ color: '#ffb366', fontSize: '1em' }}>{deliberaViewError}</div>
+            ) : (
+              <div style={{ whiteSpace: 'pre-line', fontSize: '1.08em', color: '#fff', marginTop: '10px' }}>{deliberaViewText}</div>
+            )}
           </div>
         </div>
       )}
