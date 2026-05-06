@@ -134,8 +134,18 @@ function Riunioni({ isDevMode }) {
         .update({ testo: editDeliberaText.trim() })
         .eq('id', currentDeliberaId);
       if (error) throw error;
-      setDeliberaViewText(editDeliberaText.trim());
       setEditDeliberaMode(false);
+      // Refetch per mostrare la versione aggiornata
+      if (currentDeliberaId) {
+        const { data, error: fetchError } = await supabase
+          .from('delibere')
+          .select('id, testo')
+          .eq('id', currentDeliberaId)
+          .single();
+        if (!fetchError && data) {
+          setDeliberaViewText(data.testo || '');
+        }
+      }
     } catch {
       setEditDeliberaError('Errore salvataggio modifica.');
     } finally {
@@ -154,9 +164,10 @@ function Riunioni({ isDevMode }) {
         .delete()
         .eq('id', currentDeliberaId);
       if (error) throw error;
+      setEditDeliberaMode(false);
+      // Refetch per mostrare che non c'è più delibera
       setDeliberaViewText('Nessuna delibera trovata.');
       setCurrentDeliberaId(null);
-      setEditDeliberaMode(false);
     } catch {
       setEditDeliberaError('Errore eliminazione delibera.');
     } finally {
