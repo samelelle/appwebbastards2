@@ -1,30 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-// Chiave localStorage per modalità manutenzione
-const maintenanceStorageKey = 'bb-maintenance-mode';
-// Funzioni sicure per localStorage modalità manutenzione
-function getMaintenanceMode() {
-  try {
-    return localStorage.getItem(maintenanceStorageKey) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function setMaintenanceMode(enabled) {
-  try {
-    if (enabled) {
-      localStorage.setItem(maintenanceStorageKey, '1');
-    } else {
-      localStorage.removeItem(maintenanceStorageKey);
-    }
-  } catch {}
-}
 import { useLocation } from 'react-router-dom';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import './carnivalee-font.css';
 import ScrollToTopOnRouteChange from './components/ScrollToTopOnRouteChange';
+import { fetchSharedMaintenanceMode, getCachedMaintenanceMode, updateSharedMaintenanceMode } from './lib/maintenanceMode';
 import { canCurrentUserAccessMeetings } from './lib/meetingAccess';
 import { hasSupabaseConfig, supabase } from './lib/supabaseClient';
 import Eventi from './pages/Eventi';
@@ -93,17 +74,27 @@ function App() {
 
 function AppRoutes() {
   const location = useLocation();
-  const [maintenanceMode, setMaintenanceModeState] = useState(getMaintenanceMode());
+  const [maintenanceMode, setMaintenanceModeState] = useState(getCachedMaintenanceMode());
 
   useEffect(() => {
-    const handler = event => {
-      if (event.key === maintenanceStorageKey) {
-        setMaintenanceModeState(getMaintenanceMode());
-      }
-    };
+    let active = true;
 
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    async function syncMaintenanceMode() {
+      const nextMode = await fetchSharedMaintenanceMode();
+      if (active) {
+        setMaintenanceModeState(nextMode);
+      }
+    }
+
+    syncMaintenanceMode();
+    const intervalId = window.setInterval(syncMaintenanceMode, 15000);
+    window.addEventListener('focus', syncMaintenanceMode);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', syncMaintenanceMode);
+    };
   }, []);
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
@@ -324,10 +315,15 @@ function AppRoutes() {
     setIsAuthReady(true);
   }
 
-  function handleToggleMaintenance() {
+  async function handleToggleMaintenance() {
     const nextValue = !maintenanceMode;
-    setMaintenanceMode(nextValue);
     setMaintenanceModeState(nextValue);
+
+    try {
+      await updateSharedMaintenanceMode(nextValue);
+    } catch {
+      setMaintenanceModeState(await fetchSharedMaintenanceMode());
+    }
   }
 
   return (
