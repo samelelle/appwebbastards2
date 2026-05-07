@@ -6,7 +6,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import useIsMobile from '../hooks/useIsMobile';
 import { canCurrentUserAccessMeetings } from '../lib/meetingAccess';
 import { getUnreadChatCount, getUnreadEventCount, markChatSeen, markEventsSeen, subscribeBadgeChanges } from '../lib/notificationBadges';
-import { subscribeUserToPush } from '../lib/pushSubscription';
+import { getAppServiceWorkerRegistration, subscribeUserToPush } from '../lib/pushSubscription';
 import { unsubscribeUserFromPush } from '../lib/unsubscribePush';
 
 // Utility per decodificare base64url (come in pushSubscription.js)
@@ -59,7 +59,7 @@ function Home({ onLogout, userEmail, isDevMode, isMaintenanceMode, canToggleMain
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
         if (Notification.permission !== 'granted') return;
         try {
-          const registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
+          const registration = await getAppServiceWorkerRegistration();
           if (!registration) return;
           const subscription = await registration.pushManager.getSubscription();
           if (!subscription) return;

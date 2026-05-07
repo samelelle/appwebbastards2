@@ -1,5 +1,21 @@
 import { supabase } from "./supabaseClient";
 
+export async function getAppServiceWorkerUrl() {
+  try {
+    const response = await fetch('/sw-manifest.json', { cache: 'no-store' });
+    if (!response.ok) return '/push-sw.js';
+    const payload = await response.json().catch(() => null);
+    return payload?.sw ? `/${payload.sw}` : '/push-sw.js';
+  } catch {
+    return '/push-sw.js';
+  }
+}
+
+export async function getAppServiceWorkerRegistration() {
+  const swUrl = await getAppServiceWorkerUrl();
+  return (await navigator.serviceWorker.getRegistration()) ?? (await navigator.serviceWorker.register(swUrl));
+}
+
 // Recupera l'userId corrente dalla localStorage (come usato in meetingAccess.js)
 export function getCurrentUserId() {
   try {
@@ -84,10 +100,7 @@ export async function subscribeUserToPush(options = {}) {
     return { ok: false, reason: "unsupported_or_insecure_context" };
   }
   try {
-    // Registra il service worker (assicurati che il path sia corretto)
-    const registration =
-      (await navigator.serviceWorker.getRegistration("/push-sw.js")) ??
-      (await navigator.serviceWorker.register("/push-sw.js"));
+    const registration = await getAppServiceWorkerRegistration();
 
     // Permesso notifiche: sui browser moderni spesso richiede un gesto utente.
     let permission = Notification.permission;
