@@ -16,9 +16,9 @@
       if (e.type === 'mousedown') start();
       if (e.type === 'touchend' || e.type === 'touchmove' || e.type === 'mouseup' || e.type === 'mouseleave') clear();
     }
-  // Stato per scroll-to-reply highlight
-  const [scrollToReplyId, setScrollToReplyId] = useState(null);
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// Stato per scroll-to-reply highlight
+const [scrollToReplyId, setScrollToReplyId] = useState(null);
 import { supabase } from '../lib/supabaseClient';
 import QrCodeShare from '../components/QrCodeShare';
 
