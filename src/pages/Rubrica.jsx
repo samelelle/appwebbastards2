@@ -1,3 +1,23 @@
+    // Long-press per primo, tap per i successivi
+    function handleMessagePress(msgId, e) {
+      if (selectMode) {
+        handleToggleSelectMessage(msgId);
+        return;
+      }
+      let timer;
+      const start = () => {
+        timer = setTimeout(() => {
+          setSelectMode(true);
+          setSelectedMessages([msgId]);
+        }, 350); // 350ms long-press
+      };
+      const clear = () => { if (timer) clearTimeout(timer); };
+      if (e.type === 'touchstart') start();
+      if (e.type === 'mousedown') start();
+      if (e.type === 'touchend' || e.type === 'touchmove' || e.type === 'mouseup' || e.type === 'mouseleave') clear();
+    }
+  // Stato per scroll-to-reply highlight
+  const [scrollToReplyId, setScrollToReplyId] = useState(null);
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import QrCodeShare from '../components/QrCodeShare';
@@ -237,7 +257,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
   // Gestione selezione multipla messaggi
   function handleToggleSelectMessage(msgId) {
-    setSelectMode(true);
+    if (!selectMode) return;
     setSelectedMessages(prev =>
       prev.includes(msgId)
         ? prev.filter(id => id !== msgId)
@@ -248,6 +268,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
   function exitSelectMode() {
     setSelectMode(false);
     setSelectedMessages([]);
+    setTimeout(() => setSelectedMessages([]), 0); // doppio azzeramento per sicurezza
   }
 
   async function fileToDataUrl(file) {
@@ -1134,6 +1155,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 {messaggiCategoriaAperta.map((msg, idx) => {
                   const isOwn = isOwnMessage(msg);
                   const isSelected = selectedMessages.includes(msg.id);
+                  const highlight = scrollToReplyId === msg.id;
                   // Modalità modifica messaggio
                   if (editingMsgId === msg.id) {
                     return (
@@ -1153,6 +1175,12 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                   return (
                     <div
                       key={`${msg.timestamp}-${idx}`}
+                      ref={el => {
+                        if (highlight && el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          setTimeout(() => setScrollToReplyId(null), 1200);
+                        }
+                      }}
                       style={{
                         alignSelf: isOwn ? 'flex-end' : 'flex-start',
                         maxWidth: '84%',
@@ -1164,10 +1192,18 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         position: 'relative',
                         cursor: 'pointer',
                         userSelect: 'none',
+                        boxShadow: highlight ? '0 0 0 3px #ffb366' : undefined,
+                        transition: 'box-shadow 0.3s',
                       }}
                       onClick={e => {
-                        handleToggleSelectMessage(msg.id);
+                        if (selectMode) { handleToggleSelectMessage(msg.id); return; }
                       }}
+                      onTouchStart={e => handleMessagePress && handleMessagePress(msg.id, e)}
+                      onTouchEnd={e => handleMessagePress && handleMessagePress(msg.id, e)}
+                      onTouchMove={e => handleMessagePress && handleMessagePress(msg.id, e)}
+                      onMouseDown={e => handleMessagePress && handleMessagePress(msg.id, e)}
+                      onMouseUp={e => handleMessagePress && handleMessagePress(msg.id, e)}
+                      onMouseLeave={e => handleMessagePress && handleMessagePress(msg.id, e)}
                     >
                       {selectMode && (
                         <input
@@ -1181,7 +1217,9 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         <div style={{ fontSize: '0.76em', color: '#ffb366', marginBottom: '2px' }}>{authorLabel(msg)}</div>
                       )}
                       {msg.replyToAuthor && (
-                        <div style={{ fontSize: '0.78em', color: '#aaa', borderLeft: '2px solid #555', paddingLeft: '6px', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '0.78em', color: '#aaa', borderLeft: '2px solid #555', paddingLeft: '6px', marginBottom: '4px', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                          onClick={e => { e.stopPropagation(); setScrollToReplyId(msg.replyToId); }}
+                        >
                           Risposta a {msg.replyToAuthor}: {msg.replyToText}
                         </div>
                       )}
@@ -1249,9 +1287,11 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               {identitaCorrente && !membroCorrenteInCategoria && <div style={{ marginTop: '8px', color: '#ffb366', fontSize: '0.88em' }}>La tua identita non appartiene a questa categoria.</div>}
 
               {replyTo && (
-                <div style={{ marginTop: '8px', background: '#2a2a2a', borderRadius: '6px', padding: '6px 8px', fontSize: '0.85em' }}>
+                <div style={{ marginTop: '8px', background: '#2a2a2a', borderRadius: '6px', padding: '6px 8px', fontSize: '0.85em', cursor: 'pointer', textDecoration: 'underline dotted' }}
+                  onClick={() => setScrollToReplyId(replyTo.id)}
+                >
                   Rispondi a <b>{authorLabel(replyTo)}</b>: {replyPreviewText(replyTo)}
-                  <button type="button" onClick={() => setReplyTo(null)} style={{ marginLeft: '8px', background: '#444', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer', fontSize: '0.75em' }}>
+                  <button type="button" onClick={e => { e.stopPropagation(); setReplyTo(null); }} style={{ marginLeft: '8px', background: '#444', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer', fontSize: '0.75em' }}>
                     Annulla
                   </button>
                 </div>
