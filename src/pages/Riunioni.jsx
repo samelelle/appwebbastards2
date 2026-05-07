@@ -254,6 +254,23 @@ function Riunioni({ isDevMode }) {
     setSelectedYear(today.getFullYear());
   }
 
+  const [delibere, setDelibere] = useState([]);
+
+  // Carica tutte le delibere all'avvio
+  useEffect(() => {
+    let mounted = true;
+    async function loadDelibere() {
+      try {
+        const { data, error } = await supabase.from('delibere').select('id, meeting_id, testo');
+        if (!error && Array.isArray(data) && mounted) {
+          setDelibere(data);
+        }
+      } catch {}
+    }
+    loadDelibere();
+    return () => { mounted = false; };
+  }, []);
+
   const filteredRiunioni = riunioni.filter(r => {
     if (!r.data) return false;
     const d = parseMeetingDate(r.data);
@@ -267,6 +284,7 @@ function Riunioni({ isDevMode }) {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return true;
 
+    // Cerca nei dettagli riunione
     const haystack = [
       r.ordine || '',
       r.data || '',
@@ -275,7 +293,11 @@ function Riunioni({ isDevMode }) {
       .join(' ')
       .toLowerCase();
 
-    return haystack.includes(query);
+    // Cerca anche nel testo della delibera associata
+    const delibera = delibere.find(d => String(d.meeting_id) === String(r.id));
+    const deliberaText = delibera ? (delibera.testo || '').toLowerCase() : '';
+
+    return haystack.includes(query) || deliberaText.includes(query);
   });
 
   function handleInput(e) {
