@@ -937,6 +937,9 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         video_url: chatMediaType === 'video' ? chatVideoData : null,
         media_type: chatMediaType || null,
         audio_url: audioUrl || null,
+        replyToId: replyTo ? replyTo.id : null,
+        replyToText: replyTo ? replyPreviewText(replyTo) : null,
+        replyToAuthor: replyTo ? authorLabel(replyTo) : null,
       },
     ]);
     if (insertError) {
@@ -1187,29 +1190,41 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         }
                       }}
                       style={{
-                        alignSelf: isOwn ? 'flex-end' : 'flex-start',
-                        maxWidth: '84%',
-                        background: isSelected ? '#ff6600' : (isOwn ? '#1f7a3f' : '#2a2a2a'),
-                        borderRadius: '12px',
-                        padding: '7px 9px',
-                        border: isSelected ? '2px solid #fff' : undefined,
-                        opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
-                        position: 'relative',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        boxShadow: highlight ? '0 0 0 3px #ffb366' : undefined,
-                        transition: 'box-shadow 0.3s',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                        marginTop: idx === 0 ? 0 : 12,
+                        marginBottom: 0,
+                        minHeight: 36,
                       }}
-                      onClick={e => {
-                        if (selectMode) handleToggleSelectMessage(msg.id);
-                      }}
-                      onTouchStart={e => handleMessagePress(msg.id, e)}
-                      onTouchEnd={e => handleMessagePress(msg.id, e)}
-                      onTouchMove={e => handleMessagePress(msg.id, e)}
-                      onMouseDown={e => handleMessagePress(msg.id, e)}
-                      onMouseUp={e => handleMessagePress(msg.id, e)}
-                      onMouseLeave={e => handleMessagePress(msg.id, e)}
                     >
+                      <div
+                        style={{
+                          maxWidth: '84%',
+                          background: isSelected ? '#ff6600' : (isOwn ? '#d9fdd3' : '#fff'),
+                          color: isOwn ? '#222' : '#222',
+                          borderRadius: isOwn ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          padding: '9px 13px',
+                          border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
+                          opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
+                          position: 'relative',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 1px 2px rgba(0,0,0,0.07)',
+                          transition: 'box-shadow 0.3s',
+                          marginLeft: isOwn ? 32 : 0,
+                          marginRight: isOwn ? 0 : 32,
+                        }}
+                        onClick={e => {
+                          if (selectMode) handleToggleSelectMessage(msg.id);
+                        }}
+                        onTouchStart={e => handleMessagePress(msg.id, e)}
+                        onTouchEnd={e => handleMessagePress(msg.id, e)}
+                        onTouchMove={e => handleMessagePress(msg.id, e)}
+                        onMouseDown={e => handleMessagePress(msg.id, e)}
+                        onMouseUp={e => handleMessagePress(msg.id, e)}
+                        onMouseLeave={e => handleMessagePress(msg.id, e)}
+                      >
                       {selectMode && (
                         <input
                           type="checkbox"
