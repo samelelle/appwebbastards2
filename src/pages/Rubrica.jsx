@@ -1184,27 +1184,29 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         }
                       }}
                       style={{
-                        border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
+                        alignSelf: isOwn ? 'flex-end' : 'flex-start',
+                        border: isSelected ? '2px solid #fff' : `1px solid ${isOwn ? 'rgba(27, 94, 32, 0.85)' : 'rgba(255,255,255,0.08)'}`,
                         opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
                         position: 'relative',
                         cursor: 'pointer',
                         userSelect: 'none',
-                        boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 1px 2px rgba(0,0,0,0.07)',
+                        boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 8px 18px rgba(0,0,0,0.16)',
                         transition: 'box-shadow 0.3s',
-                        marginLeft: isOwn ? 32 : 0,
-                        marginRight: isOwn ? 0 : 32,
-                        background: '#1b1b1b',
+                        marginLeft: isOwn ? 'auto' : 0,
+                        marginRight: isOwn ? 0 : 'auto',
+                        marginBottom: '6px',
+                        background: isOwn ? '#1f6a34' : '#232323',
                         color: '#fff',
-                        borderRadius: '16px',
+                        borderRadius: isOwn ? '18px 18px 6px 18px' : '18px 18px 18px 6px',
                         padding: '10px 12px',
-                        width: isMobile ? 'calc(100% - 20px)' : 'calc(100% - 32px)',
-                        maxWidth: 'calc(100% - 0px)',
+                        width: 'fit-content',
+                        maxWidth: isMobile ? '84%' : '72%',
                         minWidth: 0,
                         boxSizing: 'border-box',
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
-                        textAlign: isMobile ? 'center' : undefined,
+                        textAlign: 'left',
                         overflowX: 'hidden',
                       }}
                         onClick={e => {
@@ -1240,11 +1242,11 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         <audio
                           controls
                           src={msg.audioUrl}
-                          style={{ marginTop: msg.text ? '6px' : 0, width: '100%' }}
+                          style={{ marginTop: msg.text ? '6px' : 0, width: '100%', maxWidth: '100%' }}
                         />
                       )}
                       {(msg.imageData || msg.video_url) && (
-                        <div style={{ marginTop: msg.text || msg.audioUrl ? '6px' : 0 }}>
+                        <div style={{ marginTop: msg.text || msg.audioUrl ? '6px' : 0, maxWidth: '100%' }}>
                           {msg.imageData && (
                             <img
                               src={msg.imageData}
@@ -1268,7 +1270,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         {new Date(msg.timestamp && !msg.timestamp.endsWith('Z') ? msg.timestamp + 'Z' : msg.timestamp).toLocaleString()}
                       </div>
                       {!selectMode && (
-                        <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '4px', background: isOwn ? '#14602f' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer' }}>
+                        <button type="button" onClick={() => setReplyTo(msg)} style={{ marginTop: '6px', alignSelf: isOwn ? 'flex-end' : 'flex-start', background: isOwn ? '#184f29' : '#333', color: '#fff', border: '1px solid #555', borderRadius: '999px', padding: '3px 9px', fontSize: '0.72em', cursor: 'pointer' }}>
                           Rispondi
                         </button>
                       )}
@@ -1340,11 +1342,11 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <div style={{ marginTop: '6px', color: '#ffb366', fontSize: '0.82em' }}>{chatAudioError}</div>
               )}
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px', width: '100%', minWidth: 0, overflowX: 'hidden' }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', marginTop: '8px', width: '100%', minWidth: 0, overflowX: 'hidden' }}>
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: '#ff8a3d' }}
+                  style={{ flex: '1 1 0', marginLeft: 0, minWidth: 0, minHeight: '34px', padding: '6px 4px', fontSize: '0.68rem', background: '#ff6600' }}
                   onClick={() => galleryInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
@@ -1353,7 +1355,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: '#2b7fff' }}
+                  style={{ flex: '1 1 0', marginLeft: 0, minWidth: 0, minHeight: '34px', padding: '6px 4px', fontSize: '0.68rem', background: '#ff6600' }}
                   onClick={() => cameraPhotoInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
@@ -1362,7 +1364,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: '#7a3df0' }}
+                  style={{ flex: '1 1 0', marginLeft: 0, minWidth: 0, minHeight: '34px', padding: '6px 4px', fontSize: '0.68rem', background: '#ff6600' }}
                   onClick={() => cameraVideoInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
@@ -1371,7 +1373,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: isRecordingAudio ? '#a33' : '#14602f' }}
+                  style={{ flex: '1 1 0', marginLeft: 0, minWidth: 0, minHeight: '34px', padding: '6px 4px', fontSize: '0.68rem', background: isRecordingAudio ? '#cc3d00' : '#ff6600' }}
                   onClick={isRecordingAudio ? stopAudioRecording : startAudioRecording}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || isUploadingAudio}
                 >
