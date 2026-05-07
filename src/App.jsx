@@ -66,21 +66,19 @@ function ProtectedRoute({ isReady, isAuthenticated, children }) {
 
 
 function App() {
-  const { updateAvailable, updateApp } = useServiceWorkerUpdate();
+  const { updateAvailable, updateApp, checkForUpdate } = useServiceWorkerUpdate();
   console.log('[APP DEBUG] updateAvailable:', updateAvailable);
   return (
     <Router>
       <ScrollToTopOnRouteChange />
-      <AppRoutes updateAvailable={updateAvailable} updateApp={updateApp} />
+      <AppRoutes updateAvailable={updateAvailable} updateApp={updateApp} checkForUpdate={checkForUpdate} />
     </Router>
   );
 }
 
-function AppRoutes() {
+function AppRoutes({ updateAvailable, updateApp, checkForUpdate }) {
   const location = useLocation();
   const [maintenanceMode, setMaintenanceModeState] = useState(getCachedMaintenanceMode());
-  // Hook per aggiornamento forzato
-  const { updateAvailable, updateApp } = useServiceWorkerUpdate();
 
   useEffect(() => {
     let active = true;
@@ -102,6 +100,12 @@ function AppRoutes() {
       window.removeEventListener('focus', syncMaintenanceMode);
     };
   }, []);
+
+  useEffect(() => {
+    if (!maintenanceMode) {
+      checkForUpdate();
+    }
+  }, [maintenanceMode, checkForUpdate]);
   // Modalità sviluppo locale disabilitata: sempre false
   const [devBypassEnabled, setDevBypassEnabled] = useState(false);
   // Stato per email utente
@@ -335,7 +339,7 @@ function AppRoutes() {
   return (
     <>
       {/* Overlay/modal di aggiornamento forzato se disponibile nuova versione */}
-      {updateAvailable && (
+      {updateAvailable && !maintenanceMode && (
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
           background: 'rgba(0,0,0,0.85)', color: 'white', zIndex: 99999,

@@ -153,6 +153,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
   const knownMessageIdsRef = useRef(new Set());
   const initializedMessagesRef = useRef(null);
   const chatEndRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const [chatPermissionError, setChatPermissionError] = useState('');
   const [openedChatImage, setOpenedChatImage] = useState('');
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);

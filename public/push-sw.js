@@ -9,6 +9,10 @@ self.addEventListener('message', function(event) {
   }
 });
 
+self.addEventListener('activate', function(event) {
+  event.waitUntil(clients.claim());
+});
+
 self.addEventListener('push', function(event) {
   const data = event.data.json();
   event.waitUntil(

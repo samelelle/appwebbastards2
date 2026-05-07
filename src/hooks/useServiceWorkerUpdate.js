@@ -1,26 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const updateTriggeredRef = useRef(false);
+  const registrationRef = useRef(null);
+
+  const checkForUpdate = useCallback(async () => {
+    const reg = registrationRef.current;
+    if (!reg) return false;
+
+    await reg.update();
+    console.log('[SW DEBUG] checkForUpdateAndWaiting: regRef', reg);
+
+    if (reg.waiting) {
+      console.log('[SW DEBUG] Service worker in waiting state, update available!');
+      setUpdateAvailable(true);
+      return true;
+    }
+
+    console.log('[SW DEBUG] No waiting service worker found');
+    return false;
+  }, []);
 
   useEffect(() => {
-    let regRef = null;
-    async function checkForUpdateAndWaiting() {
-      if (regRef) {
-        await regRef.update();
-        console.log('[SW DEBUG] checkForUpdateAndWaiting: regRef', regRef);
-        if (regRef.waiting) {
-          console.log('[SW DEBUG] Service worker in waiting state, update available!');
-          setUpdateAvailable(true);
-        } else {
-          console.log('[SW DEBUG] No waiting service worker found');
-        }
-      }
-    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration().then(reg => {
         if (!reg) return;
-        regRef = reg;
+        registrationRef.current = reg;
         console.log('[SW DEBUG] Registration found:', reg);
         if (reg.waiting) {
           console.log('[SW DEBUG] Service worker already waiting at load, update available!');
@@ -43,7 +49,7 @@ export default function useServiceWorkerUpdate() {
       const visHandler = () => {
         if (document.visibilityState === 'visible') {
           console.log('[SW DEBUG] visibilitychange: visible, checking for update');
-          checkForUpdateAndWaiting();
+          checkForUpdate();
         }
       };
       document.addEventListener('visibilitychange', visHandler);
@@ -51,7 +57,7 @@ export default function useServiceWorkerUpdate() {
       // Polling periodico per forzare il check anche su schermate statiche (es. manutenzione)
       const intervalId = setInterval(() => {
         console.log('[SW DEBUG] Polling for update...');
-        checkForUpdateAndWaiting();
+        checkForUpdate();
       }, 20000); // ogni 20 secondi
 
       return () => {
@@ -59,18 +65,32 @@ export default function useServiceWorkerUpdate() {
         clearInterval(intervalId);
       };
     }
-  }, []);
+  }, [checkForUpdate]);
 
   const updateApp = () => {
     navigator.serviceWorker.getRegistration().then(reg => {
       if (reg && reg.waiting) {
+        const handleControllerChange = () => {
+          if (updateTriggeredRef.current) return;
+          updateTriggeredRef.current = true;
+          navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+          window.location.reload();
+        };
+
+        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
         reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        window.location.reload();
+        window.setTimeout(() => {
+          if (!updateTriggeredRef.current) {
+            updateTriggeredRef.current = true;
+            navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+            window.location.reload();
+          }
+        }, 4000);
       } else {
         window.location.reload();
       }
     });
   };
 
-  return { updateAvailable, updateApp };
+  return { updateAvailable, updateApp, checkForUpdate };
 }
