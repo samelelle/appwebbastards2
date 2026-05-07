@@ -878,7 +878,13 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
   useEffect(() => {
     if (!categoriaAperta || !chatEndRef.current) return;
-    chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    // Primo scroll immediato
+    chatEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    // Secondo scroll dopo breve timeout per media lenti
+    const t = setTimeout(() => {
+      if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 120);
+    return () => clearTimeout(t);
   }, [categoriaAperta, messaggiCategoriaAperta.length]);
 
   function replyPreviewText(message) {
@@ -1001,7 +1007,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
       }}
     >
       {/* Pulsante QR code spostato sotto 'Crea iscritto' */}
-      {chatNotice && (
+      {chatNotice && !categoriaAperta && (
         <div style={{ position: 'fixed', top: 'calc(var(--bb-mobile-shell-height, 94px) + 8px)', left: '10px', right: '10px', zIndex: 8200, background: '#1d2a1d', border: '1px solid #2f5d2f', color: '#b8f7b8', borderRadius: '8px', padding: '8px 10px', fontSize: '0.88rem', boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}>
           {chatNotice}
         </div>
@@ -1155,7 +1161,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 style={{ width: '100%', marginBottom: '10px', padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem' }}
               />
 
-              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
+              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
                               </div>
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>

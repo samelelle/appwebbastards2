@@ -419,7 +419,7 @@ function Riunioni({ isDevMode }) {
             <button onClick={goToCurrentMonth} style={{ background: '#ff6600', color: '#fff', border: 'none', borderRadius: '6px', padding: isMobile ? '2px 8px' : '2px 10px', fontSize: isMobile ? '0.88em' : '0.95em', cursor: 'pointer', marginLeft: '8px' }}>Oggi</button>
           </div>
 
-          <div style={{ width: '100%', background: '#222', borderRadius: '12px', padding: isMobile ? '8px' : '10px 12px', boxSizing: 'border-box', display: 'flex', gap: '8px' }}>
+          <div style={{ width: '100%', background: '#222', borderRadius: '12px', padding: isMobile ? '8px' : '10px 12px', boxSizing: 'border-box', display: 'flex', gap: '8px', overflowX: 'hidden', width: '100%' }}>
             <input
               type="text"
               value={searchText}
@@ -452,7 +452,7 @@ function Riunioni({ isDevMode }) {
                 <label style={{ fontWeight: 600, fontSize: isMobile ? 'clamp(0.84rem, 2.8vw, 0.94rem)' : 'clamp(0.9rem, 3vw, 1rem)' }}>Ora riunione:</label>
                 <input className="bb-time-input" name="ora" type="time" value={form.ora} onChange={handleInput} style={{ padding: isMobile ? '6px' : '7px', borderRadius: '6px', fontSize: isMobile ? '1rem' : 'clamp(0.95rem, 3vw, 1rem)', width: '100%', boxSizing: 'border-box' }} />
                 <label style={{ fontWeight: 600, fontSize: isMobile ? 'clamp(0.84rem, 2.8vw, 0.94rem)' : 'clamp(0.9rem, 3vw, 1rem)' }}>Ordine del giorno:</label>
-                <textarea name="ordine" value={form.ordine} onChange={handleInput} placeholder="Ordine del giorno" style={{ padding: isMobile ? '6px' : '7px', borderRadius: '6px', border: 'none', minHeight: isMobile ? '44px' : '48px', fontSize: isMobile ? '1rem' : 'clamp(0.95rem, 3vw, 1rem)', resize: 'vertical', width: '100%', boxSizing: 'border-box' }} />
+                <textarea name="ordine" value={form.ordine} onChange={handleInput} placeholder="Ordine del giorno" style={{ padding: isMobile ? '6px' : '7px', borderRadius: '6px', border: 'none', minHeight: isMobile ? '44px' : '48px', fontSize: isMobile ? '1rem' : 'clamp(0.95rem, 3vw, 1rem)', resize: 'vertical', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }} />
                 <button className="bb-event-btn" type="submit" style={{ marginTop: '8px', fontSize: isMobile ? 'clamp(0.84rem, 2.9vw, 0.92rem)' : 'clamp(0.92rem, 3vw, 1rem)', padding: isMobile ? '7px 0' : '8px 0', borderRadius: '6px', width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}>Aggiungi riunione</button>
               </form>
               <button
@@ -492,7 +492,7 @@ function Riunioni({ isDevMode }) {
                             ))}
                           </select>
                           <label style={{ fontWeight: 600, fontSize: '1em' }}>Testo delibera:</label>
-                          <textarea value={deliberaText} onChange={e => setDeliberaText(e.target.value)} required placeholder="Scrivi la delibera..." style={{ padding: '7px', borderRadius: '6px', minHeight: '70px', fontSize: '1em', width: '100%', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #555' }} />
+                          <textarea value={deliberaText} onChange={e => setDeliberaText(e.target.value)} required placeholder="Scrivi la delibera..." style={{ padding: '7px', borderRadius: '6px', minHeight: '70px', fontSize: '1em', width: '100%', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #555', overflowX: 'hidden' }} />
                           <button type="submit" className="bb-event-btn" style={{ background: '#0a3a6b', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 0', fontSize: '1em', fontWeight: 700, marginTop: '8px' }} disabled={deliberaLoading}>
                             {deliberaLoading ? 'Salvataggio...' : 'Salva delibera'}
                           </button>
