@@ -162,37 +162,13 @@ function Rubrica({ isDevMode, maintenanceMode }) {
       try {
         const parsed = JSON.parse(saved);
         return parsed && typeof parsed === 'object' ? parsed : {};
-                    <div
-                      key={`${msg.timestamp}-${idx}`}
-                      ref={el => {
-                        if (highlight && el) {
-                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          setTimeout(() => setScrollToReplyId(null), 1200);
-                        }
-                      }}
-                      style={{
-                        border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
-                        opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
-                        position: 'relative',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 1px 2px rgba(0,0,0,0.07)',
-                        transition: 'box-shadow 0.3s',
-                        marginLeft: isOwn ? 32 : 0,
-                        marginRight: isOwn ? 0 : 32,
-                        background: '#1b1b1b',
-                        color: '#fff',
-                        borderRadius: isMobile ? '0' : '16px',
-                        padding: isMobile ? 'calc(8px + env(safe-area-inset-top)) 8px 0 8px' : '18px',
-                        width: '100%',
-                        maxWidth: '100%',
-                        boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                        textAlign: isMobile ? 'center' : undefined,
-                        overflowX: 'hidden',
-                      }}
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+
   async function startAudioRecording() {
     if (!navigator.mediaDevices?.getUserMedia) {
       setChatAudioError('Registrazione audio non supportata su questo dispositivo.');
@@ -1167,7 +1143,6 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               />
 
               <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
-                              </div>
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
                 )}
@@ -1200,34 +1175,29 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                           setTimeout(() => setScrollToReplyId(null), 1200);
                         }
                       }}
-                      <div style={{
+                      style={{
+                        border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
+                        opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
+                        position: 'relative',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 1px 2px rgba(0,0,0,0.07)',
+                        transition: 'box-shadow 0.3s',
+                        marginLeft: isOwn ? 32 : 0,
+                        marginRight: isOwn ? 0 : 32,
                         background: '#1b1b1b',
                         color: '#fff',
-                        borderRadius: isMobile ? '0' : '16px',
-                        padding: isMobile ? 'calc(8px + env(safe-area-inset-top)) 8px 0 8px' : '18px',
-                        width: '100vw',
-                        height: '100dvh',
-                        maxHeight: '100dvh',
-                        boxShadow: isMobile ? 'none' : '0 4px 24px #000a',
-                        position: 'relative',
+                        borderRadius: '16px',
+                        padding: '10px 12px',
+                        width: '100%',
+                        maxWidth: '100%',
                         boxSizing: 'border-box',
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
                         textAlign: isMobile ? 'center' : undefined,
                         overflowX: 'hidden',
-                        maxWidth: '100%'
-                      }}>
-                          border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
-                          opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
-                          position: 'relative',
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                          boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 1px 2px rgba(0,0,0,0.07)',
-                          transition: 'box-shadow 0.3s',
-                          marginLeft: isOwn ? 32 : 0,
-                          marginRight: isOwn ? 0 : 32,
-                        }}
+                      }}
                         onClick={e => {
                           if (selectMode) handleToggleSelectMessage(msg.id);
                         }}
@@ -1293,7 +1263,6 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                           Rispondi
                         </button>
                       )}
-                      </div>
                     </div>
                   );
                 })}
@@ -1452,6 +1421,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {showMembersModal && (
