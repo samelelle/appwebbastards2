@@ -153,6 +153,8 @@ function Rubrica({ isDevMode, maintenanceMode }) {
   const knownMessageIdsRef = useRef(new Set());
   const initializedMessagesRef = useRef(null);
   const chatEndRef = useRef(null);
+  const chatComposerRef = useRef(null);
+  const chatInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const cameraPhotoInputRef = useRef(null);
   const cameraVideoInputRef = useRef(null);
@@ -876,6 +878,18 @@ function Rubrica({ isDevMode, maintenanceMode }) {
     return () => clearTimeout(t);
   }, [categoriaAperta, messaggiCategoriaAperta.length]);
 
+  useEffect(() => {
+    if (!replyTo || !chatComposerRef.current) return;
+
+    chatComposerRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const timeoutId = window.setTimeout(() => {
+      chatComposerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      chatInputRef.current?.focus({ preventScroll: true });
+    }, 140);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [replyTo]);
+
   function replyPreviewText(message) {
     if (!message) return null;
     if (message.text) return message.text;
@@ -1407,8 +1421,9 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 />
               </div>
 
-              <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '10px', background: '#1b1b1b', paddingTop: '8px', paddingBottom: isMobile ? 'max(8px, env(safe-area-inset-bottom))' : 0, paddingLeft: 0, paddingRight: 0, minWidth: 0, overflowX: 'hidden' }}>
+              <div ref={chatComposerRef} style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '10px', background: '#1b1b1b', paddingTop: '8px', paddingBottom: isMobile ? 'max(8px, env(safe-area-inset-bottom))' : 0, paddingLeft: 0, paddingRight: 0, minWidth: 0, overflowX: 'hidden' }}>
                 <input
+                  ref={chatInputRef}
                   type="text"
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
