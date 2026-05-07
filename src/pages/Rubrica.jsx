@@ -246,25 +246,27 @@ function Rubrica({ isDevMode, maintenanceMode }) {
     );
   }
 
+  // Miglior gestione long-press: un solo timer per tutto il componente
+  const longPressTimerRef = useRef(null);
   function handleMessagePress(msgId, e) {
     if (selectMode) {
       handleToggleSelectMessage(msgId);
       return;
     }
-
-    let timer;
-    const start = () => {
-      timer = setTimeout(() => {
+    if (e.type === 'touchstart' || e.type === 'mousedown') {
+      longPressTimerRef.current = setTimeout(() => {
         setSelectMode(true);
         setSelectedMessages([msgId]);
-      }, 350);
-    };
-    const clear = () => {
-      if (timer) clearTimeout(timer);
-    };
-
-    if (e.type === 'touchstart' || e.type === 'mousedown') start();
-    if (e.type === 'touchend' || e.type === 'touchmove' || e.type === 'mouseup' || e.type === 'mouseleave') clear();
+      }, 400); // 400ms long-press
+    } else if (
+      e.type === 'touchend' || e.type === 'touchmove' ||
+      e.type === 'mouseup' || e.type === 'mouseleave'
+    ) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
   }
 
   function exitSelectMode() {
@@ -1190,7 +1192,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         borderRadius: '12px',
                         padding: '7px 9px',
                         border: isSelected ? '2px solid #fff' : undefined,
-                        opacity: selectMode && !isSelected ? 0.6 : 1,
+                        opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
                         position: 'relative',
                         cursor: 'pointer',
                         userSelect: 'none',
