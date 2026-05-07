@@ -1280,6 +1280,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                           Rispondi
                         </button>
                       )}
+                      </div>
                     </div>
                   );
                 })}
