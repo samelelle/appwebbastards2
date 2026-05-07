@@ -80,6 +80,15 @@ export default function useServiceWorkerUpdate() {
       window.addEventListener('pageshow', pageShowHandler);
       window.addEventListener('bb-sw-registered', registeredHandler);
 
+      // Listener per messaggi dal service worker
+      const swMessageHandler = (event) => {
+        if (event.data && event.data.type === 'SW_UPDATE_AVAILABLE') {
+          console.log('[SW DEBUG] Ricevuto messaggio SW_UPDATE_AVAILABLE');
+          setUpdateAvailable(true);
+        }
+      };
+      navigator.serviceWorker.addEventListener('message', swMessageHandler);
+
       // Polling periodico per forzare il check anche su schermate statiche (es. manutenzione)
       const intervalId = setInterval(() => {
         console.log('[SW DEBUG] Polling for update...');
@@ -90,6 +99,7 @@ export default function useServiceWorkerUpdate() {
         document.removeEventListener('visibilitychange', visHandler);
         window.removeEventListener('pageshow', pageShowHandler);
         window.removeEventListener('bb-sw-registered', registeredHandler);
+        navigator.serviceWorker.removeEventListener('message', swMessageHandler);
         clearInterval(intervalId);
       };
     }

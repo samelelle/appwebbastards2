@@ -1036,7 +1036,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         width: isMobile ? '100%' : '360px',
         maxWidth: '92vw',
         margin: '0 auto',
-        marginTop: isMobile ? 0 : '3cm',
+        marginTop: isMobile ? 0 : '1cm',
         padding: isMobile ? 'calc(env(safe-area-inset-top) + 2px) 12px 8px 12px' : 0,
         boxSizing: 'border-box',
         flex: isMobile ? '0 0 auto' : '1 1 auto',
