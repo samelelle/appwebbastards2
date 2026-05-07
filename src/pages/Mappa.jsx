@@ -14,9 +14,8 @@ const initialView = {
 const navigationFollowZoom = 17;
 
 const travelModes = [
-  { value: 'driving', label: 'Auto' },
+  { value: 'driving', label: 'Moto' },
   { value: 'walking', label: 'A piedi' },
-  { value: 'cycling', label: 'Bici' },
 ];
 
 const travelModeToProfile = {
