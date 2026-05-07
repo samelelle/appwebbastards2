@@ -87,19 +87,36 @@ function AppRoutes({ updateAvailable, updateApp, checkForUpdate }) {
       const nextMode = await fetchSharedMaintenanceMode();
       if (active) {
         setMaintenanceModeState(nextMode);
+        if (!nextMode) {
+          await checkForUpdate();
+        }
       }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        syncMaintenanceMode();
+      }
+    }
+
+    function handlePageShow() {
+      syncMaintenanceMode();
     }
 
     syncMaintenanceMode();
     const intervalId = window.setInterval(syncMaintenanceMode, 15000);
     window.addEventListener('focus', syncMaintenanceMode);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
 
     return () => {
       active = false;
       window.clearInterval(intervalId);
       window.removeEventListener('focus', syncMaintenanceMode);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
     };
-  }, []);
+  }, [checkForUpdate]);
 
   useEffect(() => {
     if (!maintenanceMode) {

@@ -52,7 +52,12 @@ export default function useServiceWorkerUpdate() {
           checkForUpdate();
         }
       };
+      const pageShowHandler = () => {
+        console.log('[SW DEBUG] pageshow: checking for update');
+        checkForUpdate();
+      };
       document.addEventListener('visibilitychange', visHandler);
+      window.addEventListener('pageshow', pageShowHandler);
 
       // Polling periodico per forzare il check anche su schermate statiche (es. manutenzione)
       const intervalId = setInterval(() => {
@@ -62,6 +67,7 @@ export default function useServiceWorkerUpdate() {
 
       return () => {
         document.removeEventListener('visibilitychange', visHandler);
+        window.removeEventListener('pageshow', pageShowHandler);
         clearInterval(intervalId);
       };
     }
