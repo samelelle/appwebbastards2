@@ -4,7 +4,7 @@ export default function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const updateTriggeredRef = useRef(false);
   const registrationRef = useRef(null);
-  const loadedSwVersionRef = useRef('');
+  const loadedBuildVersionRef = useRef('');
 
   const getScriptFileName = useCallback((scriptUrl) => {
     if (!scriptUrl) return '';
@@ -21,29 +21,35 @@ export default function useServiceWorkerUpdate() {
     const response = await fetch('/sw-manifest.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('sw-manifest.json request failed');
     const data = await response.json();
-    return typeof data?.sw === 'string' ? data.sw : '';
+    return {
+      sw: typeof data?.sw === 'string' ? data.sw : '',
+      version: typeof data?.version === 'string' ? data.version : '',
+    };
   }, []);
 
   const checkManifestVersion = useCallback(async ({ initialize = false } = {}) => {
-    let manifestVersion = '';
+    let manifest = { sw: '', version: '' };
     try {
-      manifestVersion = await fetchManifestVersion();
+      manifest = await fetchManifestVersion();
     } catch {
       return false;
     }
 
-    if (!loadedSwVersionRef.current) {
+    const manifestVersion = manifest.version || manifest.sw;
+
+    if (!loadedBuildVersionRef.current) {
       const controllerVersion = getScriptFileName(navigator.serviceWorker.controller?.scriptURL);
-      loadedSwVersionRef.current = controllerVersion || manifestVersion;
+      loadedBuildVersionRef.current = manifestVersion || controllerVersion;
+      console.log('[SW DEBUG] Loaded build version initialized as:', loadedBuildVersionRef.current);
     }
 
     if (initialize) {
-      loadedSwVersionRef.current = loadedSwVersionRef.current || manifestVersion;
+      loadedBuildVersionRef.current = loadedBuildVersionRef.current || manifestVersion;
       return false;
     }
 
-    if (manifestVersion && loadedSwVersionRef.current && manifestVersion !== loadedSwVersionRef.current) {
-      console.log('[SW DEBUG] Manifest version differs from loaded version:', loadedSwVersionRef.current, manifestVersion);
+    if (manifestVersion && loadedBuildVersionRef.current && manifestVersion !== loadedBuildVersionRef.current) {
+      console.log('[SW DEBUG] Manifest version differs from loaded version:', loadedBuildVersionRef.current, manifestVersion);
       setUpdateAvailable(true);
       return true;
     }
