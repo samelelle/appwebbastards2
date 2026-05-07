@@ -614,15 +614,15 @@ function Eventi({ isDevMode }) {
 
         {selectedEvent && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', minWidth: '320px', maxWidth: '90vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', maxHeight: '80vh', overflowY: 'auto', overflowX: 'hidden' }}>
+            <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', maxHeight: '80vh', overflowY: 'auto', overflowX: 'hidden' }}>
               <button onClick={handleCloseDetail} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
               <h2 style={{ color: '#ff6600', marginTop: 0 }}>{selectedEvent.title}</h2>
               <div style={{ marginBottom: '12px' }}><b>Data:</b> {selectedEvent.start instanceof Date ? selectedEvent.start.toLocaleDateString() : ''}</div>
               {selectedEvent.note && <div style={{ fontSize: '1em', color: '#ffb366', marginTop: '2px', wordBreak: 'break-word' }}><b>Note:</b> {selectedEvent.note}</div>}
               {selectedEvent.image && <img src={selectedEvent.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '120px', marginTop: '8px', borderRadius: '8px' }} />}
               <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
-                <button className="bb-add-btn" style={{ flex: 1, fontSize: '0.82rem', padding: '3px 10px', borderRadius: '5px', minWidth: '68px' }} onClick={() => startEditEvent(selectedEvent)}>Modifica</button>
-                <button className="bb-event-btn" style={{ flex: 1, fontSize: '0.82rem', padding: '3px 10px', borderRadius: '5px', minWidth: '68px', background: '#ff4444' }} onClick={() => handleDeleteEvent(selectedEvent.id)}>Cancella</button>
+                <button className="bb-add-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px' }} onClick={() => startEditEvent(selectedEvent)}>Modifica</button>
+                <button className="bb-event-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px', background: '#ff4444' }} onClick={() => handleDeleteEvent(selectedEvent.id)}>Cancella</button>
               </div>
             </div>
           </div>

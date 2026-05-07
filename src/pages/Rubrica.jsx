@@ -150,6 +150,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
   const [chatNotice, setChatNotice] = useState('');
   // Tiene traccia dell'ultimo messaggio visto per categoria
   const lastSeenMsgIdRef = useRef({});
+  const knownMessageIdsRef = useRef(new Set());
   const initializedMessagesRef = useRef(null);
   const [chatPermissionError, setChatPermissionError] = useState('');
   const [openedChatImage, setOpenedChatImage] = useState('');
