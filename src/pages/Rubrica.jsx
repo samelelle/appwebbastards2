@@ -1419,7 +1419,8 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                   Aggiungi almeno un iscritto alla categoria per usare la chat.
                 </div>
               )}
-              </div>
+            </div>
+            </div>
           </div>
         </div>
       )}
