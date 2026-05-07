@@ -611,7 +611,7 @@ function Riunioni({ isDevMode }) {
             zIndex: 3000,
           }}
         >
-          <div className="riunioni-modal" style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', width: 'min(90vw, 320px)', maxWidth: '90vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
+          <div className="riunioni-modal" style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', width: 'min(90vw, 320px)', maxWidth: '90vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', maxHeight: '80vh', overflowY: 'auto', overflowX: 'hidden' }}>
             <button onClick={() => setShowProssima(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
             <h2 style={{ color: '#ff6600', marginTop: 0 }}>Prossima riunione</h2>
             <div style={{ marginBottom: '12px' }}><b>Data:</b> {formatDateEuropean(prossimaRiunione.data)}</div>
@@ -638,7 +638,7 @@ function Riunioni({ isDevMode }) {
             zIndex: 4000,
           }}
         >
-          <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: isMobile ? '22px' : '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
+          <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: isMobile ? '22px' : '32px', width: 'min(92vw, 370px)', maxWidth: '92vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', maxHeight: '80vh', overflowY: 'auto', overflowX: 'hidden' }}>
             <button onClick={() => setShowDeliberaView(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
             <h2 style={{ color: '#0a3a6b', marginTop: 0, marginBottom: '18px', fontSize: '1.3em' }}>Delibera</h2>
             {deliberaViewLoading ? (

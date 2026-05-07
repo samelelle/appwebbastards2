@@ -1161,7 +1161,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 style={{ width: '100%', marginBottom: '10px', padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem' }}
               />
 
-              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
+              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
                               </div>
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
@@ -1195,22 +1195,24 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                           setTimeout(() => setScrollToReplyId(null), 1200);
                         }
                       }}
-                      style={{
+                      <div style={{
+                        background: '#1b1b1b',
+                        color: '#fff',
+                        borderRadius: isMobile ? '0' : '16px',
+                        padding: isMobile ? 'calc(8px + env(safe-area-inset-top)) 8px 0 8px' : '18px',
+                        width: '100vw',
+                        height: '100dvh',
+                        maxHeight: '100dvh',
+                        boxShadow: isMobile ? 'none' : '0 4px 24px #000a',
+                        position: 'relative',
+                        boxSizing: 'border-box',
                         display: 'flex',
-                        flexDirection: 'row',
-                        justifyContent: isOwn ? 'flex-end' : 'flex-start',
-                        marginTop: idx === 0 ? 0 : 12,
-                        marginBottom: 0,
-                        minHeight: 36,
-                      }}
-                    >
-                      <div
-                        style={{
-                          maxWidth: '84%',
-                          background: isSelected ? '#ff6600' : (isOwn ? '#d9fdd3' : '#fff'),
-                          color: isOwn ? '#222' : '#222',
-                          borderRadius: isOwn ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                          padding: '9px 13px',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        textAlign: isMobile ? 'center' : undefined,
+                        overflowX: 'hidden',
+                        maxWidth: '100%'
+                      }}>
                           border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
                           opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
                           position: 'relative',
