@@ -406,6 +406,73 @@
 
 /* Smartphone landscape compact mode */
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 950px) {
+  :root {
+    --bb-app-height: 100dvh !important;
+    --bb-vh: 1dvh !important;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100dvh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .bb-page {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: var(--bb-app-height, 100dvh) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+  }
+
+  .bb-page > div[style*='calc(100dvh'],
+  .bb-page > div[style*='calc(var(--bb-app-height'],
+  .bb-page > div[style*='100dvh'],
+  .bb-page > div[style*='100svh'] {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  .bb-page > div[style*='overflowY: auto'],
+  .bb-page > div[style*='overflow-y: auto'] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bb-mobile-page-shell {
+    padding-top: max(2px, env(safe-area-inset-top)) !important;
+    border-bottom-color: rgba(255,255,255,0.06) !important;
+  }
+
+  .bb-mobile-page-shell .bb-back-btn {
+    font-size: 0.72rem !important;
+    padding: 3px 7px !important;
+  }
+
+  .bb-mobile-page-shell .bb-title {
+    font-size: 1rem !important;
+    line-height: 1 !important;
+  }
+
+  .bb-mobile-bottom-nav {
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom)) 4px !important;
+    gap: 4px !important;
+  }
+
+  .bb-mobile-bottom-nav button {
+    min-height: 32px !important;
+    font-size: 0.68rem !important;
+    border-radius: 8px !important;
+    padding: 4px 2px !important;
+  }
+
   .bb-page .bb-title {
     font-size: 1.35rem !important;
     line-height: 1.02 !important;

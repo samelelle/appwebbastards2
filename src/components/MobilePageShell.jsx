@@ -38,6 +38,7 @@ function MobilePageShell({ title, backTo = '/', backLabel = 'Home' }) {
   return (
     <div
       ref={shellRef}
+      className="bb-mobile-page-shell"
       style={{
         position: 'fixed',
         top: 0,
