@@ -1,24 +1,4 @@
-    // Long-press per primo, tap per i successivi
-    function handleMessagePress(msgId, e) {
-      if (selectMode) {
-        handleToggleSelectMessage(msgId);
-        return;
-      }
-      let timer;
-      const start = () => {
-        timer = setTimeout(() => {
-          setSelectMode(true);
-          setSelectedMessages([msgId]);
-        }, 350); // 350ms long-press
-      };
-      const clear = () => { if (timer) clearTimeout(timer); };
-      if (e.type === 'touchstart') start();
-      if (e.type === 'mousedown') start();
-      if (e.type === 'touchend' || e.type === 'touchmove' || e.type === 'mouseup' || e.type === 'mouseleave') clear();
-    }
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-// Stato per scroll-to-reply highlight
-const [scrollToReplyId, setScrollToReplyId] = useState(null);
 import { supabase } from '../lib/supabaseClient';
 import QrCodeShare from '../components/QrCodeShare';
 
@@ -164,6 +144,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
   // Stato per selezione multipla messaggi
   const [selectedMessages, setSelectedMessages] = useState([]);
   const [selectMode, setSelectMode] = useState(false);
+  const [scrollToReplyId, setScrollToReplyId] = useState(null);
   const [saveError, setSaveError] = useState('');
   const [editingIscrittoId, setEditingIscrittoId] = useState(null);
   const [chatNotice, setChatNotice] = useState('');
@@ -263,6 +244,27 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         ? prev.filter(id => id !== msgId)
         : [...prev, msgId]
     );
+  }
+
+  function handleMessagePress(msgId, e) {
+    if (selectMode) {
+      handleToggleSelectMessage(msgId);
+      return;
+    }
+
+    let timer;
+    const start = () => {
+      timer = setTimeout(() => {
+        setSelectMode(true);
+        setSelectedMessages([msgId]);
+      }, 350);
+    };
+    const clear = () => {
+      if (timer) clearTimeout(timer);
+    };
+
+    if (e.type === 'touchstart' || e.type === 'mousedown') start();
+    if (e.type === 'touchend' || e.type === 'touchmove' || e.type === 'mouseup' || e.type === 'mouseleave') clear();
   }
 
   function exitSelectMode() {
