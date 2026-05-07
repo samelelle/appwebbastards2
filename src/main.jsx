@@ -20,6 +20,7 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register(swUrl)
           .then(reg => {
             console.log('[SW DEBUG] service worker registered, scope:', reg.scope);
+            window.dispatchEvent(new CustomEvent('bb-sw-registered', { detail: { registration: reg, swUrl } }));
           })
           .catch(err => {
             console.log('[SW DEBUG] service worker register error:', err);

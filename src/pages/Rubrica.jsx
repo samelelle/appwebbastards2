@@ -1137,8 +1137,8 @@ function Rubrica({ isDevMode, maintenanceMode }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', textAlign: isMobile ? 'center' : undefined }}>
-              <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100dvh - 120px)' }}>
+            <div style={{ marginTop: '4px', borderTop: '1px solid #444', paddingTop: '10px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', overflowX: 'hidden', textAlign: isMobile ? 'center' : undefined }}>
+              <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', maxHeight: 'calc(100dvh - 120px)', minWidth: 0 }}>
 
               <h3 style={{ margin: '0 0 8px 0', color: '#ffb366', fontSize: '1rem', textAlign: isMobile ? 'center' : undefined }}>Chat categoria</h3>
               {/* Barra di ricerca messaggi */}
@@ -1147,10 +1147,10 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 value={searchChat}
                 onChange={e => setSearchChat(e.target.value)}
                 placeholder="Cerca nei messaggi..."
-                style={{ width: '100%', marginBottom: '10px', padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem' }}
+                style={{ width: '100%', marginBottom: '10px', padding: '7px', borderRadius: '7px', border: '1px solid #555', background: '#181818', color: '#fff', fontSize: '1rem', boxSizing: 'border-box', minWidth: 0 }}
               />
 
-              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, textAlign: isMobile ? 'center' : undefined }}>
+              <div style={{ background: '#0f0f0f', borderRadius: '10px', padding: '10px', flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0, minWidth: 0, boxSizing: 'border-box', textAlign: isMobile ? 'center' : undefined }}>
                 {messaggiCategoriaAperta.length === 0 && (
                   <div style={{ color: '#999', fontSize: '0.92em' }}>Nessun messaggio ancora.</div>
                 )}
@@ -1197,8 +1197,9 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         color: '#fff',
                         borderRadius: '16px',
                         padding: '10px 12px',
-                        width: '100%',
-                        maxWidth: '100%',
+                        width: isMobile ? 'calc(100% - 20px)' : 'calc(100% - 32px)',
+                        maxWidth: 'calc(100% - 0px)',
+                        minWidth: 0,
                         boxSizing: 'border-box',
                         display: 'flex',
                         flexDirection: 'column',
@@ -1339,11 +1340,11 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <div style={{ marginTop: '6px', color: '#ffb366', fontSize: '0.82em' }}>{chatAudioError}</div>
               )}
 
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px', width: '100%', minWidth: 0, overflowX: 'hidden' }}>
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem' }}
+                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: '#ff8a3d' }}
                   onClick={() => galleryInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
@@ -1352,7 +1353,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem' }}
+                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: '#2b7fff' }}
                   onClick={() => cameraPhotoInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
@@ -1361,7 +1362,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem' }}
+                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: '#7a3df0' }}
                   onClick={() => cameraVideoInputRef.current?.click()}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria}
                 >
@@ -1370,7 +1371,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 <button
                   type="button"
                   className="bb-add-btn"
-                  style={{ width: 'auto', minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: isRecordingAudio ? '#a33' : undefined }}
+                  style={{ flex: '1 1 120px', marginLeft: 0, minWidth: 0, minHeight: '36px', padding: '6px 10px', fontSize: '0.8rem', background: isRecordingAudio ? '#a33' : '#14602f' }}
                   onClick={isRecordingAudio ? stopAudioRecording : startAudioRecording}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || isUploadingAudio}
                 >
@@ -1404,7 +1405,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                 />
               </div>
 
-              <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '10px', background: '#1b1b1b', paddingTop: '8px', paddingBottom: isMobile ? 'max(8px, env(safe-area-inset-bottom))' : 0, paddingLeft: 0, paddingRight: 0 }}>
+              <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '10px', background: '#1b1b1b', paddingTop: '8px', paddingBottom: isMobile ? 'max(8px, env(safe-area-inset-bottom))' : 0, paddingLeft: 0, paddingRight: 0, minWidth: 0, overflowX: 'hidden' }}>
                 <input
                   type="text"
                   value={chatInput}
@@ -1416,10 +1417,10 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                     }
                   }}
                   placeholder="Scrivi un messaggio..."
-                  style={{ flex: 1, padding: '10px', borderRadius: '18px', border: 'none', fontSize: '0.95rem' }}
+                  style={{ flex: 1, minWidth: 0, padding: '10px', borderRadius: '18px', border: 'none', fontSize: '0.95rem', boxSizing: 'border-box' }}
                   disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || isSendingMessage}
                 />
-                <button className="bb-event-btn" style={{ width: 'auto', minWidth: '86px', borderRadius: '18px', padding: '10px 14px' }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatVideoData && !chatAudioBlob) || isUploadingAudio || isSendingMessage}>{isUploadingAudio ? 'Invio...' : isSendingMessage ? 'Invio...' : 'Invia'}</button>
+                <button className="bb-event-btn" style={{ width: 'auto', minWidth: isMobile ? '74px' : '86px', borderRadius: '18px', padding: isMobile ? '10px 12px' : '10px 14px', marginLeft: 0, flexShrink: 0 }} type="button" onClick={() => void handleSendMessage()} disabled={membriCategoriaAperta.length === 0 || !identitaCorrente || !membroCorrenteInCategoria || (!chatInput.trim() && !chatImageData && !chatVideoData && !chatAudioBlob) || isUploadingAudio || isSendingMessage}>{isUploadingAudio ? 'Invio...' : isSendingMessage ? 'Invio...' : 'Invia'}</button>
               </div>
               {membriCategoriaAperta.length === 0 && (
                 <div style={{ marginTop: '6px', color: '#999', fontSize: '0.82em' }}>

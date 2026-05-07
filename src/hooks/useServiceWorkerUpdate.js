@@ -5,6 +5,41 @@ export default function useServiceWorkerUpdate() {
   const updateTriggeredRef = useRef(false);
   const registrationRef = useRef(null);
 
+  const watchInstallingWorker = useCallback((worker) => {
+    if (!worker) return;
+
+    console.log('[SW DEBUG] watchInstallingWorker:', worker.state);
+    worker.onstatechange = () => {
+      console.log('[SW DEBUG] newWorker state:', worker.state);
+      if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+        console.log('[SW DEBUG] New service worker installed and controller exists, update available!');
+        setUpdateAvailable(true);
+      }
+    };
+  }, []);
+
+  const attachRegistration = useCallback((reg, source = 'unknown') => {
+    if (!reg) return;
+
+    registrationRef.current = reg;
+    console.log(`[SW DEBUG] Registration attached from ${source}:`, reg);
+
+    if (reg.waiting) {
+      console.log('[SW DEBUG] Service worker already waiting at attach, update available!');
+      setUpdateAvailable(true);
+    }
+
+    if (reg.installing) {
+      watchInstallingWorker(reg.installing);
+    }
+
+    reg.onupdatefound = () => {
+      const newWorker = reg.installing;
+      console.log('[SW DEBUG] onupdatefound: newWorker', newWorker);
+      watchInstallingWorker(newWorker);
+    };
+  }, [watchInstallingWorker]);
+
   const checkForUpdate = useCallback(async () => {
     const reg = registrationRef.current;
     if (!reg) return false;
@@ -26,26 +61,11 @@ export default function useServiceWorkerUpdate() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration().then(reg => {
         if (!reg) return;
-        registrationRef.current = reg;
-        console.log('[SW DEBUG] Registration found:', reg);
-        if (reg.waiting) {
-          console.log('[SW DEBUG] Service worker already waiting at load, update available!');
-          setUpdateAvailable(true);
-        }
-        reg.onupdatefound = () => {
-          const newWorker = reg.installing;
-          console.log('[SW DEBUG] onupdatefound: newWorker', newWorker);
-          if (newWorker) {
-            newWorker.onstatechange = () => {
-              console.log('[SW DEBUG] newWorker state:', newWorker.state);
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[SW DEBUG] New service worker installed and controller exists, update available!');
-                setUpdateAvailable(true);
-              }
-            };
-          }
-        };
+        attachRegistration(reg, 'getRegistration');
       });
+      const registeredHandler = (event) => {
+        attachRegistration(event.detail?.registration ?? null, 'main-register');
+      };
       const visHandler = () => {
         if (document.visibilityState === 'visible') {
           console.log('[SW DEBUG] visibilitychange: visible, checking for update');
@@ -58,6 +78,7 @@ export default function useServiceWorkerUpdate() {
       };
       document.addEventListener('visibilitychange', visHandler);
       window.addEventListener('pageshow', pageShowHandler);
+      window.addEventListener('bb-sw-registered', registeredHandler);
 
       // Polling periodico per forzare il check anche su schermate statiche (es. manutenzione)
       const intervalId = setInterval(() => {
@@ -68,10 +89,11 @@ export default function useServiceWorkerUpdate() {
       return () => {
         document.removeEventListener('visibilitychange', visHandler);
         window.removeEventListener('pageshow', pageShowHandler);
+        window.removeEventListener('bb-sw-registered', registeredHandler);
         clearInterval(intervalId);
       };
     }
-  }, [checkForUpdate]);
+  }, [attachRegistration, checkForUpdate]);
 
   const updateApp = () => {
     navigator.serviceWorker.getRegistration().then(reg => {
