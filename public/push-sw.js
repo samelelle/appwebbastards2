@@ -9,23 +9,20 @@ self.addEventListener('message', function(event) {
   }
 });
 
-// Notifica tutte le pagine quando c'è un nuovo SW in waiting
 self.addEventListener('install', function(event) {
   self.skipWaiting();
 });
 
-self.addEventListener('statechange', function(event) {
-  if (event.target && event.target.state === 'installed') {
-    self.clients.matchAll({ type: 'window' }).then(function(clients) {
-      clients.forEach(function(client) {
-        client.postMessage({ type: 'SW_UPDATE_AVAILABLE' });
-      });
-    });
-  }
-});
-
 self.addEventListener('activate', function(event) {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    clients.claim().then(function() {
+      return self.clients.matchAll({ type: 'window' }).then(function(windowClients) {
+        windowClients.forEach(function(client) {
+          client.postMessage({ type: 'SW_UPDATE_AVAILABLE' });
+        });
+      });
+    })
+  );
 });
 
 self.addEventListener('push', function(event) {

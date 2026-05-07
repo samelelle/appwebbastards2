@@ -1046,7 +1046,7 @@ function Rubrica({ isDevMode, maintenanceMode }) {
         textAlign: isMobile ? 'center' : undefined
       }}>
         {isMembroCorrenteInCategoria('Full') && (
-          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined, marginTop: '1.5cm' }}
+          <button className="bb-event-btn" style={{ width: '100%', minHeight: isMobile ? '40px' : undefined, padding: isMobile ? '8px 36px 8px 12px' : '8px 12px', fontSize: isMobile ? '0.9rem' : undefined, position: 'relative', display: isMobile ? 'flex' : undefined, justifyContent: isMobile ? 'center' : undefined, alignItems: isMobile ? 'center' : undefined, textAlign: isMobile ? 'center' : undefined }}
             onClick={() => {
               setReplyTo(null);
               setCategoriaAperta('Full');

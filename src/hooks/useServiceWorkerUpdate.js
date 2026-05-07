@@ -4,6 +4,52 @@ export default function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const updateTriggeredRef = useRef(false);
   const registrationRef = useRef(null);
+  const loadedSwVersionRef = useRef('');
+
+  const getScriptFileName = useCallback((scriptUrl) => {
+    if (!scriptUrl) return '';
+    try {
+      const url = new URL(scriptUrl, window.location.origin);
+      const parts = url.pathname.split('/').filter(Boolean);
+      return parts[parts.length - 1] || '';
+    } catch {
+      return '';
+    }
+  }, []);
+
+  const fetchManifestVersion = useCallback(async () => {
+    const response = await fetch('/sw-manifest.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('sw-manifest.json request failed');
+    const data = await response.json();
+    return typeof data?.sw === 'string' ? data.sw : '';
+  }, []);
+
+  const checkManifestVersion = useCallback(async ({ initialize = false } = {}) => {
+    let manifestVersion = '';
+    try {
+      manifestVersion = await fetchManifestVersion();
+    } catch {
+      return false;
+    }
+
+    if (!loadedSwVersionRef.current) {
+      const controllerVersion = getScriptFileName(navigator.serviceWorker.controller?.scriptURL);
+      loadedSwVersionRef.current = controllerVersion || manifestVersion;
+    }
+
+    if (initialize) {
+      loadedSwVersionRef.current = loadedSwVersionRef.current || manifestVersion;
+      return false;
+    }
+
+    if (manifestVersion && loadedSwVersionRef.current && manifestVersion !== loadedSwVersionRef.current) {
+      console.log('[SW DEBUG] Manifest version differs from loaded version:', loadedSwVersionRef.current, manifestVersion);
+      setUpdateAvailable(true);
+      return true;
+    }
+
+    return false;
+  }, [fetchManifestVersion, getScriptFileName]);
 
   const watchInstallingWorker = useCallback((worker) => {
     if (!worker) return;
@@ -42,7 +88,11 @@ export default function useServiceWorkerUpdate() {
 
   const checkForUpdate = useCallback(async () => {
     const reg = registrationRef.current;
-    if (!reg) return false;
+    let manifestHasUpdate = false;
+
+    manifestHasUpdate = await checkManifestVersion();
+
+    if (!reg) return manifestHasUpdate;
 
     await reg.update();
     console.log('[SW DEBUG] checkForUpdateAndWaiting: regRef', reg);
@@ -53,12 +103,17 @@ export default function useServiceWorkerUpdate() {
       return true;
     }
 
+    if (reg.installing) {
+      watchInstallingWorker(reg.installing);
+    }
+
     console.log('[SW DEBUG] No waiting service worker found');
-    return false;
-  }, []);
+    return manifestHasUpdate;
+  }, [checkManifestVersion, watchInstallingWorker]);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
+      checkManifestVersion({ initialize: true });
       navigator.serviceWorker.getRegistration().then(reg => {
         if (!reg) return;
         attachRegistration(reg, 'getRegistration');
@@ -79,6 +134,7 @@ export default function useServiceWorkerUpdate() {
       document.addEventListener('visibilitychange', visHandler);
       window.addEventListener('pageshow', pageShowHandler);
       window.addEventListener('bb-sw-registered', registeredHandler);
+      window.addEventListener('focus', pageShowHandler);
 
       // Listener per messaggi dal service worker
       const swMessageHandler = (event) => {
@@ -99,11 +155,12 @@ export default function useServiceWorkerUpdate() {
         document.removeEventListener('visibilitychange', visHandler);
         window.removeEventListener('pageshow', pageShowHandler);
         window.removeEventListener('bb-sw-registered', registeredHandler);
+        window.removeEventListener('focus', pageShowHandler);
         navigator.serviceWorker.removeEventListener('message', swMessageHandler);
         clearInterval(intervalId);
       };
     }
-  }, [attachRegistration, checkForUpdate]);
+  }, [attachRegistration, checkForUpdate, checkManifestVersion]);
 
   const updateApp = () => {
     navigator.serviceWorker.getRegistration().then(reg => {
