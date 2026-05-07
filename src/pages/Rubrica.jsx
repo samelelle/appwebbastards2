@@ -248,25 +248,26 @@ function Rubrica({ isDevMode, maintenanceMode }) {
 
   // Miglior gestione long-press: un solo timer per tutto il componente
   const longPressTimerRef = useRef(null);
+  // WhatsApp-like: long-press solo per il primo, tap/click solo per i successivi
   function handleMessagePress(msgId, e) {
-    if (selectMode) {
-      handleToggleSelectMessage(msgId);
-      return;
-    }
-    if (e.type === 'touchstart' || e.type === 'mousedown') {
-      longPressTimerRef.current = setTimeout(() => {
-        setSelectMode(true);
-        setSelectedMessages([msgId]);
-      }, 400); // 400ms long-press
-    } else if (
-      e.type === 'touchend' || e.type === 'touchmove' ||
-      e.type === 'mouseup' || e.type === 'mouseleave'
-    ) {
-      if (longPressTimerRef.current) {
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
+    if (!selectMode) {
+      // Primo: solo long-press
+      if (e.type === 'touchstart' || e.type === 'mousedown') {
+        longPressTimerRef.current = setTimeout(() => {
+          setSelectMode(true);
+          setSelectedMessages([msgId]);
+        }, 400);
+      } else if (
+        e.type === 'touchend' || e.type === 'touchmove' ||
+        e.type === 'mouseup' || e.type === 'mouseleave'
+      ) {
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
       }
     }
+    // Se già in selectMode, nessun toggle qui: solo onClick gestisce i successivi
   }
 
   function exitSelectMode() {
@@ -1200,14 +1201,14 @@ function Rubrica({ isDevMode, maintenanceMode }) {
                         transition: 'box-shadow 0.3s',
                       }}
                       onClick={e => {
-                        if (selectMode) { handleToggleSelectMessage(msg.id); return; }
+                        if (selectMode) handleToggleSelectMessage(msg.id);
                       }}
-                      onTouchStart={e => handleMessagePress && handleMessagePress(msg.id, e)}
-                      onTouchEnd={e => handleMessagePress && handleMessagePress(msg.id, e)}
-                      onTouchMove={e => handleMessagePress && handleMessagePress(msg.id, e)}
-                      onMouseDown={e => handleMessagePress && handleMessagePress(msg.id, e)}
-                      onMouseUp={e => handleMessagePress && handleMessagePress(msg.id, e)}
-                      onMouseLeave={e => handleMessagePress && handleMessagePress(msg.id, e)}
+                      onTouchStart={e => handleMessagePress(msg.id, e)}
+                      onTouchEnd={e => handleMessagePress(msg.id, e)}
+                      onTouchMove={e => handleMessagePress(msg.id, e)}
+                      onMouseDown={e => handleMessagePress(msg.id, e)}
+                      onMouseUp={e => handleMessagePress(msg.id, e)}
+                      onMouseLeave={e => handleMessagePress(msg.id, e)}
                     >
                       {selectMode && (
                         <input
