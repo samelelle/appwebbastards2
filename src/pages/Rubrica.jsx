@@ -162,32 +162,37 @@ function Rubrica({ isDevMode, maintenanceMode }) {
       try {
         const parsed = JSON.parse(saved);
         return parsed && typeof parsed === 'object' ? parsed : {};
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
-  const chatEndRef = useRef(null);
-  const galleryInputRef = useRef(null);
-  const cameraPhotoInputRef = useRef(null);
-  const cameraVideoInputRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const knownMessageIdsRef = useRef(new Set());
-  const initializedMessagesRef = useRef(false);
-
-  function openChatImage(imageData) {
-    if (!imageData) return;
-    setOpenedChatImage(imageData);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (chatAudioUrl) URL.revokeObjectURL(chatAudioUrl);
-    };
-  }, [chatAudioUrl]);
-
+                    <div
+                      key={`${msg.timestamp}-${idx}`}
+                      ref={el => {
+                        if (highlight && el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          setTimeout(() => setScrollToReplyId(null), 1200);
+                        }
+                      }}
+                      style={{
+                        border: isSelected ? '2px solid #fff' : '1px solid #e0e0e0',
+                        opacity: selectMode && selectedMessages.length > 0 && !isSelected ? 0.6 : 1,
+                        position: 'relative',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        boxShadow: highlight ? '0 0 0 3px #ffb366' : '0 1px 2px rgba(0,0,0,0.07)',
+                        transition: 'box-shadow 0.3s',
+                        marginLeft: isOwn ? 32 : 0,
+                        marginRight: isOwn ? 0 : 32,
+                        background: '#1b1b1b',
+                        color: '#fff',
+                        borderRadius: isMobile ? '0' : '16px',
+                        padding: isMobile ? 'calc(8px + env(safe-area-inset-top)) 8px 0 8px' : '18px',
+                        width: '100%',
+                        maxWidth: '100%',
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        textAlign: isMobile ? 'center' : undefined,
+                        overflowX: 'hidden',
+                      }}
   async function startAudioRecording() {
     if (!navigator.mediaDevices?.getUserMedia) {
       setChatAudioError('Registrazione audio non supportata su questo dispositivo.');
