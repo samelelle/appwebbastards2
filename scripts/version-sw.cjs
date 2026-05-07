@@ -4,9 +4,22 @@ const path = require('path');
 
 const swSrc = path.join(__dirname, '../public/push-sw.js');
 const distDir = path.join(__dirname, '../dist');
+const buildMetaPath = path.join(__dirname, '../.build-version.json');
 const swContent = fs.readFileSync(swSrc, 'utf8');
 const hash = crypto.createHash('md5').update(swContent).digest('hex').slice(0, 8);
-const buildVersion = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+let buildVersion = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+
+if (fs.existsSync(buildMetaPath)) {
+	try {
+		const buildMeta = JSON.parse(fs.readFileSync(buildMetaPath, 'utf8'));
+		if (typeof buildMeta?.version === 'string' && buildMeta.version) {
+			buildVersion = buildMeta.version;
+		}
+	} catch {
+		// Fallback alla versione generata runtime se il file è corrotto.
+	}
+}
+
 const swDestName = `push-sw.${hash}.js`;
 const swDest = path.join(distDir, swDestName);
 

@@ -1,21 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { BUILD_VERSION } from '../generated/buildVersion';
 
 export default function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const updateTriggeredRef = useRef(false);
   const registrationRef = useRef(null);
-  const loadedBuildVersionRef = useRef('');
-
-  const getScriptFileName = useCallback((scriptUrl) => {
-    if (!scriptUrl) return '';
-    try {
-      const url = new URL(scriptUrl, window.location.origin);
-      const parts = url.pathname.split('/').filter(Boolean);
-      return parts[parts.length - 1] || '';
-    } catch {
-      return '';
-    }
-  }, []);
+  const loadedBuildVersionRef = useRef(BUILD_VERSION);
 
   const fetchManifestVersion = useCallback(async () => {
     const response = await fetch('/sw-manifest.json', { cache: 'no-store' });
@@ -37,14 +27,8 @@ export default function useServiceWorkerUpdate() {
 
     const manifestVersion = manifest.version || manifest.sw;
 
-    if (!loadedBuildVersionRef.current) {
-      const controllerVersion = getScriptFileName(navigator.serviceWorker.controller?.scriptURL);
-      loadedBuildVersionRef.current = manifestVersion || controllerVersion;
-      console.log('[SW DEBUG] Loaded build version initialized as:', loadedBuildVersionRef.current);
-    }
-
     if (initialize) {
-      loadedBuildVersionRef.current = loadedBuildVersionRef.current || manifestVersion;
+      console.log('[SW DEBUG] Loaded build version initialized as:', loadedBuildVersionRef.current);
       return false;
     }
 
@@ -55,7 +39,7 @@ export default function useServiceWorkerUpdate() {
     }
 
     return false;
-  }, [fetchManifestVersion, getScriptFileName]);
+  }, [fetchManifestVersion]);
 
   const watchInstallingWorker = useCallback((worker) => {
     if (!worker) return;
