@@ -706,7 +706,7 @@ function Riunioni({ isDevMode }) {
             zIndex: 3100,
           }}
         >
-          <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', width: 'min(90vw, 360px)', maxWidth: '90vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box' }}>
+          <div style={{ background: '#222', color: '#fff', borderRadius: '16px', padding: '32px', width: 'min(90vw, 360px)', maxWidth: '90vw', boxShadow: '0 4px 24px #000a', position: 'relative', boxSizing: 'border-box', maxHeight: '80vh', overflowY: 'auto', overflowX: 'hidden' }}>
             <button onClick={() => setDetailMeeting(null)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: '#ff6600', fontSize: '2rem', cursor: 'pointer' }} title="Chiudi">&times;</button>
             <h2 style={{ color: '#ff6600', marginTop: 0 }}>Dettaglio riunione</h2>
             <div style={{ marginBottom: '12px' }}><b>Data:</b> {formatDateEuropean(detailMeeting.data)}</div>

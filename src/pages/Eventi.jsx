@@ -620,10 +620,12 @@ function Eventi({ isDevMode }) {
               <div style={{ marginBottom: '12px' }}><b>Data:</b> {selectedEvent.start instanceof Date ? selectedEvent.start.toLocaleDateString() : ''}</div>
               {selectedEvent.note && <div style={{ fontSize: '1em', color: '#ffb366', marginTop: '2px', wordBreak: 'break-word' }}><b>Note:</b> {selectedEvent.note}</div>}
               {selectedEvent.image && <img src={selectedEvent.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '120px', marginTop: '8px', borderRadius: '8px' }} />}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
-                <button className="bb-add-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px' }} onClick={() => startEditEvent(selectedEvent)}>Modifica</button>
-                <button className="bb-event-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px', background: '#ff4444' }} onClick={() => handleDeleteEvent(selectedEvent.id)}>Cancella</button>
-              </div>
+              {isDevMode && (
+                <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
+                  <button className="bb-add-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px' }} onClick={() => startEditEvent(selectedEvent)}>Modifica</button>
+                  <button className="bb-event-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px', background: '#ff4444' }} onClick={() => handleDeleteEvent(selectedEvent.id)}>Cancella</button>
+                </div>
+              )}
             </div>
           </div>
         )}
