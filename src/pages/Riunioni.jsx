@@ -399,7 +399,25 @@ function Riunioni({ isDevMode }) {
   return (
     <div
       className="bb-page riunioni-screen"
-      style={{ height: 'var(--bb-app-height, 100dvh)', background: '#111', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: isMobile ? 0 : '48px', paddingBottom: 0, position: isMobile ? 'fixed' : 'relative', inset: isMobile ? 0 : 'auto', overflow: 'hidden', overflowX: 'hidden', width: '100%' }}
+      style={{
+        background: '#111',
+        color: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: isMobile ? 0 : '48px',
+        paddingBottom: 0,
+        position: isMobile ? 'fixed' : 'relative',
+        inset: isMobile ? 0 : 'auto',
+        width: '100%',
+        ...(isMobile
+          ? {
+              height: 'var(--bb-app-height, 100dvh)',
+              overflow: 'hidden',
+              overflowX: 'hidden',
+            }
+          : {})
+      }}
     >
       <MobilePageShell title="RIUNIONI B.B." />
       {!isMobile && <Link to="/" className="bb-back-btn">&#8592; Home</Link>}
