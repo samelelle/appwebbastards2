@@ -781,7 +781,7 @@ function Eventi({ isDevMode }) {
                     })()}
                     {/* Lista presenti */}
                     <div style={{ marginTop: 10 }}>
-                      <b>Persone che sono presenti:</b>
+                      <b>Born Bastards presenti:</b>
                       <ul style={{ margin: '8px 0 0 0', padding: 0, listStyle: 'none', color: '#fff' }}>
                         {presenze.length === 0 && <li style={{ color: '#aaa' }}>Nessuno ha ancora confermato la presenza.</li>}
                         {presenze.map(p => (
