@@ -224,7 +224,7 @@ function Eventi({ isDevMode }) {
       try {
         const { data, error } = await supabase
           .from('eventi_presenze')
-          .select('user_id, iscritti: user_id (nome, cognome)')
+          .select('user_id, status, iscritti: user_id (nome, cognome)')
           .eq('event_id', selectedEvent.id);
         if (error) throw error;
         if (active) setPresenze(data || []);
@@ -250,33 +250,38 @@ function Eventi({ isDevMode }) {
   }, []);
 
   // Funzione per aggiungere presenza
-  async function handleAggiungiPresenza() {
+  async function handleSetPresenza(status) {
     setCiSonoLoading(true);
     setPresenzeError('');
     try {
       const user_id = await getCurrentUserId();
-      console.log('[Presenze] Aggiungendo presenza per user_id:', user_id, 'event_id:', selectedEvent.id);
-      const { error: insertError } = await supabase.from('eventi_presenze').insert([{ event_id: selectedEvent.id, user_id }]);
-      if (insertError) {
-        console.error('[Presenze] Errore insert:', insertError);
-        setPresenzeError('Errore aggiunta presenza');
-        return;
+      // Rimuovi eventuale presenza precedente
+      await supabase.from('eventi_presenze')
+        .delete()
+        .eq('event_id', selectedEvent.id)
+        .eq('user_id', user_id);
+      // Inserisci nuova presenza solo se status è 'si' o 'forse'
+      if (status === 'si' || status === 'forse') {
+        const { error: insertError } = await supabase.from('eventi_presenze').insert([{ event_id: selectedEvent.id, user_id, status }]);
+        if (insertError) {
+          setPresenzeError('Errore aggiunta presenza');
+          setCiSonoLoading(false);
+          return;
+        }
       }
       // Ricarica presenze
       const { data, error: selectError } = await supabase
         .from('eventi_presenze')
-        .select('user_id, iscritti: user_id (nome, cognome)')
+        .select('user_id, status, iscritti: user_id (nome, cognome)')
         .eq('event_id', selectedEvent.id);
       if (selectError) {
-        console.error('[Presenze] Errore select dopo insert:', selectError);
+        setPresenzeError('Errore caricamento presenze');
       } else {
-        console.log('[Presenze] Presenze dopo insert:', data);
         setPresenze(data || []);
       }
       setUserId(user_id);
     } catch (e) {
-      console.error('[Presenze] Exception aggiunta:', e);
-      setPresenzeError('Errore aggiunta presenza');
+      setPresenzeError('Errore presenza');
     } finally {
       setCiSonoLoading(false);
     }
@@ -745,34 +750,33 @@ function Eventi({ isDevMode }) {
                     {/* Flag "ci sono" */}
                     {(() => {
                       if (!userId) return null;
-                      const presente = presenze.some(p => p.user_id === userId);
-                      console.log('[Presenze] Rendering button - userId:', userId, 'presente:', presente, 'presenze array:', presenze);
+                      const myPresenza = presenze.find(p => p.user_id === userId);
+                      const status = myPresenza?.status || null;
                       return (
-                        <button
-                          className="bb-add-btn"
-                          style={{
-                            background: presente ? '#00c851' : '#ff6600',
-                            color: '#fff',
-                            fontWeight: 600,
-                            borderRadius: 6,
-                            padding: '6px 18px',
-                            marginBottom: 10,
-                            minWidth: 120,
-                            opacity: ciSonoLoading ? 0.7 : 1,
-                            pointerEvents: ciSonoLoading ? 'none' : 'auto',
-                          }}
-                          onClick={() => {
-                            console.log('[Presenze] Button clicked - presente:', presente);
-                            if (presente) {
-                              handleRimuoviPresenza();
-                            } else {
-                              handleAggiungiPresenza();
-                            }
-                          }}
-                          disabled={ciSonoLoading}
-                        >
-                          {presente ? 'Non ci sono' : 'Ci sono'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                          <button
+                            className="bb-add-btn"
+                            style={{
+                              background: status === 'si' ? '#00c851' : '#444',
+                              color: '#fff', fontWeight: 600, borderRadius: 6, padding: '6px 12px', minWidth: 90,
+                              opacity: ciSonoLoading ? 0.7 : 1, pointerEvents: ciSonoLoading ? 'none' : 'auto',
+                              border: status === 'si' ? '2px solid #00c851' : '2px solid #444',
+                            }}
+                            onClick={() => handleSetPresenza(status === 'si' ? null : 'si')}
+                            disabled={ciSonoLoading}
+                          >{status === 'si' ? 'Non ci sono' : 'Ci sono'}</button>
+                          <button
+                            className="bb-add-btn"
+                            style={{
+                              background: status === 'forse' ? '#ffb366' : '#444',
+                              color: '#fff', fontWeight: 600, borderRadius: 6, padding: '6px 12px', minWidth: 90,
+                              opacity: ciSonoLoading ? 0.7 : 1, pointerEvents: ciSonoLoading ? 'none' : 'auto',
+                              border: status === 'forse' ? '2px solid #ffb366' : '2px solid #444',
+                            }}
+                            onClick={() => handleSetPresenza(status === 'forse' ? null : 'forse')}
+                            disabled={ciSonoLoading}
+                          >{status === 'forse' ? 'Non ci sono' : 'Forse ci sono'}</button>
+                        </div>
                       );
                     })()}
                     {/* Lista presenti */}
@@ -782,7 +786,7 @@ function Eventi({ isDevMode }) {
                         {presenze.length === 0 && <li style={{ color: '#aaa' }}>Nessuno ha ancora confermato la presenza.</li>}
                         {presenze.map(p => (
                           <li key={p.user_id} style={{ padding: '2px 0' }}>
-                            {p.iscritti?.nome || ''} {p.iscritti?.cognome || ''}
+                            {p.iscritti?.nome || ''} {p.iscritti?.cognome || ''} {p.status === 'forse' ? <span style={{ color: '#ffb366' }}>(forse)</span> : ''}
                           </li>
                         ))}
                       </ul>
