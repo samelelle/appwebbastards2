@@ -255,15 +255,27 @@ function Eventi({ isDevMode }) {
     setPresenzeError('');
     try {
       const user_id = await getCurrentUserId();
-      await supabase.from('eventi_presenze').insert([{ event_id: selectedEvent.id, user_id }]);
+      console.log('[Presenze] Aggiungendo presenza per user_id:', user_id, 'event_id:', selectedEvent.id);
+      const { error: insertError } = await supabase.from('eventi_presenze').insert([{ event_id: selectedEvent.id, user_id }]);
+      if (insertError) {
+        console.error('[Presenze] Errore insert:', insertError);
+        setPresenzeError('Errore aggiunta presenza');
+        return;
+      }
       // Ricarica presenze
-      const { data } = await supabase
+      const { data, error: selectError } = await supabase
         .from('eventi_presenze')
         .select('user_id, iscritti: user_id (nome, cognome)')
         .eq('event_id', selectedEvent.id);
-      setPresenze(data || []);
-      setUserId(user_id); // aggiorna subito lo stato
+      if (selectError) {
+        console.error('[Presenze] Errore select dopo insert:', selectError);
+      } else {
+        console.log('[Presenze] Presenze dopo insert:', data);
+        setPresenze(data || []);
+      }
+      setUserId(user_id);
     } catch (e) {
+      console.error('[Presenze] Exception aggiunta:', e);
       setPresenzeError('Errore aggiunta presenza');
     } finally {
       setCiSonoLoading(false);
@@ -276,18 +288,30 @@ function Eventi({ isDevMode }) {
     setPresenzeError('');
     try {
       const user_id = await getCurrentUserId();
-      await supabase.from('eventi_presenze')
+      console.log('[Presenze] Rimuovendo presenza per user_id:', user_id, 'event_id:', selectedEvent.id);
+      const { error: deleteError } = await supabase.from('eventi_presenze')
         .delete()
         .eq('event_id', selectedEvent.id)
         .eq('user_id', user_id);
+      if (deleteError) {
+        console.error('[Presenze] Errore delete:', deleteError);
+        setPresenzeError('Errore rimozione presenza');
+        return;
+      }
       // Ricarica presenze
-      const { data } = await supabase
+      const { data, error: selectError } = await supabase
         .from('eventi_presenze')
         .select('user_id, iscritti: user_id (nome, cognome)')
         .eq('event_id', selectedEvent.id);
-      setPresenze(data || []);
-      setUserId(user_id); // aggiorna subito lo stato
+      if (selectError) {
+        console.error('[Presenze] Errore select dopo delete:', selectError);
+      } else {
+        console.log('[Presenze] Presenze dopo delete:', data);
+        setPresenze(data || []);
+      }
+      setUserId(user_id);
     } catch (e) {
+      console.error('[Presenze] Exception rimozione:', e);
       setPresenzeError('Errore rimozione presenza');
     } finally {
       setCiSonoLoading(false);
@@ -722,6 +746,7 @@ function Eventi({ isDevMode }) {
                     {(() => {
                       if (!userId) return null;
                       const presente = presenze.some(p => p.user_id === userId);
+                      console.log('[Presenze] Rendering button - userId:', userId, 'presente:', presente, 'presenze array:', presenze);
                       return (
                         <button
                           className="bb-add-btn"
@@ -736,7 +761,14 @@ function Eventi({ isDevMode }) {
                             opacity: ciSonoLoading ? 0.7 : 1,
                             pointerEvents: ciSonoLoading ? 'none' : 'auto',
                           }}
-                          onClick={presente ? handleRimuoviPresenza : handleAggiungiPresenza}
+                          onClick={() => {
+                            console.log('[Presenze] Button clicked - presente:', presente);
+                            if (presente) {
+                              handleRimuoviPresenza();
+                            } else {
+                              handleAggiungiPresenza();
+                            }
+                          }}
                           disabled={ciSonoLoading}
                         >
                           {presente ? 'Non ci sono' : 'Ci sono'}
