@@ -238,12 +238,23 @@ function Eventi({ isDevMode }) {
     return () => { active = false; };
   }, [selectedEvent]);
 
+  // Stato per userId
+  const [userId, setUserId] = useState(null);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const id = await getCurrentUserId();
+      if (active) setUserId(id);
+    })();
+    return () => { active = false; };
+  }, []);
+
   // Funzione per aggiungere presenza
   async function handleAggiungiPresenza() {
     setCiSonoLoading(true);
     setPresenzeError('');
     try {
-      const user_id = getCurrentUserId();
+      const user_id = await getCurrentUserId();
       await supabase.from('eventi_presenze').insert([{ event_id: selectedEvent.id, user_id }]);
       // Ricarica presenze
       const { data } = await supabase
@@ -251,6 +262,7 @@ function Eventi({ isDevMode }) {
         .select('user_id, iscritti: user_id (nome, cognome)')
         .eq('event_id', selectedEvent.id);
       setPresenze(data || []);
+      setUserId(user_id); // aggiorna subito lo stato
     } catch (e) {
       setPresenzeError('Errore aggiunta presenza');
     } finally {
@@ -263,7 +275,7 @@ function Eventi({ isDevMode }) {
     setCiSonoLoading(true);
     setPresenzeError('');
     try {
-      const user_id = getCurrentUserId();
+      const user_id = await getCurrentUserId();
       await supabase.from('eventi_presenze')
         .delete()
         .eq('event_id', selectedEvent.id)
@@ -274,6 +286,7 @@ function Eventi({ isDevMode }) {
         .select('user_id, iscritti: user_id (nome, cognome)')
         .eq('event_id', selectedEvent.id);
       setPresenze(data || []);
+      setUserId(user_id); // aggiorna subito lo stato
     } catch (e) {
       setPresenzeError('Errore rimozione presenza');
     } finally {
@@ -707,8 +720,8 @@ function Eventi({ isDevMode }) {
                   <>
                     {/* Flag "ci sono" */}
                     {(() => {
-                      const user_id = getCurrentUserId();
-                      const presente = presenze.some(p => p.user_id === user_id);
+                      if (!userId) return null;
+                      const presente = presenze.some(p => p.user_id === userId);
                       return (
                         <button
                           className="bb-add-btn"

@@ -16,10 +16,16 @@ export async function getAppServiceWorkerRegistration() {
   return (await navigator.serviceWorker.getRegistration()) ?? (await navigator.serviceWorker.register(swUrl));
 }
 
-// Recupera l'userId corrente dalla localStorage (come usato in meetingAccess.js)
-export function getCurrentUserId() {
+
+// Recupera l'userId corrente, prima da localStorage, poi da Supabase session
+export async function getCurrentUserId() {
   try {
-    return localStorage.getItem("bb-current-chat-user-id");
+    const local = localStorage.getItem("bb-current-chat-user-id");
+    if (local) return local;
+    if (!supabase) return null;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+    return user?.id || null;
   } catch {
     return null;
   }
