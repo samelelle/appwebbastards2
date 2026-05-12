@@ -8,6 +8,8 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { addEvent, deleteEvent, getEvents, updateEvent } from '../lib/sharedDataApi';
+import { supabase } from '../lib/supabaseClient';
+import { getCurrentUserId } from '../lib/pushSubscription';
 import { markEventsSeen } from '../lib/notificationBadges';
 import { ensureNotificationPermission, notifyUser } from '../lib/notifications';
 
@@ -50,6 +52,12 @@ function Eventi({ isDevMode }) {
   const [notificationsAllowed, setNotificationsAllowed] = useState(false);
   const knownEventIdsRef = useRef(new Set());
   const initializedEventsRef = useRef(false);
+
+  // PRESENZE
+  const [presenze, setPresenze] = useState([]);
+  const [presenzeLoading, setPresenzeLoading] = useState(false);
+  const [presenzeError, setPresenzeError] = useState('');
+  const [ciSonoLoading, setCiSonoLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -202,6 +210,75 @@ function Eventi({ isDevMode }) {
 
   function handleCloseDetail() {
     setSelectedEvent(null);
+    setPresenze([]);
+    setPresenzeError('');
+  }
+
+  // Carica presenze quando selectedEvent cambia
+  useEffect(() => {
+    if (!selectedEvent) return;
+    let active = true;
+    async function fetchPresenze() {
+      setPresenzeLoading(true);
+      setPresenzeError('');
+      try {
+        const { data, error } = await supabase
+          .from('eventi_presenze')
+          .select('user_id, iscritti: user_id (nome, cognome)')
+          .eq('event_id', selectedEvent.id);
+        if (error) throw error;
+        if (active) setPresenze(data || []);
+      } catch (e) {
+        if (active) setPresenzeError('Errore caricamento presenze');
+      } finally {
+        if (active) setPresenzeLoading(false);
+      }
+    }
+    fetchPresenze();
+    return () => { active = false; };
+  }, [selectedEvent]);
+
+  // Funzione per aggiungere presenza
+  async function handleAggiungiPresenza() {
+    setCiSonoLoading(true);
+    setPresenzeError('');
+    try {
+      const user_id = getCurrentUserId();
+      await supabase.from('eventi_presenze').insert([{ event_id: selectedEvent.id, user_id }]);
+      // Ricarica presenze
+      const { data } = await supabase
+        .from('eventi_presenze')
+        .select('user_id, iscritti: user_id (nome, cognome)')
+        .eq('event_id', selectedEvent.id);
+      setPresenze(data || []);
+    } catch (e) {
+      setPresenzeError('Errore aggiunta presenza');
+    } finally {
+      setCiSonoLoading(false);
+    }
+  }
+
+  // Funzione per rimuovere presenza
+  async function handleRimuoviPresenza() {
+    setCiSonoLoading(true);
+    setPresenzeError('');
+    try {
+      const user_id = getCurrentUserId();
+      await supabase.from('eventi_presenze')
+        .delete()
+        .eq('event_id', selectedEvent.id)
+        .eq('user_id', user_id);
+      // Ricarica presenze
+      const { data } = await supabase
+        .from('eventi_presenze')
+        .select('user_id, iscritti: user_id (nome, cognome)')
+        .eq('event_id', selectedEvent.id);
+      setPresenze(data || []);
+    } catch (e) {
+      setPresenzeError('Errore rimozione presenza');
+    } finally {
+      setCiSonoLoading(false);
+    }
   }
 
   function handleShowMapRoute(event) {
@@ -620,6 +697,55 @@ function Eventi({ isDevMode }) {
               <div style={{ marginBottom: '12px' }}><b>Data:</b> {selectedEvent.start instanceof Date ? selectedEvent.start.toLocaleDateString() : ''}</div>
               {selectedEvent.note && <div style={{ fontSize: '1em', color: '#ffb366', marginTop: '2px', wordBreak: 'break-word' }}><b>Note:</b> {selectedEvent.note}</div>}
               {selectedEvent.image && <img src={selectedEvent.image} alt="evento" style={{ maxWidth: '100%', maxHeight: '120px', marginTop: '8px', borderRadius: '8px' }} />}
+
+              {/* --- PRESENZE --- */}
+              <div style={{ margin: '18px 0 0 0', padding: '12px 0', borderTop: '1px solid #444' }}>
+                {presenzeError && <div style={{ color: '#ff4444', marginBottom: 8 }}>{presenzeError}</div>}
+                {presenzeLoading ? (
+                  <div style={{ color: '#ffb366' }}>Caricamento presenze...</div>
+                ) : (
+                  <>
+                    {/* Flag "ci sono" */}
+                    {(() => {
+                      const user_id = getCurrentUserId();
+                      const presente = presenze.some(p => p.user_id === user_id);
+                      return (
+                        <button
+                          className="bb-add-btn"
+                          style={{
+                            background: presente ? '#00c851' : '#ff6600',
+                            color: '#fff',
+                            fontWeight: 600,
+                            borderRadius: 6,
+                            padding: '6px 18px',
+                            marginBottom: 10,
+                            minWidth: 120,
+                            opacity: ciSonoLoading ? 0.7 : 1,
+                            pointerEvents: ciSonoLoading ? 'none' : 'auto',
+                          }}
+                          onClick={presente ? handleRimuoviPresenza : handleAggiungiPresenza}
+                          disabled={ciSonoLoading}
+                        >
+                          {presente ? 'Non ci sono' : 'Ci sono'}
+                        </button>
+                      );
+                    })()}
+                    {/* Lista presenti */}
+                    <div style={{ marginTop: 10 }}>
+                      <b>Persone che sono presenti:</b>
+                      <ul style={{ margin: '8px 0 0 0', padding: 0, listStyle: 'none', color: '#fff' }}>
+                        {presenze.length === 0 && <li style={{ color: '#aaa' }}>Nessuno ha ancora confermato la presenza.</li>}
+                        {presenze.map(p => (
+                          <li key={p.user_id} style={{ padding: '2px 0' }}>
+                            {p.iscritti?.nome || ''} {p.iscritti?.cognome || ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {isDevMode && (
                 <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
                   <button className="bb-add-btn" style={{ flex: 1, fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', minWidth: '44px' }} onClick={() => startEditEvent(selectedEvent)}>Modifica</button>
