@@ -1,42 +1,47 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MobileBottomNav from '../components/MobileBottomNav';
 import MobilePageShell from '../components/MobilePageShell';
 import useIsMobile from '../hooks/useIsMobile';
 import { supabase } from '../lib/supabaseClient';
 
+function normalizeFotoItem(item) {
+  if (!item) return item;
+  return {
+    ...item,
+    mediaType: item.mediaType || item.media_type || (item.video ? 'video' : 'image'),
+    created_at: item.created_at || item.createdAt || null,
+  };
+}
+
 function Foto() {
   const [gruppoSelezionato, setGruppoSelezionato] = useState('');
-    // Quando seleziono un gruppo, aggiorno anche il campo gruppo del form
-    useEffect(() => {
-      if (gruppoSelezionato && gruppoSelezionato !== '__no_group__') {
-        setGruppo(gruppoSelezionato);
-        setNuovoGruppo('');
-      } else if (!gruppoSelezionato) {
-        setGruppo('');
-        setNuovoGruppo('');
-      }
-    }, [gruppoSelezionato]);
   const isMobile = useIsMobile();
   const [editingDescriptionId, setEditingDescriptionId] = useState(null);
   const [editingDescriptionText, setEditingDescriptionText] = useState('');
-  const [fotoItems, setFotoItems] = useState(() => {
-    return [];
-  });
+  const [fotoItems, setFotoItems] = useState([]);
   const [commento, setCommento] = useState('');
-  const [media, setMedia] = useState(''); // può essere image o video (data url)
-  const [mediaType, setMediaType] = useState(''); // 'image' o 'video'
+  const [media, setMedia] = useState('');
+  const [mediaType, setMediaType] = useState('');
   const [gruppo, setGruppo] = useState('');
   const [nuovoGruppo, setNuovoGruppo] = useState('');
   const [erroreSalvataggio, setErroreSalvataggio] = useState('');
+  const [erroreCaricamento, setErroreCaricamento] = useState('');
 
-  // Gruppi unici estratti dalle foto
+  useEffect(() => {
+    if (gruppoSelezionato && gruppoSelezionato !== '__no_group__') {
+      setGruppo(gruppoSelezionato);
+      setNuovoGruppo('');
+    } else if (!gruppoSelezionato) {
+      setGruppo('');
+      setNuovoGruppo('');
+    }
+  }, [gruppoSelezionato]);
+
   const gruppi = Array.from(new Set(fotoItems.map(f => f.gruppo).filter(Boolean)));
 
   useEffect(() => {
-    // Carica tutte le foto da Supabase all'avvio
     fetchFoto();
-    // eslint-disable-next-line
   }, []);
 
   async function fetchFoto() {
@@ -44,7 +49,14 @@ function Foto() {
       .from('foto')
       .select('*')
       .order('created_at', { ascending: false });
-    if (!error) setFotoItems(data || []);
+
+    if (error) {
+      setErroreCaricamento(error.message || 'Errore durante il caricamento delle foto.');
+      return;
+    }
+
+    setErroreCaricamento('');
+    setFotoItems((data || []).map(normalizeFotoItem));
   }
 
   useEffect(() => {
@@ -90,10 +102,12 @@ function Foto() {
     if (!media) {
       return;
     }
+
     let gruppoFinale = gruppo;
     if (nuovoGruppo.trim()) {
       gruppoFinale = nuovoGruppo.trim();
     }
+
     const nuovoItem = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       image: mediaType === 'image' ? media : null,
@@ -103,15 +117,23 @@ function Foto() {
       gruppo: gruppoFinale,
       created_at: new Date().toISOString(),
     };
+
     if (!supabase) {
       setErroreSalvataggio('Errore di configurazione Supabase.');
       return;
     }
+
     const { error } = await supabase.from('foto').insert([nuovoItem]);
     if (error) {
       setErroreSalvataggio(error.message || 'Errore durante il salvataggio.');
       return;
     }
+
+    const normalizedItem = normalizeFotoItem(nuovoItem);
+    setFotoItems(prev => [normalizedItem, ...prev.filter(item => item.id !== normalizedItem.id)]);
+    setErroreCaricamento('');
+    setGruppoSelezionato(gruppoFinale || '__no_group__');
+
     fetchFoto();
     setMedia('');
     setMediaType('');
@@ -135,7 +157,7 @@ function Foto() {
     setEditingDescriptionText('');
   }
 
-async function handleDeleteDescription(itemId) {
+  async function handleDeleteDescription(itemId) {
     const { error } = await supabase
       .from('foto')
       .update({ commento: '' })
@@ -147,7 +169,7 @@ async function handleDeleteDescription(itemId) {
     }
   }
 
-async function handleDeleteFoto(itemId) {
+  async function handleDeleteFoto(itemId) {
     const confirmed = window.confirm('Vuoi eliminare questa foto?');
     if (!confirmed) return;
 
@@ -174,6 +196,9 @@ async function handleDeleteFoto(itemId) {
 
       <div style={{ width: '100%', maxWidth: '700px', padding: isMobile ? 'calc(var(--bb-mobile-shell-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px) calc(var(--bb-mobile-bottom-nav-height, 94px) + clamp(18px, 4vw, 28px)) clamp(10px, 3vw, 16px)' : '0 16px 24px 16px', boxSizing: 'border-box', flex: isMobile ? '0 0 auto' : '1 1 auto', height: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'auto', maxHeight: isMobile ? 'calc(100dvh - var(--bb-mobile-bottom-nav-height, 94px) - 8px)' : 'none', overflowY: 'auto', overflowX: 'hidden' }}>
         <form onSubmit={handleAddFoto} style={{ background: '#222', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
+          {erroreCaricamento && (
+            <div style={{ color: '#ffb366', fontWeight: 600, marginBottom: '8px' }}>{erroreCaricamento}</div>
+          )}
           {erroreSalvataggio && (
             <div style={{ color: '#ff4444', fontWeight: 600, marginBottom: '8px' }}>{erroreSalvataggio}</div>
           )}
@@ -222,7 +247,6 @@ async function handleDeleteFoto(itemId) {
         </form>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {/* Se nessun gruppo selezionato, mostra lista gruppi */}
           {!gruppoSelezionato && (
             <>
               {gruppi.length === 0 && fotoItems.length === 0 && <div style={{ color: '#bbb' }}>Nessuna foto inserita.</div>}
@@ -246,7 +270,6 @@ async function handleDeleteFoto(itemId) {
                   {gr}
                 </button>
               ))}
-              {/* Gruppo "Senza gruppo" */}
               {fotoItems.filter(item => !item.gruppo).length > 0 && (
                 <button
                   type="button"
@@ -268,7 +291,6 @@ async function handleDeleteFoto(itemId) {
               )}
             </>
           )}
-          {/* Se gruppo selezionato, mostra solo le foto di quel gruppo */}
           {gruppoSelezionato && (
             <>
               <button
@@ -340,7 +362,9 @@ async function handleDeleteFoto(itemId) {
                           Elimina foto
                         </button>
                       </div>
-                      <div style={{ marginTop: '6px', fontSize: '0.8em', color: '#9a9a9a' }}>{new Date(item.createdAt).toLocaleString()}</div>
+                      <div style={{ marginTop: '6px', fontSize: '0.8em', color: '#9a9a9a' }}>
+                        {item.created_at ? new Date(item.created_at).toLocaleString() : ''}
+                      </div>
                     </div>
                   ))}
               </div>
